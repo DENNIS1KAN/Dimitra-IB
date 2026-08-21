@@ -19,3 +19,7 @@ pgdata/
 # misc
 .DS_Store
 npm-debug.log*
+
+# lockfile: too large for this workspace's API-based push path; exact
+# top-level pins in package.json stand in — npm install regenerates it
+package-lock.json

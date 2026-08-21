@@ -13,6 +13,10 @@ through one active/paused toggle per student plus per-module release dates.
 
 ## Quick start (dev — zero external accounts)
 
+> `package.json` pins exact versions (no lockfile in the repo — it couldn't
+> travel this workspace's API-based push path); `npm install` regenerates a
+> local `package-lock.json` on first run.
+
 ```bash
 npm install
 
