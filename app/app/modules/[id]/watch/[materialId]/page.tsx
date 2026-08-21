@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { VideoPlayer } from "@/components/app/video-player";
 import { TopBar } from "@/components/lumen/learning";
 import { getSessionUser } from "@/lib/auth";
 import { studentModuleDetail } from "@/lib/queries";
@@ -44,14 +45,7 @@ export default async function WatchPage({
               allowFullScreen
             />
           ) : (
-            <video
-              controls
-              playsInline
-              preload="metadata"
-              style={{ width: "100%", height: "100%", display: "block" }}
-              src={`/api/materials/${material.id}`}
-              data-material-id={material.id}
-            />
+            <VideoPlayer src={`/api/materials/${material.id}`} materialId={material.id} />
           )}
         </div>
         <p

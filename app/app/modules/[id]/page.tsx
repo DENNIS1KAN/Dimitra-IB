@@ -1,4 +1,6 @@
 import { notFound, redirect } from "next/navigation";
+import { SubmitPanel } from "@/components/app/submit-sheet";
+import { SubmissionToastListener } from "@/components/app/submission-toast";
 import { Badge } from "@/components/lumen/core";
 import { LessonRow, LockPanel, TopBar } from "@/components/lumen/learning";
 import { getSessionUser } from "@/lib/auth";
@@ -66,6 +68,7 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
 
   return (
     <main style={{ maxWidth: 720, margin: "0 auto" }}>
+      <SubmissionToastListener />
       <TopBar title={`Week ${module.weekNumber}`} backHref="/app" />
       <div style={{ padding: "4px 20px 24px", display: "flex", flexDirection: "column", gap: 10 }}>
         <h1
@@ -103,11 +106,7 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
               body="Nice work. Compare your working line by line — and bring anything that still feels off to Dimitra."
             />
           ) : (
-            <LockPanel
-              locked
-              title="Submit your attempt to unlock solutions"
-              body="Upload a photo of your working — marks don't matter here, honest attempts do."
-            />
+            <SubmitPanel moduleId={module.id} />
           )}
         </div>
       </div>
