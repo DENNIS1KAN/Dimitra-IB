@@ -39,7 +39,9 @@ export default async function AdminModules({
       {error && (
         <Card padding="16px" style={{ borderColor: "#c4320a" }}>
           <p style={{ margin: 0, fontSize: "var(--text-body-sm)", color: "#c4320a" }}>
-            Module needs a cohort, week number, title, and release date.
+            {error === "week-taken"
+              ? "That cohort already has a module for that week number."
+              : "Module needs a cohort, week number, title, and release date."}
           </p>
         </Card>
       )}

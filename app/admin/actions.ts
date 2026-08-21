@@ -8,6 +8,8 @@ import { cohorts, materials, modules, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin";
 import { createMagicLink, deliverMagicLink } from "@/lib/auth";
 import { storage } from "@/lib/storage";
+import { isUniqueViolation } from "@/lib/db-errors";
+import { parseLocalInTz } from "@/lib/tz";
 
 // ---------------------------------------------------------------------------
 // Cohorts
@@ -87,14 +89,23 @@ export async function createModule(formData: FormData) {
   const weekNumber = Number(formData.get("weekNumber") ?? 0);
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim() || null;
-  const releaseDate = new Date(String(formData.get("releaseDate") ?? ""));
+  // datetime-local means the TUTOR's wall clock, not the server's (UTC).
+  const releaseDate = parseLocalInTz(String(formData.get("releaseDate") ?? ""));
   if (!cohortId || !title || !weekNumber || Number.isNaN(releaseDate.getTime())) {
     redirect("/admin/modules?error=module");
   }
-  const [created] = await db
-    .insert(modules)
-    .values({ cohortId, weekNumber, title, description, releaseDate })
-    .returning();
+  let created: { id: string };
+  try {
+    [created] = await db
+      .insert(modules)
+      .values({ cohortId, weekNumber, title, description, releaseDate })
+      .returning();
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      redirect("/admin/modules?error=week-taken");
+    }
+    throw err;
+  }
   revalidatePath("/admin/modules");
   redirect(`/admin/modules/${created.id}`);
 }
@@ -105,14 +116,21 @@ export async function updateModule(formData: FormData) {
   const weekNumber = Number(formData.get("weekNumber") ?? 0);
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim() || null;
-  const releaseDate = new Date(String(formData.get("releaseDate") ?? ""));
+  const releaseDate = parseLocalInTz(String(formData.get("releaseDate") ?? ""));
   if (!id || !title || !weekNumber || Number.isNaN(releaseDate.getTime())) {
     redirect(`/admin/modules/${id}?error=save`);
   }
-  await db
-    .update(modules)
-    .set({ weekNumber, title, description, releaseDate })
-    .where(eq(modules.id, id));
+  try {
+    await db
+      .update(modules)
+      .set({ weekNumber, title, description, releaseDate })
+      .where(eq(modules.id, id));
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      redirect(`/admin/modules/${id}?error=week-taken`);
+    }
+    throw err;
+  }
   revalidatePath(`/admin/modules/${id}`);
   redirect(`/admin/modules/${id}?ok=saved`);
 }
@@ -126,16 +144,25 @@ export async function moveMaterial(formData: FormData) {
   const direction = String(formData.get("direction") ?? "up");
   const [mat] = await db.select().from(materials).where(eq(materials.id, id));
   if (!mat) return;
+  // Renumber 0..n-1 instead of swapping values: deterministic order (id
+  // tie-break) and self-healing if duplicate sort_orders ever appear.
   const siblings = await db
     .select()
     .from(materials)
     .where(eq(materials.moduleId, mat.moduleId))
-    .orderBy(materials.sortOrder);
+    .orderBy(materials.sortOrder, materials.id);
   const idx = siblings.findIndex((m) => m.id === id);
-  const swapWith = direction === "up" ? siblings[idx - 1] : siblings[idx + 1];
-  if (!swapWith) return;
-  await db.update(materials).set({ sortOrder: swapWith.sortOrder }).where(eq(materials.id, mat.id));
-  await db.update(materials).set({ sortOrder: mat.sortOrder }).where(eq(materials.id, swapWith.id));
+  const target = direction === "up" ? idx - 1 : idx + 1;
+  if (target < 0 || target >= siblings.length) return;
+  const reordered = [...siblings];
+  [reordered[idx], reordered[target]] = [reordered[target], reordered[idx]];
+  await db.transaction(async (tx) => {
+    for (let i = 0; i < reordered.length; i++) {
+      if (reordered[i].sortOrder !== i) {
+        await tx.update(materials).set({ sortOrder: i }).where(eq(materials.id, reordered[i].id));
+      }
+    }
+  });
   revalidatePath(`/admin/modules/${mat.moduleId}`);
   redirect(`/admin/modules/${mat.moduleId}`);
 }

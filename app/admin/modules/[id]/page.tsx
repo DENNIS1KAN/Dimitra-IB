@@ -6,6 +6,7 @@ import { Badge, Button, Card, Icon } from "@/components/lumen/core";
 import { Input, TextArea } from "@/components/lumen/forms";
 import { UploadDropzone } from "@/components/admin/upload-dropzone";
 import { requireAdmin } from "@/lib/admin";
+import { toLocalInputValue } from "@/lib/tz";
 import { deleteMaterial, moveMaterial, renameMaterial, updateModule } from "../../actions";
 
 const TYPE_ICONS: Record<string, string> = {
@@ -35,12 +36,10 @@ export default async function AdminModuleEdit({
     .select()
     .from(materials)
     .where(eq(materials.moduleId, id))
-    .orderBy(asc(materials.sortOrder));
+    .orderBy(asc(materials.sortOrder), asc(materials.id));
 
-  // datetime-local wants "YYYY-MM-DDTHH:mm" in local time.
-  const local = new Date(module.releaseDate.getTime() - module.releaseDate.getTimezoneOffset() * 60000)
-    .toISOString()
-    .slice(0, 16);
+  // datetime-local shows the TUTOR's wall clock (lib/tz), not the server's.
+  const local = toLocalInputValue(module.releaseDate);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -67,7 +66,9 @@ export default async function AdminModuleEdit({
       {error && (
         <Card padding="12px" style={{ borderColor: "#c4320a" }}>
           <p style={{ margin: 0, fontSize: "var(--text-body-sm)", color: "#c4320a" }}>
-            Check the fields — week, title, and release date are required.
+            {error === "week-taken"
+              ? "That cohort already has a module for that week number."
+              : "Check the fields — week, title, and release date are required."}
           </p>
         </Card>
       )}

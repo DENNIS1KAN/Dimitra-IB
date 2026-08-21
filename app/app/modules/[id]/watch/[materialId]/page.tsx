@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { VideoPlayer } from "@/components/app/video-player";
 import { TopBar } from "@/components/lumen/learning";
 import { getSessionUser } from "@/lib/auth";
+import { logMaterialEvent } from "@/lib/material-access";
 import { studentModuleDetail } from "@/lib/queries";
 
 // Embedded player (SPEC §7). Dev mode streams from ./storage; with Bunny
@@ -19,6 +20,10 @@ export default async function WatchPage({
   if (!detail) notFound();
   const material = detail.materials.find((m) => m.id === materialId && m.type === "video");
   if (!material) notFound();
+
+  // One 'view' per page visit — the bytes route deliberately skips video
+  // views so range/preload requests don't inflate the events table.
+  await logMaterialEvent(user.id, material.id, "view");
 
   const { bunnyConfigured, signedEmbedUrl } = await import("@/lib/video");
   const bunny = bunnyConfigured();

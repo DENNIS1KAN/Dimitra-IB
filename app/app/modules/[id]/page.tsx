@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { SubmitPanel } from "@/components/app/submit-sheet";
 import { SubmissionToastListener } from "@/components/app/submission-toast";
-import { Badge } from "@/components/lumen/core";
+import { Badge, IconButton } from "@/components/lumen/core";
 import { LessonRow, LockPanel, TopBar } from "@/components/lumen/learning";
 import { getSessionUser } from "@/lib/auth";
 import { isNewRelease } from "@/lib/format";
@@ -34,14 +34,16 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
           />
         );
       case "slides":
-        return (
+        return withDownload(
+          m.id,
           <LessonRow
             key={m.id}
             kind="slides"
             title={m.title}
             meta="View inline · stamped download"
             href={`/api/materials/${m.id}`}
-          />
+            style={{ flex: 1, minWidth: 0 }}
+          />,
         );
       case "exercises":
         return (
@@ -54,17 +56,34 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
           />
         );
       case "solutions":
-        return (
+        return withDownload(
+          m.id,
           <LessonRow
             key={m.id}
             kind="solutions"
             title={m.title}
             meta="Compare line by line"
             href={`/api/materials/${m.id}`}
-          />
+            style={{ flex: 1, minWidth: 0 }}
+          />,
         );
     }
   };
+
+  // SPEC §7: slides are "inline view + download" — the row opens the viewer,
+  // the trailing button fetches the stamped copy (SPEC §9).
+  const withDownload = (materialId: string, row: React.ReactNode) => (
+    <div key={materialId} style={{ display: "flex", alignItems: "stretch", gap: 8 }}>
+      {row}
+      <IconButton
+        icon="download"
+        variant="outline"
+        label="Download stamped copy"
+        href={`/api/materials/${materialId}?download=1`}
+        style={{ height: "auto", alignSelf: "stretch", width: 52, borderRadius: "var(--radius-cards)" }}
+      />
+    </div>
+  );
 
   return (
     <main style={{ maxWidth: 720, margin: "0 auto" }}>
@@ -104,6 +123,8 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
               locked={false}
               title="Solutions unlocked"
               body="Nice work. Compare your working line by line — and bring anything that still feels off to Dimitra."
+              cta={solutions.length > 0 ? "Open solutions" : undefined}
+              ctaHref={solutions.length > 0 ? `/api/materials/${solutions[0].id}` : undefined}
             />
           ) : (
             <SubmitPanel moduleId={module.id} />
