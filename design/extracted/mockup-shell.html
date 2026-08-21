@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="design_doc_mode" content="canvas"><title>Lumen — UI mockups</title>
+<style>/* Lumen — font faces (Apercu Pro, licensed files provided by owner) */
+@font-face{font-family:'Apercu Pro';src:url("0c3b52fb-6c5e-4ab8-976d-13ba81904883") format('opentype');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Apercu Pro';src:url("e71b4151-3f15-4d59-ae49-de48b9239993") format('opentype');font-weight:400;font-style:italic;font-display:swap}
+@font-face{font-family:'Apercu Pro';src:url("36832939-4fa4-47fe-ab5f-0e405575d316") format('opentype');font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:'Apercu Pro';src:url("895fd295-c6e5-4525-acb3-0a98749b0a5a") format('opentype');font-weight:500;font-style:italic;font-display:swap}
+@font-face{font-family:'Apercu Pro';src:url("4fed8396-ff6b-41f8-881e-3344d37cd991") format('opentype');font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:'Apercu Pro';src:url("0a10f49a-0038-40c1-bc1a-2c1a3e6b87bd") format('opentype');font-weight:700;font-style:italic;font-display:swap}
+
+:root{
+/* Base palette (verbatim from style reference) */
+--color-page-cream:#f9f4f2;
+--color-pure-white:#ffffff;
+--color-charcoal-ink:#2d2c2b;
+--color-graphite:#44423f;
+--color-slate:#4b4c4d;
+--color-stone:#63605d;
+--color-driftwood:#c6c1b9;
+--color-linen:#e2ded9;
+--color-ash:#d0d0d0;
+--color-soft-black:#000000;
+--color-mindful-blue:#0061ef;
+--color-sunbeam-yellow:#ffce00;
+--color-deep-indigo:#3b197f;
+--color-twilight-violet:#281466;
+--color-plum:#5f2b89;
+--color-mauve:#8144a8;
+--color-celeste:#00a4ff;
+--color-blush:#ffa1cc;
+--color-brand-orange:#f47d31;
+/* Semantic — surfaces */
+--surface-page:var(--color-page-cream);
+--surface-card:var(--color-pure-white);
+--surface-accent:var(--color-sunbeam-yellow);
+--surface-contemplative:var(--color-deep-indigo);
+--surface-ink:var(--color-charcoal-ink);
+/* Semantic — text */
+--text-primary:var(--color-charcoal-ink);
+--text-secondary:var(--color-graphite);
+--text-tertiary:var(--color-slate);
+--text-disabled:var(--color-stone);
+--text-inverse:var(--color-pure-white);
+--text-display:var(--color-soft-black);
+--text-on-yellow:var(--color-charcoal-ink);
+/* Semantic — borders */
+--border-card:var(--color-linen);
+--border-input:var(--color-ash);
+--border-divider:var(--color-driftwood);
+/* Semantic — actions */
+--action-primary:var(--color-mindful-blue);
+--action-dark:var(--color-charcoal-ink);
+--accent-punctuation:var(--color-sunbeam-yellow);
+--accent-dimitra:var(--color-deep-indigo);
+/* Semantic — states */
+--state-done:var(--color-mindful-blue);
+--state-locked:var(--color-stone);
+/* Subject colors — one per class (assignment lives in product data) */
+--subject-chemistry:var(--color-mindful-blue);
+--subject-orange:var(--color-brand-orange);
+--subject-plum:var(--color-plum);
+--subject-celeste:var(--color-celeste);
+--subject-indigo:var(--color-deep-indigo);
+--subject-yellow:var(--color-sunbeam-yellow);
+}
+
+:root{
+--font-sans:'Apercu Pro',ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+--font-weight-regular:400;
+--font-weight-medium:500;
+--font-weight-bold:700;
+/* Scale */
+--text-caption:12px;--leading-caption:1.5;--tracking-caption:-0.12px;
+--text-body-sm:14px;--leading-body-sm:1.5;--tracking-body-sm:-0.14px;
+--text-body:16px;--leading-body:1.5;--tracking-body:-0.16px;
+--text-subheading:20px;--leading-subheading:1.33;--tracking-subheading:-0.5px;
+--text-heading-sm:24px;--leading-heading-sm:1.33;--tracking-heading-sm:-0.6px;
+--text-heading:32px;--leading-heading:1.3;--tracking-heading:-0.8px;
+--text-heading-lg:40px;--leading-heading-lg:1.29;--tracking-heading-lg:-1px;
+--text-display:52px;--leading-display:1.13;--tracking-display:-1.56px;
+--text-display-lg:72px;--leading-display-lg:1.1;--tracking-display-lg:-2.16px;
+}
+
+:root{
+--spacing-unit:4px;
+--spacing-4:4px;--spacing-8:8px;--spacing-12:12px;--spacing-16:16px;--spacing-20:20px;--spacing-24:24px;--spacing-32:32px;--spacing-40:40px;--spacing-48:48px;--spacing-56:56px;--spacing-64:64px;--spacing-80:80px;--spacing-96:96px;
+--page-max-width:1200px;
+--section-gap:64px;
+}
+
+:root{
+--radius-small:8px;
+--radius-inputs:8px;
+--radius-xl:12px;
+--radius-cards:16px;
+--radius-featured:24px;
+--radius-featured-lg:32px;
+--radius-pills:800px;
+--radius-buttons:800px;
+--shadow-subtle:rgba(65,61,69,0.2) 0px 2px 0px 0px;
+--shadow-card:0 1px 2px rgba(0,0,0,0.04);
+--shadow-float:0 8px 24px rgba(45,44,43,0.10);
+}
+
+body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--text-primary);font-size:var(--text-body);line-height:var(--leading-body);letter-spacing:var(--tracking-body);-webkit-font-smoothing:antialiased}
+a{color:var(--action-primary);text-decoration:none}
+a:hover{color:var(--color-deep-indigo)}
+::selection{background:var(--color-sunbeam-yellow);color:var(--color-charcoal-ink)}
+
+</style>
+<style>/* fallback */
+@font-face {
+  font-family: 'Material Symbols Rounded';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: block;
+  src: url("29242aa0-738f-4bd2-98f6-36267b527ff4") format('woff2');
+}
+
+.material-symbols-rounded {
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -moz-font-feature-settings: 'liga';
+  -moz-osx-font-smoothing: grayscale;
+}
+</style>
+<script src="cee2f12a-cca1-468e-9540-ab113f6b9fd3" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="aacda858-4c4e-47f2-9580-d0d365336162" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="162c1fea-9a20-430e-a6d7-35906a58ec85" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="64098dee-1461-4fe5-be72-6345f2f2063f"></script>
+
+<style>body{background:#f9f4f2}
+.frame{position:absolute;display:flex;flex-direction:column;gap:12px}
+.cap{font-family:var(--font-sans);font-size:15px;font-weight:700;letter-spacing:-0.15px;color:#2d2c2b}
+.cap small{font-weight:400;color:#63605d;margin-left:8px}
+.phone{width:390px;height:800px;background:var(--surface-page);border-radius:40px;border:1px solid var(--border-card);box-shadow:0 20px 50px rgba(45,44,43,.12);overflow:hidden;display:flex;flex-direction:column}
+.phone>.inner{flex:1;min-height:0;display:flex;flex-direction:column;padding-top:10px}
+.desk{width:1200px;height:820px;background:var(--surface-page);border-radius:20px;border:1px solid var(--border-card);box-shadow:0 20px 50px rgba(45,44,43,.12);overflow:hidden}
+</style></head><body>
+<script type="text/babel" src="5b18f94a-002a-4af9-885e-5da84343bac3"></script>
+<script type="text/babel" src="89198076-84de-4442-bd14-cd25bf560562"></script>
+<script type="text/babel" src="e39931c6-54dd-4cb8-ac35-0c15a1d7e7d6"></script>
+<script type="text/babel" src="03dffead-c0a6-4fdb-9b34-d0ebc68daf2f"></script>
+<script type="text/babel" src="3efe2eb3-16b9-49d2-bc29-325c65a338c9"></script>
+<script type="text/babel" src="5d99665c-7c12-4b3d-8be7-ac297641de4c"></script>
+<script type="text/babel" src="64f89625-fcbd-44e6-b4f7-6a60a2936611"></script>
+<script type="text/babel" src="1a78d9e7-ed5c-4b32-bdd0-065c047fdb7c"></script>
+<script type="text/babel" src="cc8d6cb5-6127-4579-b1e3-0306ed7282f1"></script>
+<script type="text/babel" src="60a706fa-66ef-42ce-a2fd-ef0fcb990520"></script>
+<div class="frame" style="left:60px;top:60px" id="f-deskhome"></div>
+<div class="frame" style="left:1340px;top:60px" id="f-deskmodules"></div>
+<div class="frame" style="left:2620px;top:60px" id="f-deskabout"></div>
+<div class="frame" style="left:60px;top:1000px" id="f-welcome"></div>
+<div class="frame" style="left:520px;top:1000px" id="f-home"></div>
+<div class="frame" style="left:980px;top:1000px" id="f-modules"></div>
+<div class="frame" style="left:1440px;top:1000px" id="f-module"></div>
+<div class="frame" style="left:1900px;top:1000px" id="f-unlocked"></div>
+<div class="frame" style="left:2360px;top:1000px" id="f-clinics"></div>
+<div class="frame" style="left:2820px;top:1000px" id="f-progress"></div>
+<div class="frame" style="left:3280px;top:1000px" id="f-about"></div>
+<script type="text/babel">
+const {TabBar,Wordmark,Avatar}=window.LumenDesignSystem_44a90c;
+const tabs=[{id:'home',icon:'home',label:'Home'},{id:'modules',icon:'library_books',label:'Modules'},{id:'clinics',icon:'event',label:'Clinics'},{id:'progress',icon:'monitoring',label:'Progress'}];
+function Phone({tab,children}){return <div className="phone"><div className="inner">{children}</div>{tab&&<TabBar active={tab} onChange={()=>{}} items={tabs}/>}</div>;}
+function DeskNav({page}){
+const link=(id,label)=><span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-body)',fontWeight:500,letterSpacing:'var(--tracking-body)',color:page===id?'var(--text-primary)':'var(--text-tertiary)',padding:'8px 12px'}}>{label}</span>;
+return <div style={{background:'var(--surface-card)',borderBottom:'1px solid var(--border-card)'}}><div style={{maxWidth:1040,margin:'0 auto',padding:'14px 32px',display:'flex',alignItems:'center',gap:8}}>
+<Wordmark size="sm"/><div style={{display:'flex',gap:4,marginLeft:24,flex:1}}>{link('home','Home')}{link('modules','Modules')}{link('clinics','Clinics')}{link('progress','Progress')}{link('about','About Dimitra')}</div><Avatar initials="NK" tone="neutral"/>
+</div></div>;}
+const noop=()=>{};
+const mount=(id,cap,sub,node)=>{ReactDOM.createRoot(document.getElementById(id)).render(<React.Fragment><div className="cap">{cap}{sub&&<small>{sub}</small>}</div>{node}</React.Fragment>);};
+mount('f-deskhome','Desktop — Home','primary surface: note, module, classes',<div className="desk"><DeskNav page="home"/><DesktopHome go={noop}/></div>);
+mount('f-deskmodules','Desktop — Modules','class switcher · weekly archive',<div className="desk"><DeskNav page="modules"/><DesktopModules/></div>);
+mount('f-deskabout','Desktop — About Dimitra','CV placeholder',<div className="desk"><DeskNav page="about"/><DesktopAbout/></div>);
+mount('f-welcome','Welcome','invite-only sign-in',<Phone><WelcomeScreen onSignIn={noop}/></Phone>);
+mount('f-home','Home','Dimitra’s note above the module',<Phone tab="home"><HomeScreen go={noop}/></Phone>);
+mount('f-modules','Modules','classes → weekly modules',<Phone tab="modules"><ModulesScreen go={noop}/></Phone>);
+mount('f-module','Module — locked','attempt gates the solutions',<Phone tab="modules"><ModuleScreen go={noop}/></Phone>);
+mount('f-unlocked','Module — unlocked','after the attempt',<Phone tab="modules"><ModuleScreen go={noop} initialUnlocked/></Phone>);
+mount('f-clinics','Clinics & 1:1','book a seat · recordings',<Phone tab="clinics"><ClinicsScreen/></Phone>);
+mount('f-progress','Progress','parent-glanceable facts',<Phone tab="progress"><ProgressScreen/></Phone>);
+mount('f-about','About Dimitra','CV placeholder',<Phone tab="home"><AboutScreen go={noop}/></Phone>);
+</script>
+</body></html>
