@@ -221,3 +221,6 @@ Wordmark sm + "Admin" label; zero custom design effort (SPEC §12). Tables, form
 | 15 | Per-material meta: video durations, "18 pages", "8 questions" | §6 materials: only type/title/storage_key/sort_order | Parked; derived counts fine; revisit at M3 (Bunny exposes duration) |
 | 16 | Locked-solutions copy "Solutions unlock after your attempt" / CTA "Submit my attempt" | §5 Rule 2 prescribes hint "Submit your attempt to unlock solutions" | SPEC copy in the mockup's panel skin |
 | 17 | DesktopHome "All modules →" link | Mooted by the /app merge (#4) | Dropped |
+| 18 | Badge copy "New this Monday" | Releases aren't necessarily Mondays (release_date is free §6) | Built copy: "New this week" (released < 7 days) |
+| 19 | Welcome CTA "Sign in"; invite-only helper on the combined screen | §7 splits the screen: /login (email → link) + /invite/[token] | /login CTA reads "Email me a sign-in link" (honest about the magic link); the invite-only caption appears on both screens |
+| 20 | — (no landing mockup; SPEC §7 wants tutor bio + **photo**) | Photo required | Initials Avatar stands in until a real photo is provided (see README pre-launch); contact email is a placeholder |
