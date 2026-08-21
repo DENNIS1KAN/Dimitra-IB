@@ -1,10 +1,15 @@
+import { APP_TIMEZONE } from "./tz";
+
 // Date copy per DESIGN.md: "Mon 12 Oct", "Unlocks Mon 19 Oct 09:00".
+// Always rendered in the tutor's timezone (lib/tz.ts) — servers run UTC.
 const dayFmt = new Intl.DateTimeFormat("en-GB", {
+  timeZone: APP_TIMEZONE,
   weekday: "short",
   day: "numeric",
   month: "short",
 });
 const timeFmt = new Intl.DateTimeFormat("en-GB", {
+  timeZone: APP_TIMEZONE,
   hour: "2-digit",
   minute: "2-digit",
   hour12: false,

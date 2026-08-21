@@ -17,12 +17,16 @@ import {
 
 const DAY = 24 * 60 * 60 * 1000;
 const now = Date.now();
-// Anchor releases to the most recent Monday 09:00 local time.
+// Anchor releases to the most recent Monday 09:00 that is already in the
+// past (running the seed on a Monday before 09:00 must not shift the
+// released/future split).
 const monday = (() => {
   const d = new Date(now);
   d.setHours(9, 0, 0, 0);
   const dow = (d.getDay() + 6) % 7; // 0 = Monday
-  return d.getTime() - dow * DAY;
+  let t = d.getTime() - dow * DAY;
+  if (t > now) t -= 7 * DAY;
+  return t;
 })();
 
 async function main() {
@@ -114,15 +118,17 @@ async function main() {
 
   console.log("[seed] materials…");
   const byWeek = Object.fromEntries(chemModules.map((m) => [m.weekNumber, m]));
-  const placeholder = (moduleId: string, week: number) => [
-    { moduleId, type: "video" as const, title: `1 · Core ideas`, storageKey: `seed/w${week}-video-1.webm`, sortOrder: 0 },
-    { moduleId, type: "video" as const, title: `2 · Worked examples`, storageKey: `seed/w${week}-video-2.webm`, sortOrder: 1 },
-    { moduleId, type: "slides" as const, title: "Slides — annotated", storageKey: `seed/w${week}-slides.pdf`, sortOrder: 2 },
-    { moduleId, type: "exercises" as const, title: "Exercises — set A", storageKey: `seed/w${week}-exercises.pdf`, sortOrder: 3 },
-    { moduleId, type: "solutions" as const, title: "Worked solutions", storageKey: `seed/w${week}-solutions.pdf`, sortOrder: 4 },
+  // Keys are per-cohort (prefix) so deleting a material in one cohort can
+  // never break another cohort's copy.
+  const placeholder = (moduleId: string, week: number, prefix = "w") => [
+    { moduleId, type: "video" as const, title: `1 · Core ideas`, storageKey: `seed/${prefix}${week}-video-1.webm`, sortOrder: 0 },
+    { moduleId, type: "video" as const, title: `2 · Worked examples`, storageKey: `seed/${prefix}${week}-video-2.webm`, sortOrder: 1 },
+    { moduleId, type: "slides" as const, title: "Slides — annotated", storageKey: `seed/${prefix}${week}-slides.pdf`, sortOrder: 2 },
+    { moduleId, type: "exercises" as const, title: "Exercises — set A", storageKey: `seed/${prefix}${week}-exercises.pdf`, sortOrder: 3 },
+    { moduleId, type: "solutions" as const, title: "Worked solutions", storageKey: `seed/${prefix}${week}-solutions.pdf`, sortOrder: 4 },
   ];
   for (const m of chemModules) await db.insert(materials).values(placeholder(m.id, m.weekNumber));
-  await db.insert(materials).values(placeholder(otherModule.id, 6));
+  await db.insert(materials).values(placeholder(otherModule.id, 6, "sl-w"));
 
   console.log("[seed] placeholder files…");
   // Real bytes for the placeholder PDF materials so the whole student loop
@@ -130,9 +136,10 @@ async function main() {
   // seed-video script (see scripts/) — the player copes when they're absent.
   const { storage } = await import("../lib/storage");
   const { PDFDocument, StandardFonts } = await import("pdf-lib");
-  const allMaterials = [...chemModules, otherModule].flatMap((m) =>
-    placeholder(m.id, m.weekNumber),
-  );
+  const allMaterials = [
+    ...chemModules.flatMap((m) => placeholder(m.id, m.weekNumber)),
+    ...placeholder(otherModule.id, 6, "sl-w"),
+  ];
   for (const mat of allMaterials) {
     if (!mat.storageKey.endsWith(".pdf")) continue;
     const doc = await PDFDocument.create();

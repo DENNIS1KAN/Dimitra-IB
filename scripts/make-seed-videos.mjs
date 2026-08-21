@@ -25,6 +25,7 @@ for (const week of [5, 6, 7, 8]) {
   for (const k of [1, 2]) targets.push({ key: `seed/w${week}-video-${k}.webm`, label: `Week ${week} · Video ${k}` });
 }
 targets.push({ key: "seed/sl-w6-video-1.webm", label: "SL cohort · Video 1" });
+targets.push({ key: "seed/sl-w6-video-2.webm", label: "SL cohort · Video 2" });
 
 const record = async (page, label) =>
   page.evaluate(

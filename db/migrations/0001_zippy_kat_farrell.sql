@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "modules_cohort_week_unique" ON "modules" USING btree ("cohort_id","week_number");

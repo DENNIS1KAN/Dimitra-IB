@@ -10,6 +10,7 @@ import {
   type Module,
   type User,
 } from "@/db/schema";
+import { compareByRecency, pickCurrent } from "./current";
 import { isModuleComplete, moduleState, type ModuleState } from "./gating";
 
 export type ModuleListEntry = {
@@ -95,10 +96,15 @@ export async function studentModuleList(student: User): Promise<StudentModuleLis
   }));
 
   const released = entries.filter((e) => e.state === "open");
-  const future = entries.filter((e) => e.state === "locked-teaser");
-  // Hero = the most recently released module ("this week").
-  const current = released.length ? released[released.length - 1] : null;
-  const olderReleased = released.slice(0, -1).reverse(); // newest first below the hero
+  const future = entries
+    .filter((e) => e.state === "locked-teaser")
+    .sort((a, b) => a.module.releaseDate.getTime() - b.module.releaseDate.getTime());
+  // Hero = "this week" per the shared lib/current rule (most recent release).
+  const currentModule = pickCurrent(released.map((e) => e.module));
+  const current = released.find((e) => e.module.id === currentModule?.id) ?? null;
+  const olderReleased = released
+    .filter((e) => e.module.id !== currentModule?.id)
+    .sort((a, b) => compareByRecency(a.module, b.module)); // newest first below the hero
 
   return {
     cohort: cohort ?? null,
@@ -137,7 +143,7 @@ export async function studentModuleDetail(
     .select()
     .from(materials)
     .where(eq(materials.moduleId, module.id))
-    .orderBy(asc(materials.sortOrder));
+    .orderBy(asc(materials.sortOrder), asc(materials.id));
   const [sub] = await db
     .select()
     .from(submissions)
@@ -147,10 +153,9 @@ export async function studentModuleDetail(
     .select()
     .from(modules)
     .where(eq(modules.cohortId, module.cohortId));
-  const releasedTimes = siblings
-    .map((m) => m.releaseDate.getTime())
-    .filter((t) => t <= now.getTime());
-  const isCurrent = module.releaseDate.getTime() === Math.max(...releasedTimes);
+  const releasedSiblings = siblings.filter((m) => m.releaseDate.getTime() <= now.getTime());
+  // Same rule as the /app hero — the list and this badge can never disagree.
+  const isCurrent = pickCurrent(releasedSiblings)?.id === module.id;
 
   return { module, cohort, materials: mats, hasSubmission: !!sub, isCurrent };
 }

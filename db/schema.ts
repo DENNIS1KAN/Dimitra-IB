@@ -45,16 +45,22 @@ export const users = pgTable("users", {
     .defaultNow(),
 });
 
-export const modules = pgTable("modules", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  cohortId: uuid("cohort_id")
-    .notNull()
-    .references(() => cohorts.id),
-  weekNumber: integer("week_number").notNull(),
-  title: text("title").notNull(),
-  description: text("description"),
-  releaseDate: timestamp("release_date", { withTimezone: true }).notNull(),
-});
+export const modules = pgTable(
+  "modules",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    cohortId: uuid("cohort_id")
+      .notNull()
+      .references(() => cohorts.id),
+    weekNumber: integer("week_number").notNull(),
+    title: text("title").notNull(),
+    description: text("description"),
+    releaseDate: timestamp("release_date", { withTimezone: true }).notNull(),
+  },
+  // One module per week per cohort — duplicate week numbers would make the
+  // week ordering (and the tutor's mental model) ambiguous.
+  (t) => [uniqueIndex("modules_cohort_week_unique").on(t.cohortId, t.weekNumber)],
+);
 
 export const materials = pgTable("materials", {
   id: uuid("id").primaryKey().defaultRandom(),
