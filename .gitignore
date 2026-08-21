@@ -1,0 +1,21 @@
+# licensed / local-only design assets (see design/README.md)
+design/fonts/
+design/Lumen_UI_Mockups_standalone.html
+public/fonts/
+
+# app
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# local env & data
+.env
+.env.local
+storage/
+pgdata/
+
+# misc
+.DS_Store
+npm-debug.log*
