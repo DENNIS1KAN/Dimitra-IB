@@ -115,8 +115,8 @@ async function main() {
   console.log("[seed] materials…");
   const byWeek = Object.fromEntries(chemModules.map((m) => [m.weekNumber, m]));
   const placeholder = (moduleId: string, week: number) => [
-    { moduleId, type: "video" as const, title: `1 · Core ideas`, storageKey: `seed/w${week}-video-1.mp4`, sortOrder: 0 },
-    { moduleId, type: "video" as const, title: `2 · Worked examples`, storageKey: `seed/w${week}-video-2.mp4`, sortOrder: 1 },
+    { moduleId, type: "video" as const, title: `1 · Core ideas`, storageKey: `seed/w${week}-video-1.webm`, sortOrder: 0 },
+    { moduleId, type: "video" as const, title: `2 · Worked examples`, storageKey: `seed/w${week}-video-2.webm`, sortOrder: 1 },
     { moduleId, type: "slides" as const, title: "Slides — annotated", storageKey: `seed/w${week}-slides.pdf`, sortOrder: 2 },
     { moduleId, type: "exercises" as const, title: "Exercises — set A", storageKey: `seed/w${week}-exercises.pdf`, sortOrder: 3 },
     { moduleId, type: "solutions" as const, title: "Worked solutions", storageKey: `seed/w${week}-solutions.pdf`, sortOrder: 4 },

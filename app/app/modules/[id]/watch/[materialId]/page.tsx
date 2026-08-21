@@ -19,7 +19,8 @@ export default async function WatchPage({
   const material = detail.materials.find((m) => m.id === materialId && m.type === "video");
   if (!material) notFound();
 
-  const bunny = !!process.env.BUNNY_STREAM_LIBRARY_ID;
+  const { bunnyConfigured, signedEmbedUrl } = await import("@/lib/video");
+  const bunny = bunnyConfigured();
 
   return (
     <main style={{ maxWidth: 720, margin: "0 auto" }}>
@@ -34,9 +35,10 @@ export default async function WatchPage({
           }}
         >
           {bunny ? (
-            // Bunny embed with signed token (M3): src built server-side.
+            // Bunny embed with signed, expiring token (M3) — built server-side,
+            // tied to this logged-in request; pasting it elsewhere fails.
             <iframe
-              src={`https://iframe.mediadelivery.net/embed/${process.env.BUNNY_STREAM_LIBRARY_ID}/${material.storageKey}`}
+              src={signedEmbedUrl(material.storageKey)}
               style={{ width: "100%", height: "100%", border: 0 }}
               allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
               allowFullScreen
