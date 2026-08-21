@@ -83,6 +83,18 @@ the video step the player shows a friendly "still processing" note.
 - `events` table is **write-only** in V1 (views, downloads, video progress
   every 30s) — parent digests and clinic briefs build on it later.
 
+## Before a real launch (content, not code)
+
+- Replace the initials avatar on `/` with Dimitra's photo (SPEC §7: "tutor
+  bio + photo — she is the brand").
+- Set the real contact email on the landing page (currently a placeholder
+  `mailto:hello@example.com`).
+- Confirm the credential claims on the landing page with Dimitra — they come
+  from the approved mockups, but they are factual statements on a public page.
+- Confirm the product name (SPEC §14 — "Lumen" is a working title).
+- Set `APP_TIMEZONE` if the tutor ever works outside Europe/Athens — all
+  release-date inputs and displayed dates use it.
+
 ## Production notes (M3/M5 finishing steps — need real accounts)
 
 - **Region:** deploy EU-only (Hetzner VPS, or Vercel + Neon EU). Students

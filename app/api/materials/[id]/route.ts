@@ -11,6 +11,7 @@ const CONTENT_TYPES: Record<string, string> = {
   ".pdf": "application/pdf",
   ".mp4": "video/mp4",
   ".webm": "video/webm",
+  ".mov": "video/quicktime",
   ".png": "image/png",
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
@@ -68,7 +69,9 @@ export async function GET(
     data = await stampPdf(data, user);
   }
 
-  if (user.role === "student") {
+  if (user.role === "student" && (wantsDownload || !contentType.startsWith("video/"))) {
+    // Videos log a single 'view' from the watch page instead — otherwise
+    // every byte-range/preload request would count as a view.
     await logMaterialEvent(user.id, material.id, wantsDownload ? "download" : "view");
   }
 

@@ -67,6 +67,17 @@ export default async function InvitePage({
           <Button variant="primary" size="lg" fullWidth type="submit">
             Enter Lumen
           </Button>
+          <p
+            style={{
+              margin: 0,
+              textAlign: "center",
+              fontSize: "var(--text-caption)",
+              letterSpacing: "var(--tracking-caption)",
+              color: "var(--text-tertiary)",
+            }}
+          >
+            Lumen is invite-only — ask Dimitra if you need one
+          </p>
         </form>
       ) : (
         <div className="flex flex-col gap-3.5 text-center">
