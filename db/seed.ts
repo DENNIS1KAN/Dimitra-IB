@@ -3,6 +3,7 @@
 // submission. Plus one extra cohort with a released module and no members,
 // so the "other cohort's modules invisible even by direct URL" checklist
 // item can actually be walked.
+import { parseLocalInTz } from "../lib/tz";
 import { db } from "./index";
 import {
   cohorts,
@@ -17,14 +18,15 @@ import {
 
 const DAY = 24 * 60 * 60 * 1000;
 const now = Date.now();
-// Anchor releases to the most recent Monday 09:00 that is already in the
-// past (running the seed on a Monday before 09:00 must not shift the
-// released/future split).
+// Anchor releases to the most recent Monday 09:00 IN THE TUTOR'S TIMEZONE
+// that is already past (running the seed on a Monday before 09:00 must not
+// shift the released/future split).
 const monday = (() => {
   const d = new Date(now);
-  d.setHours(9, 0, 0, 0);
   const dow = (d.getDay() + 6) % 7; // 0 = Monday
-  let t = d.getTime() - dow * DAY;
+  const mondayDate = new Date(d.getTime() - dow * DAY);
+  const iso = mondayDate.toISOString().slice(0, 10);
+  let t = parseLocalInTz(`${iso}T09:00`).getTime();
   if (t > now) t -= 7 * DAY;
   return t;
 })();
