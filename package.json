@@ -8,12 +8,14 @@
     "start": "next start",
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:seed": "npx tsx db/seed.ts",
+    "db:migrate": "tsx scripts/ensure-dev-db.ts --migrate-only",
+    "db:seed": "tsx scripts/ensure-dev-db.ts --seed",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "predev": "tsx scripts/ensure-dev-db.ts"
   },
   "dependencies": {
+    "@electric-sql/pglite": "0.5.5",
     "clsx": "2.1.1",
     "drizzle-orm": "0.45.2",
     "next": "16.3.2",

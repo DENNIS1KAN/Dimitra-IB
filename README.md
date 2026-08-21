@@ -11,28 +11,40 @@ through one active/paused toggle per student plus per-module release dates.
   extracted from the approved mockups in `design/`).
 - **CLAUDE.md** — standing working rules for AI-assisted development.
 
-## Quick start (dev — zero external accounts)
+## Quick start — only Node.js needed
+
+```bash
+git clone https://github.com/DENNIS1KAN/Dimitra-IB
+cd Dimitra-IB
+npm install
+npm run dev                   # → http://localhost:3000
+```
+
+That's the whole setup: with no `DATABASE_URL` configured, `npm run dev`
+boots an **embedded Postgres** (PGlite, persisted in `./pgdata-lite`),
+migrates it, and seeds the demo data automatically. No Docker, no `.env`.
 
 > `package.json` pins exact versions (no lockfile in the repo — it couldn't
 > travel this workspace's API-based push path); `npm install` regenerates a
 > local `package-lock.json` on first run.
 
-```bash
-npm install
-
-# Postgres 16 — either Docker:
-docker compose up -d
-# …or point DATABASE_URL at any Postgres 16 (see .env.example)
-
-cp .env.example .env          # defaults work with the docker-compose db
-npm run db:migrate            # create tables
-npm run db:seed               # demo cohort, students, modules, PDFs
-
-npm run dev                   # http://localhost:3000
-```
-
 **Sign in:** enter a seeded email on `/login` — the magic link **prints to
 the server console** (no email service in dev).
+
+<details>
+<summary><strong>Prefer real Postgres 16 (matches production)?</strong></summary>
+
+```bash
+docker compose up -d          # or any Postgres 16
+cp .env.example .env          # sets DATABASE_URL
+npm run db:migrate
+npm run db:seed
+npm run dev
+```
+
+The embedded database is dev-only — production requires `DATABASE_URL`
+(the app refuses to start on PGlite in production).
+</details>
 
 | Account | Email | State |
 |---|---|---|
