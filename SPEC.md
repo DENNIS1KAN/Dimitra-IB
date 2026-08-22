@@ -260,7 +260,7 @@ The owner amended this spec for Phase 2. Everything below **overrides** the earl
 - **`/app` dashboard** — as before, plus: due date on the hero card, overdue badges on rows, unread-messages dot in the nav. With several active enrollments the list spans all of them (rows name their course); with a single enrollment the page is exactly what a pre-migration student saw.
 - **`/app/courses`** — *my courses* (active / paused states) + *catalog* of `is_listed` courses with **"Ask to join"** → request created, button becomes **"Requested"**.
 - **`/app/assignments`** — every open module across enrollments with its due date; overdue badge; completed section below. This is the "what do I owe" page.
-- **`/app/messages`** — single thread with Dimitra: composer, sent/received bubbles, unread marking. Simple polling refresh; no websockets.
+- **`/app/messages`** — single thread with Dimitra: composer (trimmed, max 4000 characters, empty submits rejected server-side), sent/received bubbles with timestamps in the tutor's timezone, unread tutor messages marked read when the thread is opened. Simple polling refresh; no websockets. Empty state: "No messages yet — ask Dimitra anything about your modules." The student header shows an unread dot on Messages. No events/analytics for messages in this phase.
 - **`/app/sessions`** — next clinic (`settings.clinic_text`) + **"Book a 1:1 on Google Meet"** button opening `settings.booking_url` in a new tab.
 - **`/app/account`** — change own password (current + new, min 8, same scrypt path).
 
@@ -272,7 +272,7 @@ A student nav (Home · Courses · Assignments · Messages · Sessions · Account
 - **Courses** — edit `blurb` + `is_listed` per cohort (cohort creation moves here).
 - **Students** — per-student enrollments with pause / resume / end, and "add to course"; the global active toggle stays.
 - **Modules** — `due_date` field (defaulting per §15.3).
-- **`/admin/messages`** — all threads, unread counts, reply.
+- **`/admin/messages`** — all threads sorted by latest activity, unread counts (the admin nav shows the unread total), open a thread, reply. **Replying** marks that thread read for the tutor. Only admins reach the inbox.
 - **Progress matrix** — clicking a submitted cell opens that student's submission (file + note) — admin-only read path; students still can never read submissions back.
 - **Settings page** — `booking_url`, `clinic_text`.
 
@@ -286,7 +286,7 @@ Verify (walked 2026-08-22 in Chrome at 390px and 1280px against the seeded dev D
 - [x] overdue badge appears after due date and clears on submit
 - [x] every pre-migration student still sees exactly what they saw before
 
-**M7 — Messages.** Verify: both directions work; unread clears on open; student A can never read student B's thread (test the authz, not just the UI).
+**M7 — Messages.** Verify: both directions work; unread clears on open; student A can never read student B's thread (test the authz, not just the UI — including a direct POST with a forged student id); only admins reach the inbox; a globally paused student still sees only the Rule 3 screen, messages included.
 
 **M8 — Sessions + account password change + admin submission viewer + settings.** Verify: old password stops working after change; admin opens a real uploaded submission; booking button opens the Google page.
 
@@ -304,5 +304,7 @@ Verify (walked 2026-08-22 in Chrome at 390px and 1280px against the seeded dev D
 | 4 | §5: "three rules … resist adding cases" | Rule 1 gains enrollment status + paused-enrollment state; soft deadline added | Owner decision — recorded as a rewrite of Rule 1 plus one presentation rule, still in one tested module |
 | 5 | §7: `/admin` students table has a *cohort* column and the create form picks one cohort | Students can hold several enrollments | Create form keeps one cohort (→ active enrollment); more enrollments are added per row |
 | 6 | DESIGN.md §8: TabBar and DeskNav page links deferred (single student destination) | Six student pages need a nav | Nav links built from the DeskNav link recipe, mounted once in the `/app` layout; restyled in M9 |
-| 7 | §15.3 lists the `status` values but not what *decline* does | — | Assumption: decline **deletes** the request row (the student may ask again); `ended` is an admin-set state for students who left a course |
-| 8 | Default due date "Sunday 23:59 after release" | — | Assumption: the first Sunday 23:59 (tutor timezone) strictly after the release instant |
+| 7 | §15.3 lists the `status` values but not what *decline* does | — | **APPROVED (owner, 2026-08-22):** decline **deletes** the request row; the student may ask again. `ended` is an admin-set state for students who left a course |
+| 8 | Default due date "Sunday 23:59 after release" | — | **APPROVED (owner, 2026-08-22):** the first Sunday 23:59 (tutor timezone) strictly after the release instant |
+| 9 | `/app` hero ("this week") tie-break when two courses release the same day was by module id | — | **Owner decision (2026-08-22):** most recent release wins; ties → the module with the **nearest due date**; still tied → **alphabetical course title**; same course, same release and due → higher week number. Never by id. Covered by `lib/current.test.ts` |
+| 10 | `design/lumen-dashboard-mockup.html` was an untracked local file | M9 needs it as the restyle reference | **Owner decision (2026-08-22):** committed to the repo |
