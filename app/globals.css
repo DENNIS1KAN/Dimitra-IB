@@ -221,7 +221,7 @@ a.lmn-rail-row:hover{border-color:var(--action-primary);transform:translateX(2px
 .lmn-rail-go{font-weight:var(--font-weight-bold);font-size:14px;white-space:nowrap;color:var(--action-primary)}
 .lmn-rail-when{font-size:13.5px;color:var(--text-tertiary);white-space:nowrap}
 @media (min-width:641px){.lmn-rail{padding-left:34px}.lmn-rail-node{left:-34px}}
-@media (max-width:640px){.lmn-rail-go{display:none}}
+@media (max-width:640px){.lmn-rail-go{display:none}.lmn-rail-when{white-space:normal;text-align:right;max-width:40%}}
 
 /* Note from Dimitra (mockup .note) */
 .lmn-note{background:var(--surface-card);border-radius:var(--radius-cards);box-shadow:var(--shadow-card);padding:18px 20px;display:flex;gap:16px;align-items:flex-start}
