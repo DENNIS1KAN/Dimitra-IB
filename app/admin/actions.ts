@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { cohorts, materials, modules, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin";
-import { createMagicLink, deliverMagicLink } from "@/lib/auth";
+import { hashPassword } from "@/lib/password";
 import { storage } from "@/lib/storage";
 import { isUniqueViolation } from "@/lib/db-errors";
 import { parseLocalInTz } from "@/lib/tz";
@@ -27,60 +27,55 @@ export async function createCohort(formData: FormData) {
 }
 
 // ---------------------------------------------------------------------------
-// Students & invites
+// Students & credentials — Dimitra creates each account and hands the
+// username + password to the student herself (no email involved). Passwords
+// are typed in the form so no secret ever rides in a redirect URL.
 
-export async function createStudentAndInvite(formData: FormData) {
+export async function createStudent(formData: FormData) {
   await requireAdmin();
   const name = String(formData.get("name") ?? "").trim() || "New student";
+  const username = String(formData.get("username") ?? "")
+    .trim()
+    .toLowerCase();
   const email = String(formData.get("email") ?? "")
     .trim()
     .toLowerCase();
+  const password = String(formData.get("password") ?? "");
   const cohortId = String(formData.get("cohortId") ?? "");
-  if (!email || !cohortId) redirect("/admin?error=invite");
+  if (!username || !email || !cohortId) redirect("/admin?error=student");
+  if (password.length < 8) redirect("/admin?error=password-short");
 
-  const [existing] = await db.select().from(users).where(eq(users.email, email));
-  if (existing) redirect("/admin?error=email-taken");
-
-  let student: { id: string };
   try {
-    [student] = await db
-      .insert(users)
-      .values({ role: "student", name, email, cohortId })
-      .returning();
+    await db.insert(users).values({
+      role: "student",
+      name,
+      username,
+      passwordHash: hashPassword(password),
+      email,
+      cohortId,
+    });
   } catch (err) {
-    // The check above is a friendly fast path; the unique index is the truth.
-    // A double-submit race lands here instead of on the generic error page.
-    if (isUniqueViolation(err)) redirect("/admin?error=email-taken");
+    // Unique indexes on username and email are the truth; a duplicate (or a
+    // double-submit race) lands here instead of on the generic error page.
+    if (isUniqueViolation(err)) redirect("/admin?error=taken");
     throw err;
   }
-  const link = await createMagicLink(student.id, "invite");
-  await deliverMagicLink(email, link);
   revalidatePath("/admin");
-  // Console mode only: surface the link in the UI as well as the console.
-  // With email configured the raw single-use token must never ride in a GET
-  // query string (access logs, browser history).
-  redirect(
-    process.env.RESEND_API_KEY
-      ? "/admin?ok=invited"
-      : `/admin?ok=invited&link=${encodeURIComponent(link)}`,
-  );
+  redirect("/admin?ok=created");
 }
 
-export async function reinviteStudent(formData: FormData) {
+export async function resetStudentPassword(formData: FormData) {
   await requireAdmin();
   const studentId = String(formData.get("studentId") ?? "");
+  const password = String(formData.get("password") ?? "");
+  if (password.length < 8) redirect("/admin?error=password-short");
   const [student] = await db
     .select()
     .from(users)
     .where(and(eq(users.id, studentId), eq(users.role, "student")));
   if (!student) redirect("/admin?error=missing");
-  const link = await createMagicLink(student.id, "invite");
-  await deliverMagicLink(student.email, link);
-  redirect(
-    process.env.RESEND_API_KEY
-      ? "/admin?ok=invited"
-      : `/admin?ok=invited&link=${encodeURIComponent(link)}`,
-  );
+  await db.update(users).set({ passwordHash: hashPassword(password) }).where(eq(users.id, student.id));
+  redirect("/admin?ok=password-set");
 }
 
 /** Lever 1 (SPEC §5): the active flag mirrors PayPal reality. */

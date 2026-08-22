@@ -2,18 +2,19 @@ import { redirect } from "next/navigation";
 import { Button, Wordmark } from "@/components/lumen/core";
 import { Input } from "@/components/lumen/forms";
 import { getSessionUser } from "@/lib/auth";
-import { requestMagicLink } from "./actions";
+import { signIn } from "./actions";
 
 // Welcome skin (DESIGN.md §6): centered xl wordmark + tagline, bottom-anchored
-// form, 24px side padding. Email only — the magic link does the rest.
+// form, 24px side padding. Username + password — Dimitra hands out the
+// credentials herself.
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ sent?: string; error?: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   const user = await getSessionUser();
   if (user) redirect(user.role === "admin" ? "/admin" : "/app");
-  const { sent, error } = await searchParams;
+  const { error } = await searchParams;
 
   return (
     <main
@@ -39,62 +40,50 @@ export default async function LoginPage({
         </p>
       </div>
 
-      {sent ? (
-        <div className="flex flex-col gap-3.5 text-center">
+      <form action={signIn} className="flex flex-col gap-3.5">
+        {error === "credentials" && (
           <p
+            role="alert"
             style={{
               margin: 0,
-              fontSize: "var(--text-body)",
-              fontWeight: 500,
-              color: "var(--text-primary)",
+              textAlign: "center",
+              fontSize: "var(--text-body-sm)",
+              color: "#c4320a",
             }}
           >
-            Check your email — your sign-in link is on its way.
+            Wrong username or password — try again.
           </p>
-          <p
-            style={{
-              margin: 0,
-              fontSize: "var(--text-caption)",
-              letterSpacing: "var(--tracking-caption)",
-              color: "var(--text-tertiary)",
-            }}
-          >
-            Links work once and expire after 30 minutes. In dev mode the link
-            prints to the server console.
-          </p>
-          <Button variant="ghost" href="/login">
-            Use a different email
-          </Button>
-        </div>
-      ) : (
-        <form action={requestMagicLink} className="flex flex-col gap-3.5">
-          {error === "expired" && (
-            <p
-              role="alert"
-              style={{
-                margin: 0,
-                textAlign: "center",
-                fontSize: "var(--text-body-sm)",
-                color: "#c4320a",
-              }}
-            >
-              That link has expired or was already used — request a fresh one.
-            </p>
-          )}
-          <Input
-            label="Email"
-            type="email"
-            name="email"
-            required
-            placeholder="you@school.gr"
-            autoComplete="email"
-            helper="Lumen is invite-only — ask Dimitra if you need an invitation"
-          />
-          <Button variant="primary" size="lg" fullWidth type="submit">
-            Email me a sign-in link
-          </Button>
-        </form>
-      )}
+        )}
+        <Input
+          label="Username"
+          name="username"
+          required
+          placeholder="your username"
+          autoComplete="username"
+        />
+        <Input
+          label="Password"
+          type="password"
+          name="password"
+          required
+          placeholder="your password"
+          autoComplete="current-password"
+        />
+        <Button variant="primary" size="lg" fullWidth type="submit">
+          Sign in
+        </Button>
+        <p
+          style={{
+            margin: 0,
+            textAlign: "center",
+            fontSize: "var(--text-caption)",
+            letterSpacing: "var(--tracking-caption)",
+            color: "var(--text-tertiary)",
+          }}
+        >
+          Accounts are created by Dimitra — ask her for your credentials
+        </p>
+      </form>
     </main>
   );
 }

@@ -4,12 +4,12 @@
 // so the "other cohort's modules invisible even by direct URL" checklist
 // item can actually be walked. Callable from the CLI seed and from the
 // dev-db bootstrap.
+import { hashPassword } from "../lib/password";
 import { mostRecentMondayAt } from "../lib/tz";
 import type { Db } from "./index";
 import {
   cohorts,
   events,
-  loginTokens,
   materials,
   modules,
   sessions,
@@ -27,7 +27,6 @@ export async function runSeed(db: Db) {
   await db.delete(events);
   await db.delete(submissions);
   await db.delete(materials);
-  await db.delete(loginTokens);
   await db.delete(sessions);
   await db.delete(modules);
   await db.delete(users);
@@ -44,9 +43,13 @@ export async function runSeed(db: Db) {
     .returning();
 
   console.log("[seed] users…");
+  // Shared dev password for every seeded account: "lumen123".
+  const devPassword = () => hashPassword("lumen123");
   await db.insert(users).values({
     role: "admin",
     name: "Dimitra Anglou",
+    username: "dimitra",
+    passwordHash: devPassword(),
     email: "dimitra@example.com",
     cohortId: null,
   });
@@ -55,16 +58,27 @@ export async function runSeed(db: Db) {
     .values({
       role: "student",
       name: "Nikos Karras",
+      username: "nikos",
+      passwordHash: devPassword(),
       email: "nikos@example.com",
       cohortId: chem.id,
       lastSeenAt: new Date(monday - 5 * DAY), // matches his week-5 submission
     })
     .returning();
   await db.insert(users).values([
-    { role: "student", name: "Eleni Vasil", email: "eleni@example.com", cohortId: chem.id },
+    {
+      role: "student",
+      name: "Eleni Vasil",
+      username: "eleni",
+      passwordHash: devPassword(),
+      email: "eleni@example.com",
+      cohortId: chem.id,
+    },
     {
       role: "student",
       name: "Petros Adamou",
+      username: "petros",
+      passwordHash: devPassword(),
       email: "petros@example.com",
       cohortId: chem.id,
       active: false, // the paused student (Rule 3)
@@ -167,9 +181,9 @@ export async function runSeed(db: Db) {
     createdAt: new Date(monday - 5 * DAY),
   });
 
-  console.log("[seed] done.");
-  console.log("  admin:   dimitra@example.com");
-  console.log("  student: nikos@example.com  (active, 1 submission on week 5)");
-  console.log("  student: eleni@example.com  (active, no submissions)");
-  console.log("  student: petros@example.com (PAUSED — Rule 3 screen)");
+  console.log("[seed] done. Password for every account: lumen123");
+  console.log("  admin:   dimitra  (full admin panel)");
+  console.log("  student: nikos    (active, 1 submission on week 5)");
+  console.log("  student: eleni    (active, no submissions)");
+  console.log("  student: petros   (PAUSED — Rule 3 screen)");
 }

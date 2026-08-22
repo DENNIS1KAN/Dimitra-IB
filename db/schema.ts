@@ -9,7 +9,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-// Six domain tables per SPEC §6, plus what magic-link auth needs.
+// Six domain tables per SPEC §6, plus the sessions table auth needs.
 
 export const roleEnum = pgEnum("role", ["admin", "student"]);
 export const levelEnum = pgEnum("level", ["HL", "SL"]);
@@ -37,6 +37,10 @@ export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   role: roleEnum("role").notNull().default("student"),
   name: text("name").notNull(),
+  // Login identity: username + scrypt password hash (lib/password.ts).
+  username: text("username").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  // Contact + PDF-stamping field only — plays no role in authentication.
   email: text("email").notNull().unique(),
   cohortId: uuid("cohort_id").references(() => cohorts.id),
   active: boolean("active").notNull().default(true),
@@ -109,18 +113,6 @@ export const events = pgTable("events", {
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
-
-// Auth: single-use magic-link tokens + server-side sessions.
-export const loginTokens = pgTable("login_tokens", {
-  token: text("token").primaryKey(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  // 'login' opens a session; 'invite' also lets the student set their name first.
-  purpose: text("purpose").notNull().default("login"),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-  usedAt: timestamp("used_at", { withTimezone: true }),
 });
 
 export const sessions = pgTable("sessions", {

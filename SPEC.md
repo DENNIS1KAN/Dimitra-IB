@@ -97,7 +97,7 @@ Postgres. Six domain tables plus whatever the auth library needs.
 - `/` — one-page landing: what the program is, how a week works, tutor bio + photo, "access by invitation", contact. Job: parent credibility, not conversion.
 
 **Auth**
-- `/login` — email field → magic link. No passwords anywhere.
+- `/login` — email field → magic link. No passwords anywhere. *Recorded substitution (owner decision, 2026-08-22): username + password sign-in; accounts and passwords are created/reset by the tutor in `/admin`. The invite-link flow is retired.*
 - `/invite/[token]` — new student sets their name, lands in `/app`.
 
 **Student** (mobile-first — assume a phone)
@@ -132,7 +132,7 @@ Defaults below; equivalents you prefer are fine — **keep the shape** (boring m
 - **App:** Next.js (App Router) + TypeScript, single repo, no microservices.
 - **DB:** Postgres + Drizzle ORM + migrations. Local via Docker in dev. *Recorded substitution (per this section's preamble): with `DATABASE_URL` unset, dev falls back to embedded Postgres (PGlite, `./pgdata-lite`) so a fresh clone needs no Docker; the Docker flow keeps working via `.env`.*
 - **UI:** Tailwind + shadcn/ui.
-- **Auth:** magic links (Auth.js email provider or hand-rolled signed tokens). **Dev mode: links print to the server console** — no email service needed until Milestone 3. Prod: Resend.
+- **Auth:** magic links (Auth.js email provider or hand-rolled signed tokens). **Dev mode: links print to the server console** — no email service needed until Milestone 3. Prod: Resend. *Recorded substitution (owner decision, 2026-08-22): hand-rolled username + password (scrypt hashes) with the same hashed server-side sessions; no email service in any environment. `RESEND_API_KEY` is no longer used.*
 - **Video:** Bunny Stream, one library with **token authentication ON**. Admin uploads go browser → Bunny directly (upload URL created server-side); playback via embed/HLS with expiring signed tokens tied to a logged-in session.
 - **Files (PDFs, submission uploads):** Bunny Storage or Cloudflare R2, presigned URLs both directions. **Dev mode: local `./storage` folder** behind the same interface.
 - **PDF stamping:** on download, stamp footer "Prepared for {student name} · {email}" with `pdf-lib` (Milestone 5).

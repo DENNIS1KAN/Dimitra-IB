@@ -5,17 +5,17 @@ import { Badge, Button, Card } from "@/components/lumen/core";
 import { Input } from "@/components/lumen/forms";
 import { requireAdmin } from "@/lib/admin";
 import { formatDay } from "@/lib/format";
-import { createCohort, createStudentAndInvite, reinviteStudent, toggleStudentActive } from "./actions";
+import { createCohort, createStudent, resetStudentPassword, toggleStudentActive } from "./actions";
 
-// /admin — students table: name, cohort, active toggle, last seen, invite
-// (SPEC §7). Plain and fast; no design effort (§12).
+// /admin — students table: name, cohort, active toggle, last seen, account
+// creation + password resets (SPEC §7). Plain and fast; no design effort (§12).
 export default async function AdminStudents({
   searchParams,
 }: {
-  searchParams: Promise<{ ok?: string; error?: string; link?: string }>;
+  searchParams: Promise<{ ok?: string; error?: string }>;
 }) {
   await requireAdmin();
-  const { ok, error, link } = await searchParams;
+  const { ok, error } = await searchParams;
 
   const allCohorts = await db.select().from(cohorts).orderBy(cohorts.name);
   // users.lastSeenAt survives sign-out (sessions rows don't) and tracks
@@ -60,26 +60,23 @@ export default async function AdminStudents({
         Students
       </h1>
 
-      {ok === "invited" && (
+      {(ok === "created" || ok === "password-set") && (
         <Card padding="16px" style={{ borderColor: "var(--action-primary)" }}>
-          <p style={{ margin: link ? "0 0 6px" : 0, fontSize: "var(--text-body-sm)", fontWeight: 700 }}>
-            {link
-              ? "Invite created — the link was also printed to the server console."
-              : "Invite created and emailed to the student."}
+          <p style={{ margin: 0, fontSize: "var(--text-body-sm)", fontWeight: 700 }}>
+            {ok === "created"
+              ? "Student created — share the username and password with them."
+              : "Password updated — share the new password with the student."}
           </p>
-          {link && (
-            <code style={{ fontSize: 12, wordBreak: "break-all", color: "var(--text-secondary)" }}>
-              {link}
-            </code>
-          )}
         </Card>
       )}
       {error && (
         <Card padding="16px" style={{ borderColor: "#c4320a" }}>
           <p style={{ margin: 0, fontSize: "var(--text-body-sm)", color: "#c4320a" }}>
-            {error === "email-taken"
-              ? "That email already has an account."
-              : "Something was missing — check the form and try again."}
+            {error === "taken"
+              ? "That username or email already has an account."
+              : error === "password-short"
+                ? "Passwords need at least 8 characters."
+                : "Something was missing — check the form and try again."}
           </p>
         </Card>
       )}
@@ -90,7 +87,7 @@ export default async function AdminStudents({
             <thead>
               <tr>
                 <th style={th}>Name</th>
-                <th style={th}>Email</th>
+                <th style={th}>Username</th>
                 <th style={th}>Cohort</th>
                 <th style={th}>Status</th>
                 <th style={th}>Last seen</th>
@@ -100,8 +97,13 @@ export default async function AdminStudents({
             <tbody>
               {students.map(({ user, cohortName, lastSeen }) => (
                 <tr key={user.id}>
-                  <td style={{ ...td, fontWeight: 500 }}>{user.name}</td>
-                  <td style={td}>{user.email}</td>
+                  <td style={{ ...td, fontWeight: 500 }}>
+                    {user.name}
+                    <span style={{ display: "block", fontWeight: 400, color: "var(--text-tertiary)" }}>
+                      {user.email}
+                    </span>
+                  </td>
+                  <td style={td}>{user.username}</td>
                   <td style={td}>{cohortName ?? "—"}</td>
                   <td style={td}>
                     {user.active ? (
@@ -123,10 +125,20 @@ export default async function AdminStudents({
                           {user.active ? "Pause" : "Unpause"}
                         </Button>
                       </form>
-                      <form action={reinviteStudent}>
+                      <form action={resetStudentPassword} style={{ display: "flex", gap: 6 }}>
                         <input type="hidden" name="studentId" value={user.id} />
+                        <input
+                          className="lmn-input"
+                          type="password"
+                          name="password"
+                          required
+                          minLength={8}
+                          placeholder="new password"
+                          autoComplete="new-password"
+                          style={{ padding: "6px 10px", fontSize: "var(--text-body-sm)", width: 130 }}
+                        />
                         <Button variant="ghost" size="sm" type="submit">
-                          New invite link
+                          Set password
                         </Button>
                       </form>
                     </div>
@@ -136,7 +148,7 @@ export default async function AdminStudents({
               {students.length === 0 && (
                 <tr>
                   <td style={{ ...td, color: "var(--text-tertiary)" }} colSpan={6}>
-                    No students yet — invite the first one below.
+                    No students yet — create the first account below.
                   </td>
                 </tr>
               )}
@@ -155,14 +167,24 @@ export default async function AdminStudents({
       >
         <Card padding="20px">
           <h2 style={{ margin: "0 0 12px", fontSize: "var(--text-body)", fontWeight: 700 }}>
-            Invite a new student
+            Create a student account
           </h2>
           <form
-            action={createStudentAndInvite}
+            action={createStudent}
             style={{ display: "flex", flexDirection: "column", gap: 10 }}
           >
             <Input label="Name" name="name" placeholder="First and last name" />
-            <Input label="Email" name="email" type="email" required placeholder="student@school.gr" />
+            <Input label="Username" name="username" required placeholder="e.g. nikos" autoComplete="off" />
+            <Input
+              label="Password"
+              name="password"
+              type="password"
+              required
+              minLength={8}
+              placeholder="at least 8 characters"
+              autoComplete="new-password"
+            />
+            <Input label="Email (contact only)" name="email" type="email" required placeholder="student@school.gr" />
             <label className="lmn-field">
               <span className="lmn-field-label">Cohort</span>
               <select className="lmn-input" name="cohortId" required defaultValue="">
@@ -177,7 +199,7 @@ export default async function AdminStudents({
               </select>
             </label>
             <Button variant="primary" size="sm" type="submit">
-              Create &amp; send invite
+              Create account
             </Button>
           </form>
         </Card>

@@ -28,8 +28,8 @@ migrates it, and seeds the demo data automatically. No Docker, no `.env`.
 > travel this workspace's API-based push path); `npm install` regenerates a
 > local `package-lock.json` on first run.
 
-**Sign in:** enter a seeded email on `/login` — the magic link **prints to
-the server console** (no email service in dev).
+**Sign in:** username + password on `/login`. Every seeded account uses the
+password **`lumen123`**.
 
 <details>
 <summary><strong>Prefer real Postgres 16 (matches production)?</strong></summary>
@@ -50,12 +50,12 @@ The embedded database is dev-only — production requires `DATABASE_URL`
 (the app refuses to use PGlite in production).
 </details>
 
-| Account | Email | State |
-|---|---|---|
-| Admin (tutor) | `dimitra@example.com` | full admin panel |
-| Student | `nikos@example.com` | active, week 5 already submitted |
-| Student | `eleni@example.com` | active, nothing submitted |
-| Student | `petros@example.com` | **paused** → sees the Rule 3 screen |
+| Account | Username | Password | State |
+|---|---|---|---|
+| Admin (tutor) | `dimitra` | `lumen123` | full admin panel |
+| Student | `nikos` | `lumen123` | active, week 5 already submitted |
+| Student | `eleni` | `lumen123` | active, nothing submitted |
+| Student | `petros` | `lumen123` | **paused** → sees the Rule 3 screen |
 
 Optional extras:
 
@@ -87,10 +87,10 @@ the video step the player shows a friendly "still processing" note.
 
 - `lib/gating.ts` — Rules 1–3 as pure functions; **every** access decision
   (pages *and* the material-bytes API) goes through them. Unit-tested.
-- `db/schema.ts` — the six SPEC §6 tables + `login_tokens`/`sessions`.
-- `lib/auth.ts` — hand-rolled magic links (single-use, 30 min) + hashed
-  server-side sessions. Dev: links print to the console. Prod: Resend,
-  switched purely on `RESEND_API_KEY`.
+- `db/schema.ts` — the six SPEC §6 tables + `sessions`.
+- `lib/auth.ts` — hashed server-side sessions; `lib/password.ts` — scrypt
+  password hashing. Sign-in is username + password; the tutor creates
+  accounts and resets passwords in `/admin`. No email service anywhere.
 - `lib/storage.ts` — one `FileStorage` interface; `./storage` folder in dev,
   Bunny Storage when `BUNNY_STORAGE_*` are set.
 - `lib/video.ts` — Bunny Stream signed-embed tokens (tested), video-object
@@ -98,7 +98,7 @@ the video step the player shows a friendly "still processing" note.
 - `lib/stamp.ts` — every student PDF download gets "Prepared for {name} ·
   {email}" stamped on each page (pdf-lib).
 - `app/app/*` — student screens (mobile-first, 390px-checked, per DESIGN.md).
-- `app/admin/*` — students (invite/pause), modules (create/edit/upload/
+- `app/admin/*` — students (create/pause/reset password), modules (create/edit/upload/
   reorder), progress matrix. Function over beauty.
 - `events` table is **write-only** in V1 (views, downloads, video progress
   every 30s) — parent digests and clinic briefs build on it later.
@@ -120,7 +120,7 @@ the video step the player shows a friendly "still processing" note.
 - **Region:** deploy EU-only (Hetzner VPS, or Vercel + Neon EU). Students
   are mostly minors: the app stores name, email, cohort — nothing else.
 - **Env:** see `.env.example`; set `AUTH_SECRET`, `APP_URL`, `DATABASE_URL`,
-  Resend + Bunny keys. Every vendor path is env-switched — no code changes.
+  and the Bunny keys. Every vendor path is env-switched — no code changes.
 - **Bunny Stream:** one library, token authentication ON. Playback URLs are
   signed server-side and expire (`lib/video.ts`); pasting an embed URL into
   a logged-out window fails. Uploads: `createBunnyVideo()` +
@@ -143,7 +143,7 @@ SPEC.md  DESIGN.md  CLAUDE.md      # the three sources of truth
 design/                            # approved mockup sources (see design/README.md)
 db/                                # schema, migrations, seed
 lib/                               # gating, auth, storage, video, stamping
-app/                               # routes: / (landing), /login, /invite/[token],
+app/                               # routes: / (landing), /login,
                                    #   /app (student), /admin (tutor), /api/*
 components/lumen/                  # the design system, from DESIGN.md recipes
 components/app/, components/admin/ # feature components
