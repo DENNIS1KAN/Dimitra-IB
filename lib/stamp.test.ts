@@ -31,6 +31,23 @@ describe("stampPdf", () => {
     expect(out.length).toBeGreaterThan(input.length);
   });
 
+  it('renders "Νίκος Καρράς" via the bundled Unicode font, not a silent fallback', async () => {
+    const input = await makePdf();
+    const out = await stampPdf(input, student("Νίκος Καρράς"));
+    // Fail-open would hand back the identical input; a WinAnsi fallback
+    // would have thrown into that path. A real stamp differs and reparses.
+    expect(out).not.toBe(input);
+    expect(out.equals(input)).toBe(false);
+    const reparsed = await PDFDocument.load(out);
+    expect(reparsed.getPageCount()).toBe(1);
+    // The Unicode font is genuinely embedded: re-save without object
+    // streams (they compress dictionaries) and the /BaseFont names the
+    // NotoSans subset — absent from the Helvetica-only input.
+    const flat = Buffer.from(await reparsed.save({ useObjectStreams: false })).toString("latin1");
+    expect(flat).toContain("NotoSans");
+    expect(input.toString("latin1")).not.toContain("NotoSans");
+  });
+
   it("stamps a Latin name too", async () => {
     const input = await makePdf();
     const out = await stampPdf(input, student("Nikos Karras"));
