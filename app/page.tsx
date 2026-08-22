@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Avatar, Badge, Button, Card, Icon, Wordmark } from "@/components/lumen/core";
+import { Avatar, Button, Card, Icon, Wordmark } from "@/components/lumen/core";
 
 export const metadata: Metadata = {
   title: "Lumen — private IB tutoring with Dimitra Anglou",
@@ -16,7 +16,7 @@ const steps = [
   },
   {
     icon: "edit_note",
-    color: "var(--color-graphite)",
+    color: "var(--text-primary)",
     title: "Practice",
     body: "Annotated slides and an exercise set to attempt on paper, the way the exam will ask for it.",
   },
@@ -28,7 +28,7 @@ const steps = [
   },
   {
     icon: "lock_open",
-    color: "var(--color-deep-indigo)",
+    color: "var(--color-indigo)",
     title: "Unlock & fix",
     body: "Worked solutions unlock after the attempt, and the weekly clinic fixes what's still wobbly.",
   },
@@ -46,55 +46,68 @@ const credentials = [
 export default function Landing() {
   return (
     <main style={{ display: "flex", flexDirection: "column", minHeight: "100dvh" }}>
-      {/* Hero */}
-      <section
-        style={{
-          padding: "72px 24px 56px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          textAlign: "center",
-          gap: 20,
-        }}
-      >
-        <Wordmark size="xl" byline style={{ alignItems: "center" }} />
-        <p
-          style={{
-            margin: 0,
-            maxWidth: 460,
-            fontSize: "var(--text-subheading)",
-            fontWeight: 500,
-            letterSpacing: "var(--tracking-subheading)",
-            lineHeight: 1.4,
-            color: "var(--text-secondary)",
-          }}
+      {/* Hero — indigo owns it (DESIGN.md §6) */}
+      <section className="lmn-hero" style={{ padding: "64px 0 56px" }}>
+        <div
+          className="lmn-wrap"
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 20 }}
         >
-          Weekly IB Chemistry modules, practice that earns its solutions, and
-          clinics for the hard parts — structured teaching between lessons,
-          without the scheduling.
-        </p>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
-          <Badge tone="new">Access by invitation</Badge>
-          <Badge tone="neutral">IB Chemistry HL · SL</Badge>
-        </div>
-        <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
-          <Button variant="dark" href="/login">
-            Student sign in
-          </Button>
-          <Button variant="secondary" href="#contact">
-            For parents
-          </Button>
+          <Wordmark size="xl" byline inverse style={{ alignItems: "center" }} />
+          <p
+            style={{
+              margin: 0,
+              maxWidth: 460,
+              fontSize: "var(--text-subheading)",
+              fontWeight: 500,
+              letterSpacing: "var(--tracking-subheading)",
+              lineHeight: 1.4,
+              color: "rgba(255,255,255,.85)",
+            }}
+          >
+            Weekly IB Chemistry modules, practice that earns its solutions, and
+            clinics for the hard parts — structured teaching between lessons,
+            without the scheduling.
+          </p>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+            {["Access by invitation", "IB Chemistry HL · SL"].map((t) => (
+              <span
+                key={t}
+                style={{
+                  display: "inline-block",
+                  padding: "5px 12px",
+                  borderRadius: "var(--radius-pills)",
+                  background: "rgba(255,255,255,.16)",
+                  color: "#fff",
+                  fontSize: "var(--text-caption)",
+                  fontWeight: 700,
+                }}
+              >
+                {t}
+              </span>
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 12, marginTop: 4, flexWrap: "wrap", justifyContent: "center" }}>
+            <Button variant="secondary" href="/login">
+              Student sign in
+            </Button>
+            <a
+              href="#contact"
+              style={{ color: "#fff", fontWeight: 700, display: "inline-flex", alignItems: "center", padding: "12px 8px" }}
+            >
+              For parents
+            </a>
+          </div>
         </div>
       </section>
 
       {/* How a week works */}
-      <section style={{ padding: "0 24px 56px" }}>
+      <section style={{ padding: "48px 24px 56px" }}>
         <div style={{ maxWidth: 860, margin: "0 auto" }}>
           <h2
             style={{
               margin: "0 0 20px",
               fontSize: "var(--text-heading-sm)",
-              fontWeight: 700,
+              fontWeight: 800,
               letterSpacing: "var(--tracking-heading-sm)",
               textAlign: "center",
             }}
@@ -160,7 +173,7 @@ export default function Landing() {
                 style={{
                   margin: 0,
                   fontSize: "var(--text-heading)",
-                  fontWeight: 700,
+                  fontWeight: 800,
                   letterSpacing: "var(--tracking-heading)",
                 }}
               >
@@ -202,7 +215,7 @@ export default function Landing() {
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 {credentials.map(([ic, t]) => (
                   <div key={ic} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                    <Icon name={ic} size={20} color="var(--color-deep-indigo)" />
+                    <Icon name={ic} size={20} color="var(--color-indigo)" />
                     <span
                       style={{
                         fontSize: "var(--text-body-sm)",
@@ -290,7 +303,7 @@ export default function Landing() {
             color: "var(--text-tertiary)",
           }}
         >
-          Private tutoring platform · students sign in with an emailed link
+          Private tutoring platform · students sign in with a username and password from Dimitra
         </span>
       </footer>
     </main>

@@ -70,6 +70,7 @@ export default async function AdminModules({
                   style={{
                     display: "flex",
                     alignItems: "center",
+                    flexWrap: "wrap", // three badges + a title must wrap at 390px, not scroll the page
                     gap: 12,
                     padding: "10px 12px",
                     border: "1px solid var(--border-card)",
@@ -79,7 +80,7 @@ export default async function AdminModules({
                   }}
                 >
                   <span style={{ fontWeight: 700, minWidth: 64 }}>Week {m.weekNumber}</span>
-                  <span style={{ flex: 1, fontWeight: 500 }}>{m.title}</span>
+                  <span style={{ flex: 1, minWidth: 160, fontWeight: 500 }}>{m.title}</span>
                   {m.releaseDate.getTime() <= now ? (
                     <Badge tone="done" icon="check">
                       Released {formatDay(m.releaseDate)}
