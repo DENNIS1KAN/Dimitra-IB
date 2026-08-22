@@ -3,21 +3,13 @@ import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/db";
 import { materials, modules } from "@/db/schema";
 import { loadStudentAccess } from "@/lib/access";
+import { contentTypeFor, extensionOf } from "@/lib/content-type";
 import { getSessionUser } from "@/lib/auth";
 import { moduleState, solutionsVisible } from "@/lib/gating";
 import { hasSubmissionFor, logMaterialEvent } from "@/lib/material-access";
 import { storage } from "@/lib/storage";
 import { isUuid } from "@/lib/validate";
 
-const CONTENT_TYPES: Record<string, string> = {
-  ".pdf": "application/pdf",
-  ".mp4": "video/mp4",
-  ".webm": "video/webm",
-  ".mov": "video/quicktime",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-};
 
 // Serves material bytes from storage — with the gating rules enforced
 // server-side, not just hidden in the UI. Direct URLs obey Rules 1 & 2.
@@ -52,8 +44,8 @@ export async function GET(
     }
   }
 
-  const ext = material.storageKey.slice(material.storageKey.lastIndexOf(".")).toLowerCase();
-  const contentType = CONTENT_TYPES[ext] ?? "application/octet-stream";
+  const ext = extensionOf(material.storageKey);
+  const contentType = contentTypeFor(material.storageKey);
   const wantsDownload = request.nextUrl.searchParams.get("download") === "1";
 
   const headers = new Headers({

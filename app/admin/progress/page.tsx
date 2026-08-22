@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { asc, eq, lte } from "drizzle-orm";
 import { db } from "@/db";
 import { cohorts, enrollments, modules, submissions, users } from "@/db/schema";
@@ -109,15 +110,25 @@ export default async function AdminProgress() {
                         return (
                           <td key={m.id} style={td}>
                             {sub ? (
-                              <span
-                                style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+                              // Opens the attempt (file + note) — admin-only read path (SPEC §15.5).
+                              <Link
+                                href={`/admin/submissions/${sub.id}`}
+                                title="Open this submission"
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                  color: "var(--text-primary)",
+                                  textDecoration: "underline",
+                                  textDecorationColor: "var(--border-divider)",
+                                }}
                               >
                                 <Icon name="check_circle" size={18} color="var(--state-done)" />
                                 <span>
                                   {formatDay(sub.createdAt)}
                                   {sub.fileKey ? " · file" : sub.note ? " · note" : ""}
                                 </span>
-                              </span>
+                              </Link>
                             ) : (
                               <Icon name="circle" size={16} color="var(--color-driftwood)" filled={false} />
                             )}

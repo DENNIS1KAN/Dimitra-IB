@@ -6,10 +6,13 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { cohorts, enrollments } from "@/db/schema";
 import { isUniqueViolation } from "@/lib/db-errors";
+import { changeOwnPassword } from "@/lib/account";
+import { revokeOtherSessions } from "@/lib/auth";
 import { postStudentMessage } from "@/lib/messages";
 import { requireStudent } from "@/lib/student";
 import { isUuid } from "@/lib/validate";
 import type { ComposerState } from "@/components/messages/composer";
+import type { PasswordFormState } from "@/components/app/password-form";
 
 /**
  * "Ask to join" (SPEC §15.1): creates a request that Dimitra approves in
@@ -58,5 +61,20 @@ export async function sendMessage(_prev: ComposerState, formData: FormData): Pro
   const result = await postStudentMessage(user, formData);
   if (!result.ok) return result;
   revalidatePath("/app/messages");
+  return { ok: true, at: Date.now() };
+}
+
+/**
+ * Change own password (SPEC §15.4): current + new, min 8, the same scrypt
+ * path. On success the student's other devices are signed out (§15.7 #11).
+ */
+export async function changePassword(
+  _prev: PasswordFormState,
+  formData: FormData,
+): Promise<PasswordFormState> {
+  const user = await requireStudent();
+  const result = await changeOwnPassword(user, formData);
+  if (!result.ok) return result;
+  await revokeOtherSessions(user.id);
   return { ok: true, at: Date.now() };
 }

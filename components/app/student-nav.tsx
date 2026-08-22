@@ -11,6 +11,8 @@ const ITEMS = [
   { href: "/app/courses", label: "Courses" },
   { href: "/app/assignments", label: "Assignments" },
   { href: "/app/messages", label: "Messages" },
+  { href: "/app/sessions", label: "Sessions" },
+  { href: "/app/account", label: "Account" },
 ];
 
 export function StudentNav({ unread = false }: { unread?: boolean }) {

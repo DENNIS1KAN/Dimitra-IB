@@ -33,7 +33,7 @@ beforeAll(async () => {
       { role: "student", name: "Paused Pat", username: "pat", passwordHash: "locked", email: "p@x", active: false },
     ])
     .returning();
-});
+}, 30_000); // migrates a fresh in-memory PGlite — slow on a loaded machine
 
 describe("student side — the thread is always the actor's own", () => {
   it("a student's message lands in their own thread only", async () => {

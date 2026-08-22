@@ -10,9 +10,11 @@ import { hashPassword, isAcceptablePassword } from "@/lib/password";
 import { storage } from "@/lib/storage";
 import { isUniqueViolation } from "@/lib/db-errors";
 import { postTutorReply } from "@/lib/messages";
+import { updateSettings } from "@/lib/settings";
 import { parseLocalInTz } from "@/lib/tz";
 import { isUuid } from "@/lib/validate";
 import type { ComposerState } from "@/components/messages/composer";
+import type { SettingsFormState } from "@/components/admin/settings-form";
 
 // ---------------------------------------------------------------------------
 // Cohorts
@@ -340,5 +342,20 @@ export async function replyToStudent(
   if (!result.ok) return result;
   revalidatePath(`/admin/messages/${studentId}`);
   revalidatePath("/admin/messages");
+  return { ok: true, at: Date.now() };
+}
+
+// ---------------------------------------------------------------------------
+// Settings (SPEC §15.5) — booking_url, clinic_text.
+
+export async function saveSettings(
+  _prev: SettingsFormState,
+  formData: FormData,
+): Promise<SettingsFormState> {
+  const user = await requireAdmin();
+  const result = await updateSettings(user, formData);
+  if (!result.ok) return result;
+  revalidatePath("/admin/settings");
+  revalidatePath("/app/sessions");
   return { ok: true, at: Date.now() };
 }

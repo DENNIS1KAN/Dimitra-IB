@@ -71,5 +71,5 @@ describe("migration 0005 — enrollments backfill", () => {
     expect(cohort.rows[0]).toEqual({ is_listed: false, blurb: null });
     await pg.exec(`INSERT INTO settings (key, value) VALUES ('booking_url', '')`);
     await pg.close();
-  });
+  }, 30_000); // boots a fresh PGlite and replays every migration — ~5s on slow machines
 });

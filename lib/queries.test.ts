@@ -63,7 +63,7 @@ beforeAll(async () => {
     { studentId: petros.id, cohortId: chem.id, status: "active" },
   ]);
   await db.insert(submissions).values({ studentId: nikos.id, moduleId: chemW5.id, note: "done" });
-});
+}, 30_000); // migrates a fresh in-memory PGlite — slow on a loaded machine
 
 const releasedTitles = (list: Awaited<ReturnType<typeof q.studentModuleList>>) =>
   [list.current, ...list.olderReleased]

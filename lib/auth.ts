@@ -1,7 +1,7 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { sessions, users, type User } from "@/db/schema";
 
@@ -28,6 +28,19 @@ export async function createSession(userId: string) {
     expires: expiresAt,
     path: "/",
   });
+}
+
+/** Every session of `userId` except `keepTokenHash` (null = all of them). */
+export async function deleteSessionsExcept(userId: string, keepTokenHash: string | null) {
+  const own = eq(sessions.userId, userId);
+  await db.delete(sessions).where(keepTokenHash ? and(own, ne(sessions.token, keepTokenHash)) : own);
+}
+
+/** After a password change: sign out every other device, keep this one. */
+export async function revokeOtherSessions(userId: string) {
+  const jar = await cookies();
+  const raw = jar.get(SESSION_COOKIE)?.value;
+  await deleteSessionsExcept(userId, raw ? hash(raw) : null);
 }
 
 export async function destroySession() {

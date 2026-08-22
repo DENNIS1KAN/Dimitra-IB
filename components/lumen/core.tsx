@@ -289,6 +289,7 @@ export function Button({
   fullWidth = false,
   disabled = false,
   href,
+  external = false,
   type = "button",
   name,
   value,
@@ -301,6 +302,8 @@ export function Button({
   fullWidth?: boolean;
   disabled?: boolean;
   href?: string;
+  /** Off-site link: opens in a new tab with rel="noopener noreferrer". */
+  external?: boolean;
   type?: "button" | "submit";
   /** Submit-button name/value pair (several buttons, one form). */
   name?: string;
@@ -315,6 +318,19 @@ export function Button({
     ...style,
   };
   if (href && !disabled) {
+    if (external) {
+      return (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`lmn-btn lmn-btn-${variant}`}
+          style={css}
+        >
+          {children}
+        </a>
+      );
+    }
     // Route-handler hrefs must be plain <a>: next/link viewport-prefetches
     // and RSC-fetches its href in production, which executes /api handlers
     // (stamping PDFs, logging phantom download events) without a real click.

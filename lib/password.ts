@@ -4,10 +4,9 @@ import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 
 const KEY_LEN = 64;
 
-/** Enforced server-side in every action that sets a password. */
-export const MIN_PASSWORD_LENGTH = 8;
-export const isAcceptablePassword = (password: string): boolean =>
-  password.length >= MIN_PASSWORD_LENGTH;
+// The length rule lives in lib/password-rules.ts (no node deps) so the
+// browser-side account form can share it; kept exported from here too.
+export { MIN_PASSWORD_LENGTH, isAcceptablePassword } from "./password-rules";
 
 /** `scrypt:{salt}:{hash}` with a per-user random salt. */
 export function hashPassword(password: string): string {
