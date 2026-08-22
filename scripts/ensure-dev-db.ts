@@ -8,13 +8,15 @@
 //
 // Flags: --migrate-only (skip seeding) · --seed (force a full reseed)
 
-// tsx doesn't auto-load .env the way Next does — mirror it so this script
-// and the app always talk to the same database.
-try {
-  process.loadEnvFile();
-} catch {
-  // no .env file — embedded dev database it is
-}
+// Env loading: @next/env is the loader Next itself uses, so this script and
+// the app read the same files with the same precedence (.env.development.local,
+// .env.local, .env.development, .env; existing process.env always wins) and
+// load errors are reported instead of swallowed. It must run before db/index
+// or lib/tz evaluate — both read env at module scope — which is why those are
+// `await import`ed inside main() below. Static imports hoist above any
+// statement; keep them dynamic.
+import { loadEnvConfig } from "@next/env";
+loadEnvConfig(process.cwd(), process.env.NODE_ENV !== "production");
 
 import { sql } from "drizzle-orm";
 import { users } from "../db/schema";
