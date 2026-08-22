@@ -5,7 +5,13 @@ import { Badge, Button, Card } from "@/components/lumen/core";
 import { Input } from "@/components/lumen/forms";
 import { requireAdmin } from "@/lib/admin";
 import { formatDay } from "@/lib/format";
-import { createCohort, createStudent, resetStudentPassword, toggleStudentActive } from "./actions";
+import {
+  addEnrollment,
+  createStudent,
+  resetStudentPassword,
+  setEnrollmentStatus,
+  toggleStudentActive,
+} from "./actions";
 
 // /admin — students table: name, cohort, active toggle, last seen, account
 // creation + password resets (SPEC §7). Plain and fast; no design effort (§12).
@@ -122,11 +128,53 @@ export default async function AdminStudents({
                         >
                           <span style={{ fontWeight: 500 }}>{cohortName}</span>
                           <Badge tone={enrollmentTone(enrollment.status)}>{enrollment.status}</Badge>
+                          {enrollment.status !== "requested" && (
+                            <form action={setEnrollmentStatus} style={{ display: "inline-flex", gap: 2 }}>
+                              <input type="hidden" name="enrollmentId" value={enrollment.id} />
+                              {enrollment.status === "active" ? (
+                                <Button variant="ghost" size="sm" type="submit" name="status" value="paused">
+                                  Pause
+                                </Button>
+                              ) : (
+                                <Button variant="ghost" size="sm" type="submit" name="status" value="active">
+                                  Resume
+                                </Button>
+                              )}
+                              {enrollment.status !== "ended" && (
+                                <Button variant="ghost" size="sm" type="submit" name="status" value="ended">
+                                  End
+                                </Button>
+                              )}
+                            </form>
+                          )}
                         </div>
                       ))}
                       {(byStudent.get(user.id) ?? []).length === 0 && (
                         <span style={{ color: "var(--text-tertiary)" }}>No courses</span>
                       )}
+                      <form action={addEnrollment} style={{ display: "flex", gap: 6 }}>
+                        <input type="hidden" name="studentId" value={user.id} />
+                        <select
+                          className="lmn-input"
+                          name="cohortId"
+                          required
+                          defaultValue=""
+                          aria-label={`Add ${user.name} to a course`}
+                          style={{ padding: "6px 10px", fontSize: "var(--text-body-sm)", width: 190 }}
+                        >
+                          <option value="" disabled>
+                            Add to course…
+                          </option>
+                          {allCohorts.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                        <Button variant="ghost" size="sm" type="submit">
+                          Add
+                        </Button>
+                      </form>
                     </div>
                   </td>
                   <td style={td}>
@@ -181,14 +229,7 @@ export default async function AdminStudents({
         </div>
       </Card>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: 16,
-          alignItems: "start",
-        }}
-      >
+      <div style={{ maxWidth: 480 }}>
         <Card padding="20px">
           <h2 style={{ margin: "0 0 12px", fontSize: "var(--text-body)", fontWeight: 700 }}>
             Create a student account
@@ -210,7 +251,7 @@ export default async function AdminStudents({
             />
             <Input label="Email (contact only)" name="email" type="email" required placeholder="student@school.gr" />
             <label className="lmn-field">
-              <span className="lmn-field-label">Cohort</span>
+              <span className="lmn-field-label">First course (an active enrollment)</span>
               <select className="lmn-input" name="cohortId" required defaultValue="">
                 <option value="" disabled>
                   Pick a cohort
@@ -228,35 +269,6 @@ export default async function AdminStudents({
           </form>
         </Card>
 
-        <Card padding="20px">
-          <h2 style={{ margin: "0 0 12px", fontSize: "var(--text-body)", fontWeight: 700 }}>
-            New cohort
-          </h2>
-          <form action={createCohort} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <Input label="Name" name="name" required placeholder="Chemistry HL 2027" />
-            <Input label="Subject" name="subject" required placeholder="Chemistry" />
-            <div style={{ display: "flex", gap: 10 }}>
-              <label className="lmn-field" style={{ flex: 1 }}>
-                <span className="lmn-field-label">Level</span>
-                <select className="lmn-input" name="level" defaultValue="HL">
-                  <option value="HL">HL</option>
-                  <option value="SL">SL</option>
-                </select>
-              </label>
-              <Input
-                label="Exam year"
-                name="examYear"
-                type="number"
-                required
-                defaultValue={new Date().getFullYear() + 2}
-                style={{ flex: 1 }}
-              />
-            </div>
-            <Button variant="dark" size="sm" type="submit">
-              Create cohort
-            </Button>
-          </form>
-        </Card>
       </div>
     </div>
   );

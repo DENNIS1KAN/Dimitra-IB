@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
+import { eq, sql } from "drizzle-orm";
+import { db } from "@/db";
+import { enrollments } from "@/db/schema";
 import { IconButton, Wordmark } from "@/components/lumen/core";
 import { getSessionUser } from "@/lib/auth";
 import { signOut } from "@/lib/auth-actions";
@@ -12,8 +15,15 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   if (!user) redirect("/login");
   if (user.role !== "admin") redirect("/app");
 
+  // Pending join requests surface in the nav so they can't be missed.
+  const [{ pending }] = await db
+    .select({ pending: sql<number>`count(*)::int` })
+    .from(enrollments)
+    .where(eq(enrollments.status, "requested"));
   const nav = [
     { href: "/admin", label: "Students" },
+    { href: "/admin/requests", label: pending > 0 ? `Requests (${pending})` : "Requests" },
+    { href: "/admin/courses", label: "Courses" },
     { href: "/admin/modules", label: "Modules" },
     { href: "/admin/progress", label: "Progress" },
   ];

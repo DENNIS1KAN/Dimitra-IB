@@ -10,6 +10,7 @@ import { hashPassword, isAcceptablePassword } from "@/lib/password";
 import { storage } from "@/lib/storage";
 import { isUniqueViolation } from "@/lib/db-errors";
 import { parseLocalInTz } from "@/lib/tz";
+import { isUuid } from "@/lib/validate";
 
 // ---------------------------------------------------------------------------
 // Cohorts
@@ -20,10 +21,92 @@ export async function createCohort(formData: FormData) {
   const subject = String(formData.get("subject") ?? "").trim();
   const level = String(formData.get("level") ?? "HL") as "HL" | "SL";
   const examYear = Number(formData.get("examYear") ?? new Date().getFullYear() + 2);
-  if (!name || !subject) redirect("/admin?error=cohort");
+  if (!name || !subject) redirect("/admin/courses?error=cohort");
   await db.insert(cohorts).values({ name, subject, level, examYear });
+  revalidatePath("/admin/courses");
+  redirect("/admin/courses?ok=cohort");
+}
+
+/** Catalog fields (SPEC §15.5): the blurb students read and whether it's listed. */
+export async function updateCohort(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  const blurb = String(formData.get("blurb") ?? "").trim() || null;
+  const isListed = formData.get("isListed") === "on";
+  if (isUuid(id)) await db.update(cohorts).set({ blurb, isListed }).where(eq(cohorts.id, id));
+  revalidatePath("/admin/courses");
+  redirect("/admin/courses?ok=saved");
+}
+
+// ---------------------------------------------------------------------------
+// Enrollments (SPEC §15.5) — the requests queue + each student's standing
+// per course. users.active stays the global switch; these are per course.
+
+export async function approveRequest(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("enrollmentId") ?? "");
+  if (isUuid(id)) {
+    await db
+      .update(enrollments)
+      .set({ status: "active", decidedAt: new Date() })
+      .where(and(eq(enrollments.id, id), eq(enrollments.status, "requested")));
+  }
+  revalidatePath("/admin/requests");
+  redirect("/admin/requests");
+}
+
+/** Decline = the request disappears; the student may ask again (SPEC §15.7 #7). */
+export async function declineRequest(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("enrollmentId") ?? "");
+  if (isUuid(id)) {
+    await db
+      .delete(enrollments)
+      .where(and(eq(enrollments.id, id), eq(enrollments.status, "requested")));
+  }
+  revalidatePath("/admin/requests");
+  redirect("/admin/requests");
+}
+
+const ENROLLMENT_TRANSITIONS = ["active", "paused", "ended"] as const;
+type EnrollmentTransition = (typeof ENROLLMENT_TRANSITIONS)[number];
+
+export async function setEnrollmentStatus(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("enrollmentId") ?? "");
+  const status = String(formData.get("status") ?? "");
+  if (isUuid(id) && (ENROLLMENT_TRANSITIONS as readonly string[]).includes(status)) {
+    await db
+      .update(enrollments)
+      .set({ status: status as EnrollmentTransition, decidedAt: new Date() })
+      .where(eq(enrollments.id, id));
+  }
   revalidatePath("/admin");
-  redirect("/admin?ok=cohort");
+  redirect("/admin");
+}
+
+export async function addEnrollment(formData: FormData) {
+  await requireAdmin();
+  const studentId = String(formData.get("studentId") ?? "");
+  const cohortId = String(formData.get("cohortId") ?? "");
+  if (isUuid(studentId) && isUuid(cohortId)) {
+    const [existing] = await db
+      .select()
+      .from(enrollments)
+      .where(and(eq(enrollments.studentId, studentId), eq(enrollments.cohortId, cohortId)));
+    if (existing) {
+      await db
+        .update(enrollments)
+        .set({ status: "active", decidedAt: new Date() })
+        .where(eq(enrollments.id, existing.id));
+    } else {
+      await db
+        .insert(enrollments)
+        .values({ studentId, cohortId, status: "active", decidedAt: new Date() });
+    }
+  }
+  revalidatePath("/admin");
+  redirect("/admin");
 }
 
 // ---------------------------------------------------------------------------

@@ -283,6 +283,8 @@ export function Button({
   disabled = false,
   href,
   type = "button",
+  name,
+  value,
   onClick,
   children,
   style,
@@ -293,6 +295,9 @@ export function Button({
   disabled?: boolean;
   href?: string;
   type?: "button" | "submit";
+  /** Submit-button name/value pair (several buttons, one form). */
+  name?: string;
+  value?: string;
   onClick?: () => void;
   children: ReactNode;
   style?: CSSProperties;
@@ -324,6 +329,8 @@ export function Button({
       type={type}
       className={`lmn-btn lmn-btn-${variant}`}
       disabled={disabled}
+      name={name}
+      value={value}
       onClick={onClick}
       style={css}
     >
