@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
+import { StudentNav } from "@/components/app/student-nav";
 import { Avatar, IconButton, Wordmark } from "@/components/lumen/core";
 import { LockPanel } from "@/components/lumen/learning";
 import { getSessionUser } from "@/lib/auth";
@@ -44,42 +45,27 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      {/* Mobile top bar (≤ lg): page-cream, wordmark + avatar */}
+      {/* ONE header for every width (SPEC §15.4: the nav is mounted once).
+          DeskNav recipe (white bar, 1040px shell); under lg the nav drops to
+          its own row and scrolls sideways at 390px. */}
       <header
-        className="lg:hidden"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "14px 20px",
-          paddingTop: "calc(14px + env(safe-area-inset-top))",
-          background: "var(--surface-page)",
-        }}
-      >
-        <span style={{ flex: 1, display: "inline-flex" }}>
-          <Wordmark size="sm" />
-        </span>
-        {signOutButton}
-        {avatar}
-      </header>
-
-      {/* Desktop nav (lg+): white bar per DeskNav recipe */}
-      <header
-        className="hidden lg:block"
         style={{ background: "var(--surface-card)", borderBottom: "1px solid var(--border-card)" }}
       >
         <div
+          className="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:gap-3"
           style={{
             maxWidth: 1040,
             margin: "0 auto",
-            padding: "14px 32px",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
+            padding: "12px 20px",
+            paddingTop: "calc(12px + env(safe-area-inset-top))",
           }}
         >
-          <Wordmark size="sm" />
-          <span style={{ flex: 1 }} />
+          <span className="flex flex-1 lg:flex-none">
+            <Wordmark size="sm" />
+          </span>
+          <div className="order-last basis-full lg:order-none lg:basis-auto lg:flex-1 lg:pl-4">
+            <StudentNav />
+          </div>
           {signOutButton}
           {avatar}
         </div>
