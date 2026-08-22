@@ -6,8 +6,10 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { cohorts, enrollments } from "@/db/schema";
 import { isUniqueViolation } from "@/lib/db-errors";
+import { postStudentMessage } from "@/lib/messages";
 import { requireStudent } from "@/lib/student";
 import { isUuid } from "@/lib/validate";
+import type { ComposerState } from "@/components/messages/composer";
 
 /**
  * "Ask to join" (SPEC §15.1): creates a request that Dimitra approves in
@@ -45,4 +47,16 @@ export async function requestToJoin(formData: FormData) {
   }
   revalidatePath("/app/courses");
   redirect("/app/courses?ok=requested");
+}
+
+/**
+ * The student's composer (SPEC §15.4). The thread is derived from the
+ * session — lib/messages ignores any student id in the form.
+ */
+export async function sendMessage(_prev: ComposerState, formData: FormData): Promise<ComposerState> {
+  const user = await requireStudent();
+  const result = await postStudentMessage(user, formData);
+  if (!result.ok) return result;
+  revalidatePath("/app/messages");
+  return { ok: true, at: Date.now() };
 }

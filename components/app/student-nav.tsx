@@ -10,10 +10,14 @@ const ITEMS = [
   { href: "/app", label: "Home" },
   { href: "/app/courses", label: "Courses" },
   { href: "/app/assignments", label: "Assignments" },
+  { href: "/app/messages", label: "Messages" },
 ];
 
-export function StudentNav() {
+export function StudentNav({ unread = false }: { unread?: boolean }) {
   const pathname = usePathname();
+  // The thread page marks everything read as it opens, so the dot is never
+  // shown while the student is already there.
+  const showDot = unread && !pathname.startsWith("/app/messages");
   const isActive = (href: string) =>
     href === "/app"
       ? pathname === "/app" || pathname.startsWith("/app/modules")
@@ -39,6 +43,23 @@ export function StudentNav() {
             }}
           >
             {item.label}
+            {item.href === "/app/messages" && showDot && (
+              <>
+                <span
+                  aria-hidden="true"
+                  style={{
+                    display: "inline-block",
+                    width: 8,
+                    height: 8,
+                    marginLeft: 6,
+                    borderRadius: "var(--radius-pills)",
+                    background: "var(--action-primary)",
+                    verticalAlign: "middle",
+                  }}
+                />
+                <span className="sr-only"> (unread)</span>
+              </>
+            )}
           </Link>
         );
       })}

@@ -6,6 +6,7 @@ import { LockPanel } from "@/components/lumen/learning";
 import { getSessionUser } from "@/lib/auth";
 import { signOut } from "@/lib/auth-actions";
 import { initials } from "@/lib/format";
+import { unreadForStudent } from "@/lib/messages";
 
 // Student shell. Rule 3 lives here: a paused student sees only the friendly
 // full-screen state — no module list, no content — on every /app route.
@@ -36,6 +37,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     );
   }
 
+  const unread = (await unreadForStudent(user.id)) > 0;
   const avatar = <Avatar size="md" tone="neutral" initials={initials(user.name)} />;
   const signOutButton = (
     <form action={signOut} style={{ display: "inline-flex" }}>
@@ -64,7 +66,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             <Wordmark size="sm" />
           </span>
           <div className="order-last basis-full lg:order-none lg:basis-auto lg:flex-1 lg:pl-4">
-            <StudentNav />
+            <StudentNav unread={unread} />
           </div>
           {signOutButton}
           {avatar}
