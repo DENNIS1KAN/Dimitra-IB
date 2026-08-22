@@ -1,40 +1,33 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Badge, Button, Card, ProgressBar } from "@/components/lumen/core";
-import { ListRow, ModuleCard, NoteCard } from "@/components/lumen/learning";
+import { Badge, Button, Card, Icon, ProgressBar } from "@/components/lumen/core";
+import { ModuleCard, NoteCard } from "@/components/lumen/learning";
 import { getSessionUser } from "@/lib/auth";
-import { firstName, formatDay, formatDue, formatUnlock, isNewRelease } from "@/lib/format";
+import { firstName, formatDay, formatDue, formatUnlock, greeting, isNewRelease } from "@/lib/format";
 import { materialMeta, studentModuleList, type ModuleListEntry } from "@/lib/queries";
-import { subjectColor } from "@/lib/subject";
+import { getSettings } from "@/lib/settings";
 
-// /app — the merged module list (DESIGN.md §6): greeting → note → hero →
-// progress → released weeks → locked teasers. Rule 1 decides every row.
-// Phase 2 (SPEC §15.4): rows span every ACTIVE enrollment (named when there
-// is more than one), the hero shows its due date, overdue rows are badged.
+// /app — the dashboard, composed per design/lumen-dashboard-mockup.html:
+// indigo hero (greeting + progress) → note from Dimitra → "This week"
+// feature card with the ONE orange CTA → clinic strip → the term rail →
+// footer. One responsive layout. Same data, same rules as before (Rule 1
+// decides every row; SPEC §15.4 for due dates / overdue / course names).
 export default async function AppPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
-  const list = await studentModuleList(user);
+  const [list, settings] = await Promise.all([studentModuleList(user), getSettings()]);
   const multi = list.activeCohorts.length > 1;
-  const courseLabel = (entry: ModuleListEntry) => (multi ? entry.cohort.name : null);
+  const course = (entry: ModuleListEntry) => (multi ? entry.cohort.name : null);
   const meta = (...parts: (string | null | undefined)[]) => parts.filter(Boolean).join(" · ");
   const hero = list.current;
+  const pct = list.releasedCount ? Math.round((list.completedCount / list.releasedCount) * 100) : 0;
+  const eyebrow = list.activeCohorts.length
+    ? list.activeCohorts.map((c) => c.name).join(" · ")
+    : "Private IB tutoring";
 
-  const noteCard = hero?.module.description ? (
-    <NoteCard note={hero.module.description} date={formatDay(hero.module.releaseDate)} />
-  ) : null;
-
-  const progressCard =
-    list.releasedCount > 0 ? (
-      <ProgressBar
-        value={list.completedCount}
-        total={list.releasedCount}
-        label={`${list.completedCount} of ${list.releasedCount} modules`}
-      />
-    ) : null;
-
-  // Empty hero copy depends on WHY there is nothing to show.
-  const emptyHero = () => {
+  // Empty feature copy depends on WHY there is nothing to show.
+  const emptyFeature = () => {
     const requested = list.access.enrollments.some((e) => e.status === "requested");
     if (list.activeCohorts.length === 0 && list.pausedCohorts.length > 0) {
       return "Your course is paused — talk to Dimitra to continue. Your progress is safe.";
@@ -48,9 +41,13 @@ export default async function AppPage() {
     return "Your first module lands soon — Dimitra will let you know the moment it unlocks.";
   };
 
-  const heroCard = hero ? (
+  const noteCard = hero?.module.description ? (
+    <NoteCard note={hero.module.description} date={formatDay(hero.module.releaseDate)} style={{ marginTop: -52 }} />
+  ) : null;
+
+  const feature = hero ? (
     <ModuleCard
-      week={meta(courseLabel(hero), `Week ${hero.module.weekNumber}`, "This week")}
+      week={meta(course(hero), "This week")}
       isNew={isNewRelease(hero.module.releaseDate)}
       badges={
         hero.overdue ? (
@@ -59,18 +56,19 @@ export default async function AppPage() {
           </Badge>
         ) : undefined
       }
-      title={hero.module.title}
+      title={`Week ${hero.module.weekNumber} · ${hero.module.title}`}
       meta={materialMeta(hero.materialCounts)}
       due={hero.module.dueDate && !hero.complete ? formatDue(hero.module.dueDate) : undefined}
       cta={hero.complete ? "Review module" : "Start module"}
       href={`/app/modules/${hero.module.id}`}
+      style={{ marginTop: noteCard ? 26 : -52 }}
     />
   ) : (
-    <Card featured>
-      <p style={{ margin: 0, fontWeight: 500, color: "var(--text-secondary)" }}>{emptyHero()}</p>
+    <Card featured style={{ marginTop: -52 }}>
+      <p style={{ margin: 0, fontWeight: 500, color: "var(--text-secondary)" }}>{emptyFeature()}</p>
       {list.activeCohorts.length === 0 && list.pausedCohorts.length === 0 && (
         <div style={{ marginTop: 16 }}>
-          <Button variant="secondary" href="/app/courses">
+          <Button variant="primary" href="/app/courses">
             Browse courses
           </Button>
         </div>
@@ -78,119 +76,153 @@ export default async function AppPage() {
     </Card>
   );
 
-  const weekRow = (entry: ModuleListEntry) =>
-    entry.complete ? (
-      <ListRow
-        key={entry.module.id}
-        icon="check_circle"
-        iconColor={subjectColor(entry.cohort.subject)}
-        label={`Week ${entry.module.weekNumber} — ${entry.module.title}`}
-        meta={meta(courseLabel(entry), "Completed")}
-        trailing={
-          <Badge tone="done" icon="check">
-            Done
-          </Badge>
-        }
-        chevron={false}
-        href={`/app/modules/${entry.module.id}`}
-      />
-    ) : (
-      <ListRow
-        key={entry.module.id}
-        icon="play_circle"
-        iconColor={subjectColor(entry.cohort.subject)}
-        label={`Week ${entry.module.weekNumber} — ${entry.module.title}`}
-        meta={meta(
-          courseLabel(entry),
-          entry.module.dueDate ? formatDue(entry.module.dueDate) : "Open — attempt not sent yet",
-        )}
-        trailing={entry.overdue ? <Badge tone="alert">Overdue</Badge> : undefined}
-        href={`/app/modules/${entry.module.id}`}
-      />
+  // The term rail: current week first, then older released (newest first),
+  // then locked teasers — the same order the list always had.
+  type Kind = "now" | "open" | "done" | "locked";
+  const rows: { entry: ModuleListEntry; kind: Kind }[] = [
+    ...(hero ? [{ entry: hero, kind: (hero.complete ? "done" : "now") as Kind }] : []),
+    ...list.olderReleased.map((entry) => ({ entry, kind: (entry.complete ? "done" : "open") as Kind })),
+    ...list.future.map((entry) => ({ entry, kind: "locked" as Kind })),
+  ];
+  // Rail line: one colour segment per row (jade done · blue in progress · linen locked).
+  const seg = (i: number) => `${(i / rows.length) * 100}%`;
+  const railLine = rows.length
+    ? `linear-gradient(${rows
+        .map(({ kind }, i) => {
+          const colour = kind === "done" ? "var(--color-jade)" : kind === "locked" ? "var(--color-linen)" : "var(--color-blue)";
+          return `${colour} ${seg(i)} ${seg(i + 1)}`;
+        })
+        .join(", ")})`
+    : undefined;
+
+  const railRow = ({ entry, kind }: { entry: ModuleListEntry; kind: Kind }, i: number) => {
+    const { module } = entry;
+    const node = (
+      <span className="lmn-rail-node">
+        <span className="lmn-rail-disc">
+          {kind === "done" && <Icon name="check" size={13} strokeWidth={3.2} />}
+          {kind === "locked" && <Icon name="lock" size={12} strokeWidth={2.4} />}
+        </span>
+      </span>
     );
-
-  const teaserRow = (entry: ModuleListEntry) => (
-    <ListRow
-      key={entry.module.id}
-      icon="lock"
-      iconColor="var(--state-locked)"
-      label={`Week ${entry.module.weekNumber} — ${entry.module.title}`}
-      meta={meta(courseLabel(entry), formatUnlock(entry.module.releaseDate))}
-      chevron={false}
-    />
-  );
-
-  const greeting = (
-    <h1
-      style={{
-        margin: 0,
-        fontSize: "var(--text-heading)",
-        fontWeight: 700,
-        letterSpacing: "var(--tracking-heading)",
-        lineHeight: 1.2,
-      }}
-    >
-      Hi {firstName(user.name)}.
-    </h1>
-  );
+    const title = <h3>{`Week ${module.weekNumber} · ${module.title}`}</h3>;
+    const cls = `lmn-rail-row is-${kind === "open" ? "now" : kind} lmn-rise`;
+    const delay = { animationDelay: `${0.28 + i * 0.05}s` };
+    if (kind === "locked") {
+      return (
+        <article key={module.id} className={cls} style={delay}>
+          {node}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {title}
+            {course(entry) && <p className="lmn-rail-sub">{course(entry)}</p>}
+          </div>
+          <span className="lmn-rail-when">{formatUnlock(module.releaseDate)}</span>
+        </article>
+      );
+    }
+    const sub =
+      kind === "done" ? (
+        <p className="lmn-rail-sub">
+          {course(entry) && `${course(entry)} · `}Completed · <span className="ok">Solutions unlocked</span>
+        </p>
+      ) : (
+        <p className="lmn-rail-sub">
+          {meta(course(entry), "In progress · submit your attempt to unlock solutions", module.dueDate ? formatDue(module.dueDate) : null)}
+        </p>
+      );
+    return (
+      <Link key={module.id} href={`/app/modules/${module.id}`} className={cls} style={delay}>
+        {node}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {title}
+          {sub}
+        </div>
+        {entry.overdue && <Badge tone="alert">Overdue</Badge>}
+        <span className="lmn-rail-go">{kind === "done" ? "Review" : "Continue"}</span>
+      </Link>
+    );
+  };
 
   return (
     <>
-      {/* Mobile (≤ lg): single column, 20px gutters, 390px-first */}
-      <main className="lg:hidden" style={{ padding: "8px 20px 24px" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div style={{ marginTop: 8 }}>{greeting}</div>
-          {noteCard}
-          {heroCard}
-          {progressCard}
-          {(list.olderReleased.length > 0 || list.future.length > 0) && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {list.olderReleased.map(weekRow)}
-              {list.future.map(teaserRow)}
+      <header className="lmn-hero">
+        <div className="lmn-wrap lmn-rise">
+          <p className="lmn-eyebrow" style={{ margin: 0 }}>
+            {eyebrow}
+          </p>
+          <h1
+            style={{
+              margin: "10px 0 22px",
+              fontSize: "clamp(28px, 4.4vw, 40px)",
+              fontWeight: 800,
+              letterSpacing: "-0.03em",
+              lineHeight: 1.12,
+            }}
+          >
+            {greeting()}, {firstName(user.name)}
+          </h1>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+            <div style={{ width: "min(380px, 100%)" }}>
+              <ProgressBar value={list.completedCount} total={list.releasedCount || 1} onDark label="Course progress" style={{ display: "contents" }} />
             </div>
+            <small style={{ fontSize: 14, color: "rgba(255,255,255,.75)" }}>
+              {list.releasedCount > 0
+                ? `${list.completedCount} of ${list.releasedCount} modules complete · ${pct}%`
+                : "Nothing released yet"}
+            </small>
+          </div>
+        </div>
+      </header>
+
+      <main style={{ padding: "0 0 72px" }}>
+        <div className="lmn-wrap" style={{ display: "flex", flexDirection: "column" }}>
+          {noteCard}
+          {feature}
+
+          {settings.clinicText && (
+            <Link href="/app/sessions" className="lmn-clinic lmn-rise" style={{ margin: "14px 0 0", animationDelay: ".2s" }}>
+              <Icon name="calendar" size={18} />
+              <span>
+                <b>Next clinic</b> — {settings.clinicText}
+              </span>
+            </Link>
+          )}
+
+          {rows.length > 0 && (
+            <>
+              <div
+                className="lmn-rise"
+                style={{
+                  display: "flex",
+                  alignItems: "baseline",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  margin: "34px 0 16px",
+                  animationDelay: ".24s",
+                }}
+              >
+                <h2 style={{ margin: 0, fontSize: 19, fontWeight: 800, letterSpacing: "-0.3px" }}>
+                  Your term, week by week
+                </h2>
+                <Link href="/app/assignments" style={{ fontWeight: 700, fontSize: 14, whiteSpace: "nowrap" }}>
+                  All assignments
+                </Link>
+              </div>
+              <div className="lmn-rail" style={railLine ? { ["--rail-line" as string]: railLine } : undefined}>
+                <style>{railLine ? `.lmn-rail::before{background:var(--rail-line)}` : ""}</style>
+                {rows.map(railRow)}
+              </div>
+            </>
           )}
         </div>
       </main>
 
-      {/* Desktop (lg+): 1040px shell, 1.6fr/1fr grid per DESIGN.md */}
-      <main className="hidden lg:block">
-        <div style={{ maxWidth: 1040, margin: "0 auto", padding: "40px 32px 64px" }}>
-          <div style={{ marginBottom: 24 }}>{greeting}</div>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1.6fr 1fr",
-              gap: 24,
-              alignItems: "start",
-            }}
-          >
-            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              {heroCard}
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {list.olderReleased.map(weekRow)}
-                {list.future.map(teaserRow)}
-              </div>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {noteCard}
-              {progressCard && (
-                <Card padding="20px">
-                  <div
-                    style={{
-                      fontSize: "var(--text-body-sm)",
-                      fontWeight: 700,
-                      marginBottom: 12,
-                    }}
-                  >
-                    This term
-                  </div>
-                  {progressCard}
-                </Card>
-              )}
-            </div>
-          </div>
+      <footer className="lmn-footer">
+        <div className="lmn-wrap">
+          <span>Lumen · IB {list.activeCohorts[0]?.subject ?? "Chemistry"} with Dimitra Anglou</span>
+          <span>Access by invitation</span>
         </div>
-      </main>
+      </footer>
     </>
   );
 }

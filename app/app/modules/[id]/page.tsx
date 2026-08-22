@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { SubmitPanel } from "@/components/app/submit-sheet";
 import { SubmissionToastListener } from "@/components/app/submission-toast";
 import { Badge, IconButton } from "@/components/lumen/core";
-import { LessonRow, LockPanel, TopBar } from "@/components/lumen/learning";
+import { BackLink, LessonRow, LockPanel } from "@/components/lumen/learning";
 import { getSessionUser } from "@/lib/auth";
 import { formatDue, isNewRelease } from "@/lib/format";
 import { studentModuleDetail } from "@/lib/queries";
@@ -88,13 +88,16 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
   return (
     <main style={{ maxWidth: 720, margin: "0 auto" }}>
       <SubmissionToastListener />
-      <TopBar title={`Week ${module.weekNumber}`} backHref="/app" />
-      <div style={{ padding: "4px 20px 24px", display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ padding: "16px 20px 24px", display: "flex", flexDirection: "column", gap: 10 }}>
+        <BackLink href="/app" label="Home" />
+        <p className="lmn-eyebrow" style={{ margin: "4px 0 0", color: "var(--text-tertiary)" }}>
+          Week {module.weekNumber}
+        </p>
         <h1
           style={{
-            margin: "4px 0 2px",
+            margin: "0 0 2px",
             fontSize: "var(--text-heading-sm)",
-            fontWeight: 700,
+            fontWeight: 800,
             letterSpacing: "var(--tracking-heading-sm)",
             lineHeight: 1.25,
           }}

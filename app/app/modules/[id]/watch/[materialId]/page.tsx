@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { VideoPlayer } from "@/components/app/video-player";
-import { TopBar } from "@/components/lumen/learning";
+import { BackLink } from "@/components/lumen/learning";
 import { getSessionUser } from "@/lib/auth";
 import { logMaterialEvent } from "@/lib/material-access";
 import { studentModuleDetail } from "@/lib/queries";
@@ -35,8 +35,18 @@ export default async function WatchPage({
 
   return (
     <main style={{ maxWidth: 720, margin: "0 auto" }}>
-      <TopBar title={material.title} backHref={`/app/modules/${id}`} />
-      <div style={{ padding: "4px 20px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ padding: "16px 20px 24px", display: "flex", flexDirection: "column", gap: 12 }}>
+        <BackLink href={`/app/modules/${id}`} label={`Week ${detail.module.weekNumber}`} />
+        <h1
+          style={{
+            margin: 0,
+            fontSize: "var(--text-subheading)",
+            fontWeight: 800,
+            letterSpacing: "var(--tracking-subheading)",
+          }}
+        >
+          {material.title}
+        </h1>
         <div
           style={{
             background: "var(--color-charcoal-ink)",
