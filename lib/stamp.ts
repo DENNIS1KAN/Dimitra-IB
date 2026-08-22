@@ -1,6 +1,25 @@
 import "server-only";
+import fs from "node:fs";
+import path from "node:path";
+import fontkit from "@pdf-lib/fontkit";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import type { User } from "@/db/schema";
+
+// Bundled OFL font with Greek + Latin coverage (assets/fonts). The
+// standard-14 fonts are WinAnsi-only — they cannot encode "Δημήτρης", and
+// most of this platform's students have Greek names.
+const FONT_PATH = path.join(process.cwd(), "assets", "fonts", "NotoSans-Regular.ttf");
+let cachedFontBytes: Buffer | null | undefined;
+function fontBytes(): Buffer | null {
+  if (cachedFontBytes === undefined) {
+    try {
+      cachedFontBytes = fs.readFileSync(FONT_PATH);
+    } catch {
+      cachedFontBytes = null; // fall back to Helvetica below
+    }
+  }
+  return cachedFontBytes;
+}
 
 /**
  * PDF name-stamping (SPEC §9): every downloaded PDF carries
@@ -9,7 +28,17 @@ import type { User } from "@/db/schema";
 export async function stampPdf(data: Buffer, user: User): Promise<Buffer> {
   try {
     const doc = await PDFDocument.load(data, { ignoreEncryption: true });
-    const font = await doc.embedFont(StandardFonts.Helvetica);
+    // Encrypted PDFs "load" fine but re-save corrupted (broken xref) — hand
+    // them back unstamped rather than corrupt the student's download.
+    if (doc.isEncrypted) return data;
+    const bytes = fontBytes();
+    let font;
+    if (bytes) {
+      doc.registerFontkit(fontkit);
+      font = await doc.embedFont(bytes, { subset: true });
+    } else {
+      font = await doc.embedFont(StandardFonts.Helvetica); // WinAnsi-only fallback
+    }
     const text = `Prepared for ${user.name} · ${user.email}`;
     const size = 8;
     for (const page of doc.getPages()) {
