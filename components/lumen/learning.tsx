@@ -237,7 +237,9 @@ export function ModuleCard({
   week,
   title,
   meta,
+  due,
   isNew = false,
+  badges,
   cta = "Continue",
   href,
   style,
@@ -245,7 +247,11 @@ export function ModuleCard({
   week: string;
   title: string;
   meta?: string;
+  /** Soft-deadline line under the meta, e.g. "Due Sun 30 Aug 23:59" (SPEC §15.1). */
+  due?: string;
   isNew?: boolean;
+  /** Extra badges after the New badge (e.g. Overdue). */
+  badges?: ReactNode;
   cta?: string;
   href: string;
   style?: CSSProperties;
@@ -276,6 +282,7 @@ export function ModuleCard({
           {week}
         </span>
         {isNew && <Badge tone="new">New</Badge>}
+        {badges}
       </div>
       <h3
         style={{
@@ -292,13 +299,26 @@ export function ModuleCard({
       {meta && (
         <p
           style={{
-            margin: "0 0 16px",
+            margin: due ? "0 0 4px" : "0 0 16px",
             fontSize: "var(--text-body-sm)",
             letterSpacing: "var(--tracking-body-sm)",
             color: "var(--text-tertiary)",
           }}
         >
           {meta}
+        </p>
+      )}
+      {due && (
+        <p
+          style={{
+            margin: "0 0 16px",
+            fontSize: "var(--text-caption)",
+            fontWeight: 500,
+            letterSpacing: "var(--tracking-caption)",
+            color: "var(--text-tertiary)",
+          }}
+        >
+          {due}
         </p>
       )}
       <Button variant="primary" fullWidth href={href}>

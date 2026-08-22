@@ -178,6 +178,13 @@ const badgeTones: Record<string, CSSProperties> = {
     color: "var(--text-inverse)",
     border: "1px solid transparent",
   },
+  // Overdue (SPEC §15.1 soft deadline) — tinted from the error literal
+  // #c4320a that DESIGN.md §1 already documents for input errors.
+  alert: {
+    background: "rgba(196,50,10,.08)",
+    color: "#c4320a",
+    border: "1px solid transparent",
+  },
 };
 
 export function Badge({

@@ -1,19 +1,23 @@
 import { redirect } from "next/navigation";
-import { Badge, Card, ProgressBar } from "@/components/lumen/core";
+import { Badge, Button, Card, ProgressBar } from "@/components/lumen/core";
 import { ListRow, ModuleCard, NoteCard } from "@/components/lumen/learning";
 import { getSessionUser } from "@/lib/auth";
-import { firstName, formatDay, formatUnlock, isNewRelease } from "@/lib/format";
+import { firstName, formatDay, formatDue, formatUnlock, isNewRelease } from "@/lib/format";
 import { materialMeta, studentModuleList, type ModuleListEntry } from "@/lib/queries";
 import { subjectColor } from "@/lib/subject";
 
 // /app — the merged module list (DESIGN.md §6): greeting → note → hero →
 // progress → released weeks → locked teasers. Rule 1 decides every row.
+// Phase 2 (SPEC §15.4): rows span every ACTIVE enrollment (named when there
+// is more than one), the hero shows its due date, overdue rows are badged.
 export default async function AppPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
   const list = await studentModuleList(user);
-  const color = subjectColor(list.activeCohorts[0]?.subject);
+  const multi = list.activeCohorts.length > 1;
+  const courseLabel = (entry: ModuleListEntry) => (multi ? entry.cohort.name : null);
+  const meta = (...parts: (string | null | undefined)[]) => parts.filter(Boolean).join(" · ");
   const hero = list.current;
 
   const noteCard = hero?.module.description ? (
@@ -29,21 +33,48 @@ export default async function AppPage() {
       />
     ) : null;
 
+  // Empty hero copy depends on WHY there is nothing to show.
+  const emptyHero = () => {
+    const requested = list.access.enrollments.some((e) => e.status === "requested");
+    if (list.activeCohorts.length === 0 && list.pausedCohorts.length > 0) {
+      return "Your course is paused — talk to Dimitra to continue. Your progress is safe.";
+    }
+    if (list.activeCohorts.length === 0 && requested) {
+      return "Your request is with Dimitra — your modules appear here once she confirms your place.";
+    }
+    if (list.activeCohorts.length === 0) {
+      return "You're not in a course yet — browse the catalog and ask to join.";
+    }
+    return "Your first module lands soon — Dimitra will let you know the moment it unlocks.";
+  };
+
   const heroCard = hero ? (
     <ModuleCard
-      week={`Week ${hero.module.weekNumber} · This week`}
+      week={meta(courseLabel(hero), `Week ${hero.module.weekNumber}`, "This week")}
       isNew={isNewRelease(hero.module.releaseDate)}
+      badges={
+        hero.overdue ? (
+          <Badge tone="alert" icon="schedule">
+            Overdue
+          </Badge>
+        ) : undefined
+      }
       title={hero.module.title}
       meta={materialMeta(hero.materialCounts)}
+      due={hero.module.dueDate && !hero.complete ? formatDue(hero.module.dueDate) : undefined}
       cta={hero.complete ? "Review module" : "Start module"}
       href={`/app/modules/${hero.module.id}`}
     />
   ) : (
     <Card featured>
-      <p style={{ margin: 0, fontWeight: 500, color: "var(--text-secondary)" }}>
-        Your first module lands soon — Dimitra will let you know the moment it
-        unlocks.
-      </p>
+      <p style={{ margin: 0, fontWeight: 500, color: "var(--text-secondary)" }}>{emptyHero()}</p>
+      {list.activeCohorts.length === 0 && list.pausedCohorts.length === 0 && (
+        <div style={{ marginTop: 16 }}>
+          <Button variant="secondary" href="/app/courses">
+            Browse courses
+          </Button>
+        </div>
+      )}
     </Card>
   );
 
@@ -52,9 +83,9 @@ export default async function AppPage() {
       <ListRow
         key={entry.module.id}
         icon="check_circle"
-        iconColor={color}
+        iconColor={subjectColor(entry.cohort.subject)}
         label={`Week ${entry.module.weekNumber} — ${entry.module.title}`}
-        meta="Completed"
+        meta={meta(courseLabel(entry), "Completed")}
         trailing={
           <Badge tone="done" icon="check">
             Done
@@ -67,9 +98,13 @@ export default async function AppPage() {
       <ListRow
         key={entry.module.id}
         icon="play_circle"
-        iconColor={color}
+        iconColor={subjectColor(entry.cohort.subject)}
         label={`Week ${entry.module.weekNumber} — ${entry.module.title}`}
-        meta="Open — attempt not sent yet"
+        meta={meta(
+          courseLabel(entry),
+          entry.module.dueDate ? formatDue(entry.module.dueDate) : "Open — attempt not sent yet",
+        )}
+        trailing={entry.overdue ? <Badge tone="alert">Overdue</Badge> : undefined}
         href={`/app/modules/${entry.module.id}`}
       />
     );
@@ -80,7 +115,7 @@ export default async function AppPage() {
       icon="lock"
       iconColor="var(--state-locked)"
       label={`Week ${entry.module.weekNumber} — ${entry.module.title}`}
-      meta={formatUnlock(entry.module.releaseDate)}
+      meta={meta(courseLabel(entry), formatUnlock(entry.module.releaseDate))}
       chevron={false}
     />
   );
