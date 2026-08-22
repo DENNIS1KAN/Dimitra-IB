@@ -1,5 +1,7 @@
 "use client";
 
+import { Icon } from "@/components/lumen/core";
+
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
@@ -87,12 +89,7 @@ export function UploadDropzone({ moduleId }: { moduleId: string }) {
           fontFamily: "inherit",
         }}
       >
-        <span
-          className="material-symbols-rounded"
-          style={{ fontSize: 24, color: "var(--text-secondary)", fontVariationSettings: "'FILL' 1,'wght' 500" }}
-        >
-          {busy ? "hourglass_top" : "upload_file"}
-        </span>
+        <Icon name={busy ? "hourglass" : "upload"} size={24} color="var(--text-secondary)" />
         <span style={{ fontSize: "var(--text-body-sm)", fontWeight: 500, color: "var(--text-secondary)" }}>
           {busy ? "Uploading…" : "Drag files here or click to choose"}
         </span>

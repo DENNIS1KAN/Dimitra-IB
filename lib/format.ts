@@ -39,3 +39,11 @@ export const formatDue = (d: Date) => `Due ${dayFmt.format(d)} ${timeFmt.format(
 
 /** "Mon 17 Aug · 14:05" — message timestamps, tutor timezone. */
 export const formatDateTime = (d: Date) => `${dayFmt.format(d)} · ${timeFmt.format(d)}`;
+
+/** "Good morning" / "Good afternoon" / "Good evening" by the tutor's clock. */
+export const greeting = (now = new Date()) => {
+  const hour = Number(
+    new Intl.DateTimeFormat("en-GB", { timeZone: APP_TIMEZONE, hour: "numeric", hour12: false }).format(now),
+  );
+  return hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+};

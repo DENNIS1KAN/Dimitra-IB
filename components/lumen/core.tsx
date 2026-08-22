@@ -1,51 +1,21 @@
-// Lumen design-system primitives — exact recipes from DESIGN.md §5.
+// Lumen design-system primitives — recipes from DESIGN.md §5 (Phase 2
+// palette). Every colour is a token from app/globals.css.
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
+import { Icon } from "./icon";
 
-// --- Icon ------------------------------------------------------------------
-
-export function Icon({
-  name,
-  size = 20,
-  color,
-  filled = true,
-  weight = 500,
-  style,
-}: {
-  name: string;
-  size?: number;
-  color?: string;
-  filled?: boolean;
-  weight?: number;
-  style?: CSSProperties;
-}) {
-  return (
-    <span
-      className="material-symbols-rounded"
-      aria-hidden="true"
-      style={{
-        fontSize: size,
-        color: color || "inherit",
-        fontVariationSettings: `'FILL' ${filled ? 1 : 0},'wght' ${weight}`,
-        lineHeight: 1,
-        verticalAlign: "middle",
-        ...style,
-      }}
-    >
-      {name}
-    </span>
-  );
-}
+export { Icon };
 
 // --- Wordmark --------------------------------------------------------------
 
 const wordmarkSizes = {
-  sm: { fs: 22, ls: -0.66, by: 11 },
-  md: { fs: 28, ls: -0.84, by: 13 },
-  lg: { fs: 44, ls: -1.32, by: 16 },
-  xl: { fs: 88, ls: -2.64, by: 20 },
+  sm: { fs: 22, ls: -0.66, by: 11, dot: 7 },
+  md: { fs: 28, ls: -0.84, by: 13, dot: 9 },
+  lg: { fs: 44, ls: -1.32, by: 16, dot: 13 },
+  xl: { fs: 88, ls: -2.64, by: 20, dot: 24 },
 };
 
+/** "lumen" + the orange brand dot; `inverse` for the blue nav / indigo hero. */
 export function Wordmark({
   size = "md",
   byline = false,
@@ -71,14 +41,27 @@ export function Wordmark({
     >
       <span
         style={{
-          fontWeight: 700,
+          display: "inline-flex",
+          alignItems: "baseline",
+          gap: Math.round(s.dot * 0.5),
+          fontWeight: 800,
           fontSize: s.fs,
           letterSpacing: s.ls,
-          color: inverse ? "var(--text-inverse)" : "var(--text-primary)",
+          color: inverse ? "var(--text-inverse)" : "var(--text-display)",
         }}
       >
         lumen
-        <span style={{ color: "var(--accent-punctuation)" }}>.</span>
+        <span
+          aria-hidden="true"
+          style={{
+            display: "inline-block",
+            width: s.dot,
+            height: s.dot,
+            borderRadius: "50%",
+            background: "var(--accent-brand)",
+            transform: "translateY(-1px)",
+          }}
+        />
       </span>
       {byline && (
         <span
@@ -86,7 +69,7 @@ export function Wordmark({
             fontWeight: 500,
             fontSize: s.by,
             letterSpacing: "-0.02em",
-            color: inverse ? "rgba(255,255,255,.75)" : "var(--text-secondary)",
+            color: inverse ? "rgba(255,255,255,.75)" : "var(--text-tertiary)",
             marginTop: Math.round(s.by * 0.55),
           }}
         >
@@ -109,28 +92,24 @@ export function Avatar({
 }: {
   initials?: string;
   size?: keyof typeof avatarSizes;
-  tone?: "indigo" | "yellow" | "neutral";
+  /** indigo = Dimitra · neutral = students on light surfaces · inverse = on the blue nav */
+  tone?: "indigo" | "neutral" | "inverse";
   style?: CSSProperties;
 }) {
   const px = avatarSizes[size];
   const bg =
     tone === "indigo"
       ? "var(--accent-dimitra)"
-      : tone === "yellow"
-        ? "var(--color-sunbeam-yellow)"
+      : tone === "inverse"
+        ? "rgba(255,255,255,.2)"
         : "var(--color-linen)";
-  const fg =
-    tone === "yellow"
-      ? "var(--text-on-yellow)"
-      : tone === "indigo"
-        ? "var(--text-inverse)"
-        : "var(--text-secondary)";
+  const fg = tone === "neutral" ? "var(--text-primary)" : "var(--text-inverse)";
   return (
     <span
       style={{
         width: px,
         height: px,
-        borderRadius: "var(--radius-pills)",
+        borderRadius: "50%",
         background: bg,
         color: fg,
         display: "inline-flex",
@@ -154,18 +133,20 @@ export function Avatar({
 
 const badgeTones: Record<string, CSSProperties> = {
   neutral: {
-    background: "var(--color-page-cream)",
-    color: "var(--text-secondary)",
+    background: "var(--surface-page)",
+    color: "var(--text-tertiary)",
     border: "1px solid var(--border-card)",
   },
+  // "chip" in the mockup — blue tint + blue text
   new: {
-    background: "var(--color-sunbeam-yellow)",
-    color: "var(--text-on-yellow)",
+    background: "var(--surface-tint-blue)",
+    color: "var(--action-primary)",
     border: "1px solid transparent",
   },
+  // green as text is always Forest
   done: {
-    background: "rgba(0,97,239,.08)",
-    color: "var(--action-primary)",
+    background: "var(--surface-tint-green)",
+    color: "var(--text-success)",
     border: "1px solid transparent",
   },
   locked: {
@@ -174,15 +155,13 @@ const badgeTones: Record<string, CSSProperties> = {
     border: "1px solid transparent",
   },
   live: {
-    background: "var(--color-deep-indigo)",
+    background: "var(--surface-contemplative)",
     color: "var(--text-inverse)",
     border: "1px solid transparent",
   },
-  // Overdue (SPEC §15.1 soft deadline) — tinted from the error literal
-  // #c4320a that DESIGN.md §1 already documents for input errors.
   alert: {
     background: "rgba(196,50,10,.08)",
-    color: "#c4320a",
+    color: "var(--state-alert)",
     border: "1px solid transparent",
   },
 };
@@ -203,12 +182,12 @@ export function Badge({
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: 4,
+        gap: 5,
         borderRadius: "var(--radius-pills)",
         padding: "4px 10px",
         fontFamily: "var(--font-sans)",
         fontSize: "var(--text-caption)",
-        fontWeight: 500,
+        fontWeight: 700,
         letterSpacing: "var(--tracking-caption)",
         lineHeight: 1.4,
         whiteSpace: "nowrap",
@@ -216,14 +195,7 @@ export function Badge({
         ...style,
       }}
     >
-      {icon && (
-        <span
-          className="material-symbols-rounded"
-          style={{ fontSize: 13, fontVariationSettings: "'FILL' 1,'wght' 500" }}
-        >
-          {icon}
-        </span>
-      )}
+      {icon && <Icon name={icon} size={13} strokeWidth={2.6} />}
       {children}
     </span>
   );
@@ -238,9 +210,9 @@ const cardSurfaces: Record<string, CSSProperties> = {
     color: "var(--text-primary)",
   },
   cream: { background: "var(--surface-page)", border: "none", color: "var(--text-primary)" },
-  yellow: { background: "var(--surface-accent)", border: "none", color: "var(--text-on-yellow)" },
+  tint: { background: "var(--surface-tint-blue)", border: "none", color: "var(--text-primary)" },
   indigo: {
-    background: "var(--surface-contemplative)",
+    background: "var(--surface-hero)",
     border: "none",
     color: "var(--text-inverse)",
   },
@@ -263,7 +235,7 @@ export function Card({
     <div
       style={{
         borderRadius: featured ? "var(--radius-featured)" : "var(--radius-cards)",
-        padding: padding ?? (featured ? "32px" : "20px"),
+        padding: padding ?? (featured ? "28px" : "20px"),
         boxShadow: surface === "white" ? "var(--shadow-card)" : "none",
         boxSizing: "border-box",
         ...cardSurfaces[surface],
@@ -280,7 +252,7 @@ export function Card({
 const buttonSizes = {
   sm: { fontSize: "14px", padding: "8px 16px" },
   md: { fontSize: "16px", padding: "12px 24px" },
-  lg: { fontSize: "16px", padding: "14px 28px" },
+  lg: { fontSize: "16.5px", padding: "15px 30px" },
 };
 
 export function Button({
@@ -297,7 +269,8 @@ export function Button({
   children,
   style,
 }: {
-  variant?: "primary" | "dark" | "secondary" | "ghost";
+  /** primary = blue (standard) · cta = the ONE orange motivational CTA per view (ink text) */
+  variant?: "primary" | "cta" | "dark" | "secondary" | "ghost";
   size?: keyof typeof buttonSizes;
   fullWidth?: boolean;
   disabled?: boolean;
@@ -317,16 +290,11 @@ export function Button({
     ...(fullWidth ? { width: "100%" } : {}),
     ...style,
   };
+  const className = `lmn-btn lmn-btn-${variant}`;
   if (href && !disabled) {
     if (external) {
       return (
-        <a
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`lmn-btn lmn-btn-${variant}`}
-          style={css}
-        >
+        <a href={href} target="_blank" rel="noopener noreferrer" className={className} style={css}>
           {children}
         </a>
       );
@@ -336,13 +304,13 @@ export function Button({
     // (stamping PDFs, logging phantom download events) without a real click.
     if (href.startsWith("/api/")) {
       return (
-        <a href={href} className={`lmn-btn lmn-btn-${variant}`} style={css}>
+        <a href={href} className={className} style={css}>
           {children}
         </a>
       );
     }
     return (
-      <Link href={href} className={`lmn-btn lmn-btn-${variant}`} style={css}>
+      <Link href={href} className={className} style={css}>
         {children}
       </Link>
     );
@@ -350,7 +318,7 @@ export function Button({
   return (
     <button
       type={type}
-      className={`lmn-btn lmn-btn-${variant}`}
+      className={className}
       disabled={disabled}
       name={name}
       value={value}
@@ -376,7 +344,7 @@ export function IconButton({
   style,
 }: {
   icon: string;
-  variant?: "ghost" | "outline" | "dark";
+  variant?: "ghost" | "outline" | "dark" | "inverse";
   size?: keyof typeof iconButtonSizes;
   label: string;
   href?: string;
@@ -385,42 +353,26 @@ export function IconButton({
 }) {
   const px = iconButtonSizes[size];
   const css: CSSProperties = { width: px, height: px, ...style };
-  const glyph = (
-    <span
-      className="material-symbols-rounded"
-      style={{ fontSize: Math.round(px * 0.55), fontVariationSettings: "'FILL' 1,'wght' 500" }}
-    >
-      {icon}
-    </span>
-  );
+  const className = `lmn-iconbtn lmn-iconbtn-${variant}`;
+  const glyph = <Icon name={icon} size={Math.round(px * 0.55)} />;
   if (href) {
     // Same as Button: /api/ hrefs stay plain <a> so prefetch/RSC fetches
     // never execute the route handler.
     if (href.startsWith("/api/")) {
       return (
-        <a href={href} className={`lmn-iconbtn lmn-iconbtn-${variant}`} aria-label={label} style={css}>
+        <a href={href} className={className} aria-label={label} style={css}>
           {glyph}
         </a>
       );
     }
     return (
-      <Link
-        href={href}
-        className={`lmn-iconbtn lmn-iconbtn-${variant}`}
-        aria-label={label}
-        style={css}
-      >
+      <Link href={href} className={className} aria-label={label} style={css}>
         {glyph}
       </Link>
     );
   }
   return (
-    <button
-      type={type ?? "button"}
-      className={`lmn-iconbtn lmn-iconbtn-${variant}`}
-      aria-label={label}
-      style={css}
-    >
+    <button type={type ?? "button"} className={className} aria-label={label} style={css}>
       {glyph}
     </button>
   );
@@ -432,11 +384,14 @@ export function ProgressBar({
   value = 0,
   total = 100,
   label,
+  onDark = false,
   style,
 }: {
   value?: number;
   total?: number;
   label?: string;
+  /** On the indigo hero: translucent track, light label. */
+  onDark?: boolean;
   style?: CSSProperties;
 }) {
   const pct = Math.max(0, Math.min(100, total ? (value / total) * 100 : 0));
@@ -448,7 +403,7 @@ export function ProgressBar({
             fontSize: "var(--text-caption)",
             fontWeight: 500,
             letterSpacing: "var(--tracking-caption)",
-            color: "var(--text-tertiary)",
+            color: onDark ? "rgba(255,255,255,.75)" : "var(--text-tertiary)",
             marginBottom: 6,
           }}
         >
@@ -456,10 +411,15 @@ export function ProgressBar({
         </div>
       )}
       <div
+        role="progressbar"
+        aria-valuenow={Math.round(pct)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={label}
         style={{
-          height: 6,
+          height: onDark ? 8 : 6,
           borderRadius: "var(--radius-pills)",
-          background: "var(--color-linen)",
+          background: onDark ? "rgba(255,255,255,.18)" : "var(--color-linen)",
           overflow: "hidden",
         }}
       >
@@ -468,7 +428,7 @@ export function ProgressBar({
             height: "100%",
             width: `${pct}%`,
             borderRadius: "var(--radius-pills)",
-            background: "var(--action-primary)",
+            background: "var(--state-done)",
             transition: "width .4s ease",
           }}
         />

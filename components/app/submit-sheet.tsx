@@ -52,7 +52,7 @@ export function SubmitPanel({ moduleId }: { moduleId: string }) {
         title="Submit your attempt to unlock solutions"
         body="Upload a photo of your working — marks don't matter here, honest attempts do."
         action={
-          <Button variant="dark" onClick={() => setOpen(true)}>
+          <Button variant="cta" onClick={() => setOpen(true)}>
             Submit my attempt
           </Button>
         }

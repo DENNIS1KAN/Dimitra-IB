@@ -1,7 +1,7 @@
-// Lumen learning components — exact recipes from DESIGN.md §5.
+// Lumen learning components — recipes from DESIGN.md §5 (Phase 2 palette).
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
-import { Avatar, Badge, Button, Icon, Wordmark } from "./core";
+import { Avatar, Badge, Button, Icon } from "./core";
 
 // --- ListRow ---------------------------------------------------------------
 
@@ -31,10 +31,10 @@ export function ListRow({
         <span
           style={{
             display: "block",
-            fontSize: "var(--text-body)",
-            fontWeight: 500,
-            letterSpacing: "var(--tracking-body)",
-            color: "var(--text-primary)",
+            fontSize: "15.5px",
+            fontWeight: 700,
+            letterSpacing: "-0.2px",
+            color: "var(--text-display)",
           }}
         >
           {label}
@@ -43,7 +43,7 @@ export function ListRow({
           <span
             style={{
               display: "block",
-              fontSize: "var(--text-caption)",
+              fontSize: "13.5px",
               letterSpacing: "var(--tracking-caption)",
               color: "var(--text-tertiary)",
               marginTop: 2,
@@ -54,7 +54,7 @@ export function ListRow({
         )}
       </span>
       {trailing}
-      {chevron && <Icon name="chevron_right" size={20} color="var(--text-secondary)" />}
+      {chevron && <Icon name="chevron_right" size={20} color="var(--text-tertiary)" />}
     </>
   );
   if (href) {
@@ -76,8 +76,8 @@ export function ListRow({
 const lessonKinds = {
   video: { icon: "play_circle", color: "var(--action-primary)" },
   slides: { icon: "description", color: "var(--color-plum)" },
-  exercise: { icon: "edit_note", color: "var(--color-graphite)" },
-  solutions: { icon: "lock_open", color: "var(--color-deep-indigo)" },
+  exercise: { icon: "edit_note", color: "var(--text-primary)" },
+  solutions: { icon: "lock_open", color: "var(--text-heading)" },
 };
 
 export function LessonRow({
@@ -109,10 +109,10 @@ export function LessonRow({
         <span
           style={{
             display: "block",
-            fontSize: "var(--text-body)",
-            fontWeight: 500,
-            letterSpacing: "var(--tracking-body)",
-            color: locked ? "var(--text-tertiary)" : "var(--text-primary)",
+            fontSize: "15.5px",
+            fontWeight: 700,
+            letterSpacing: "-0.2px",
+            color: locked ? "var(--text-tertiary)" : "var(--text-display)",
           }}
         >
           {title}
@@ -121,7 +121,7 @@ export function LessonRow({
           <span
             style={{
               display: "block",
-              fontSize: "var(--text-caption)",
+              fontSize: "13.5px",
               letterSpacing: "var(--tracking-caption)",
               color: "var(--text-tertiary)",
               marginTop: 2,
@@ -136,7 +136,7 @@ export function LessonRow({
           Locked
         </Badge>
       ) : (
-        <Icon name="chevron_right" size={20} color="var(--text-secondary)" />
+        <Icon name="chevron_right" size={20} color="var(--text-tertiary)" />
       )}
     </>
   );
@@ -178,7 +178,7 @@ export function LockPanel({
   return (
     <div
       style={{
-        background: locked ? "var(--surface-page)" : "var(--surface-contemplative)",
+        background: locked ? "var(--surface-card)" : "var(--surface-hero)",
         border: locked ? "1px dashed var(--border-divider)" : "none",
         borderRadius: "var(--radius-featured)",
         padding: "24px",
@@ -192,15 +192,15 @@ export function LockPanel({
       <Icon
         name={locked ? "lock" : "lock_open"}
         size={28}
-        color={locked ? "var(--state-locked)" : "var(--color-sunbeam-yellow)"}
+        color={locked ? "var(--state-locked)" : "var(--state-done)"}
       />
       <h4
         style={{
           margin: "10px 0 6px",
           fontSize: "var(--text-subheading)",
-          fontWeight: 700,
+          fontWeight: 800,
           letterSpacing: "var(--tracking-subheading)",
-          color: locked ? "var(--text-primary)" : "var(--text-inverse)",
+          color: locked ? "var(--text-heading)" : "var(--text-inverse)",
         }}
       >
         {title}
@@ -212,7 +212,7 @@ export function LockPanel({
           fontSize: "var(--text-body-sm)",
           lineHeight: 1.5,
           letterSpacing: "var(--tracking-body-sm)",
-          opacity: locked ? 1 : 0.85,
+          opacity: locked ? 1 : 0.88,
         }}
       >
         {body}
@@ -221,7 +221,7 @@ export function LockPanel({
         <div style={{ marginTop: 16 }}>
           {action ??
             (cta && (
-              <Button variant={locked ? "dark" : "primary"} href={ctaHref}>
+              <Button variant={locked ? "dark" : "secondary"} href={ctaHref}>
                 {cta}
               </Button>
             ))}
@@ -231,7 +231,7 @@ export function LockPanel({
   );
 }
 
-// --- ModuleCard (current-week hero) ---------------------------------------
+// --- ModuleCard ("This week" feature card, mockup .feature) ---------------
 
 export function ModuleCard({
   week,
@@ -244,232 +244,109 @@ export function ModuleCard({
   href,
   style,
 }: {
+  /** Chip text, e.g. "This week" (course name is prefixed by the page when needed). */
   week: string;
   title: string;
   meta?: string;
   /** Soft-deadline line under the meta, e.g. "Due Sun 30 Aug 23:59" (SPEC §15.1). */
   due?: string;
   isNew?: boolean;
-  /** Extra badges after the New badge (e.g. Overdue). */
+  /** Extra badges after the chip (e.g. Overdue). */
   badges?: ReactNode;
   cta?: string;
   href: string;
   style?: CSSProperties;
 }) {
   return (
-    <div
-      style={{
-        background: "var(--surface-card)",
-        border: "1px solid var(--border-card)",
-        borderRadius: "var(--radius-featured)",
-        padding: "24px",
-        boxShadow: "var(--shadow-card)",
-        fontFamily: "var(--font-sans)",
-        boxSizing: "border-box",
-        ...style,
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-        <span
-          style={{
-            fontSize: "var(--text-caption)",
-            fontWeight: 700,
-            letterSpacing: ".02em",
-            textTransform: "uppercase",
-            color: "var(--text-tertiary)",
-          }}
-        >
-          {week}
-        </span>
-        {isNew && <Badge tone="new">New</Badge>}
-        {badges}
+    <section className="lmn-feature lmn-rise" aria-label="This week" style={style}>
+      <div style={{ flex: 1, minWidth: 240 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+          <span className="lmn-chip">{week}</span>
+          {isNew && <Badge tone="new">New</Badge>}
+          {badges}
+        </div>
+        <h2>{title}</h2>
+        {meta && (
+          <p
+            style={{
+              margin: due ? "0 0 4px" : "0 0 16px",
+              fontSize: "14.5px",
+              letterSpacing: "var(--tracking-body-sm)",
+              color: "var(--text-tertiary)",
+            }}
+          >
+            {meta}
+          </p>
+        )}
+        {due && (
+          <p
+            style={{
+              margin: "0 0 16px",
+              fontSize: "var(--text-caption)",
+              fontWeight: 600,
+              letterSpacing: "var(--tracking-caption)",
+              color: "var(--text-tertiary)",
+            }}
+          >
+            {due}
+          </p>
+        )}
       </div>
-      <h3
-        style={{
-          margin: "0 0 6px",
-          fontSize: "var(--text-heading-sm)",
-          fontWeight: 700,
-          letterSpacing: "var(--tracking-heading-sm)",
-          lineHeight: 1.25,
-          color: "var(--text-primary)",
-        }}
-      >
-        {title}
-      </h3>
-      {meta && (
-        <p
-          style={{
-            margin: due ? "0 0 4px" : "0 0 16px",
-            fontSize: "var(--text-body-sm)",
-            letterSpacing: "var(--tracking-body-sm)",
-            color: "var(--text-tertiary)",
-          }}
-        >
-          {meta}
-        </p>
-      )}
-      {due && (
-        <p
-          style={{
-            margin: "0 0 16px",
-            fontSize: "var(--text-caption)",
-            fontWeight: 500,
-            letterSpacing: "var(--tracking-caption)",
-            color: "var(--text-tertiary)",
-          }}
-        >
-          {due}
-        </p>
-      )}
-      <Button variant="primary" fullWidth href={href}>
+      {/* The one orange CTA on this view — ink text on orange. */}
+      <Button variant="cta" size="lg" href={href}>
         {cta}
+        <Icon name="arrow_right" size={18} strokeWidth={2.6} />
       </Button>
-    </div>
+    </section>
   );
 }
 
-// --- NoteCard (tutor note strip) ------------------------------------------
+// --- NoteCard (mockup .note — "Note from Dimitra") -------------------------
 
 export function NoteCard({
   note,
   date,
-  signature = "— Dimitra",
   compact = false,
   style,
 }: {
   note: ReactNode;
   date?: string;
-  signature?: string;
+  /** Kept for call-site compatibility; the mockup has one density. */
   compact?: boolean;
+  signature?: string;
   style?: CSSProperties;
 }) {
+  void compact;
   return (
-    <div
-      style={{
-        background: "var(--surface-accent)",
-        borderRadius: "var(--radius-featured)",
-        padding: compact ? "20px" : "24px",
-        fontFamily: "var(--font-sans)",
-        color: "var(--text-on-yellow)",
-        boxSizing: "border-box",
-        ...style,
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-        <Avatar size="sm" />
-        <span
-          style={{
-            fontSize: "var(--text-body-sm)",
-            fontWeight: 700,
-            letterSpacing: "var(--tracking-body-sm)",
-          }}
-        >
-          This week from Dimitra
-        </span>
-        {date && (
-          <span
-            style={{
-              marginLeft: "auto",
-              fontSize: "var(--text-caption)",
-              fontWeight: 500,
-              opacity: 0.7,
-            }}
-          >
-            {date}
-          </span>
-        )}
-      </div>
-      <p
-        style={{
-          margin: 0,
-          fontSize: compact ? "var(--text-body-sm)" : "var(--text-body)",
-          lineHeight: 1.5,
-          letterSpacing: "var(--tracking-body)",
-          fontWeight: 400,
-        }}
-      >
-        {note}
-      </p>
-      <div
-        style={{
-          marginTop: 12,
-          fontSize: "var(--text-body-sm)",
-          fontWeight: 500,
-          fontStyle: "italic",
-          opacity: 0.85,
-        }}
-      >
-        {signature}
-      </div>
-    </div>
-  );
-}
-
-// --- TopBar ----------------------------------------------------------------
-
-export function TopBar({
-  title,
-  backHref,
-  trailing,
-  style,
-}: {
-  title?: string;
-  backHref?: string;
-  trailing?: ReactNode;
-  style?: CSSProperties;
-}) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        padding: "14px 20px",
-        background: "var(--surface-page)",
-        fontFamily: "var(--font-sans)",
-        boxSizing: "border-box",
-        ...style,
-      }}
-    >
-      {backHref && (
-        <span style={{ marginLeft: -8, display: "inline-flex" }}>
-          <BackLink href={backHref} />
-        </span>
-      )}
-      {title ? (
-        <span
-          style={{
-            flex: 1,
-            fontSize: "var(--text-subheading)",
-            fontWeight: 700,
-            letterSpacing: "var(--tracking-subheading)",
-            color: "var(--text-primary)",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {title}
-        </span>
-      ) : (
-        <span style={{ flex: 1, display: "inline-flex" }}>
-          <Wordmark size="sm" />
-        </span>
-      )}
-      {trailing}
-    </div>
-  );
-}
-
-function BackLink({ href }: { href: string }) {
-  return (
-    <Link className="lmn-iconbtn" aria-label="Back" href={href} style={{ width: 40, height: 40 }}>
-      <span
-        className="material-symbols-rounded"
-        style={{ fontSize: 22, fontVariationSettings: "'FILL' 1,'wght' 500" }}
-      >
-        arrow_back
+    <section className="lmn-note lmn-rise" aria-label="Note from your tutor" style={style}>
+      <span className="lmn-note-mark">
+        <Icon name="chat" size={19} />
       </span>
+      <div style={{ minWidth: 0 }}>
+        <h2>Note from Dimitra{date ? ` · ${date}` : ""}</h2>
+        <p>{note}</p>
+      </div>
+    </section>
+  );
+}
+
+// --- BackLink (replaces TopBar: one header per page) -----------------------
+
+export function BackLink({ href, label = "Back" }: { href: string; label?: string }) {
+  return (
+    <Link
+      href={href}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        fontSize: "var(--text-body-sm)",
+        fontWeight: 700,
+        letterSpacing: "var(--tracking-body-sm)",
+      }}
+    >
+      <Icon name="arrow_back" size={16} strokeWidth={2.4} />
+      {label}
     </Link>
   );
 }
@@ -489,6 +366,7 @@ export function Toast({
 }) {
   return (
     <div
+      role="status"
       style={{
         display: "flex",
         alignItems: "center",
@@ -508,14 +386,14 @@ export function Toast({
           width: 32,
           height: 32,
           borderRadius: "var(--radius-pills)",
-          background: "var(--action-primary)",
+          background: "var(--state-done)",
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
           flexShrink: 0,
         }}
       >
-        <Icon name={icon} size={18} color="#fff" />
+        <Icon name={icon} size={18} color="#fff" strokeWidth={3} />
       </span>
       <span style={{ minWidth: 0 }}>
         <span
@@ -524,7 +402,7 @@ export function Toast({
             fontSize: "var(--text-body-sm)",
             fontWeight: 700,
             letterSpacing: "var(--tracking-body-sm)",
-            color: "var(--text-primary)",
+            color: "var(--text-display)",
           }}
         >
           {message}
@@ -546,3 +424,6 @@ export function Toast({
     </div>
   );
 }
+
+// Dimitra's avatar is still used by a few admin surfaces.
+export { Avatar };
