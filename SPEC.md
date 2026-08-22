@@ -279,12 +279,12 @@ A student nav (Home · Courses · Assignments · Messages · Sessions · Account
 ### 15.6 Milestones (one per session; verified, then pushed to origin)
 
 **M6 — Enrollments + catalog + deadlines.** Migration, gating rewrite + tests, courses page, request/approve, assignments page.
-Verify:
-- [ ] a two-course student sees both
-- [ ] a requested course shows no modules
-- [ ] pausing one enrollment hides only that course
-- [ ] overdue badge appears after due date and clears on submit
-- [ ] every pre-migration student still sees exactly what they saw before
+Verify (walked 2026-08-22 in Chrome at 390px and 1280px against the seeded dev DB — `docs/superpowers/plans/2026-08-22-m6-enrollments-catalog-deadlines.md`):
+- [x] a two-course student sees both
+- [x] a requested course shows no modules
+- [x] pausing one enrollment hides only that course
+- [x] overdue badge appears after due date and clears on submit
+- [x] every pre-migration student still sees exactly what they saw before
 
 **M7 — Messages.** Verify: both directions work; unread clears on open; student A can never read student B's thread (test the authz, not just the UI).
 

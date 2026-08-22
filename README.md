@@ -52,10 +52,12 @@ The embedded database is dev-only — production requires `DATABASE_URL`
 
 | Account | Username | Password | State |
 |---|---|---|---|
-| Admin (tutor) | `dimitra` | `lumen123` | full admin panel |
-| Student | `nikos` | `lumen123` | active, week 5 already submitted |
-| Student | `eleni` | `lumen123` | active, nothing submitted |
-| Student | `petros` | `lumen123` | **paused** → sees the Rule 3 screen |
+| Admin (tutor) | `dimitra` | `lumen123` | full admin panel; one pending join request to approve |
+| Student | `nikos` | `lumen123` | Chemistry HL (active), week 5 submitted; has **asked to join** Chemistry SL |
+| Student | `eleni` | `lumen123` | Chemistry HL **and** SL (two courses); week 5 is overdue |
+| Student | `petros` | `lumen123` | **paused** globally → sees the Rule 3 screen |
+
+A fourth, listed course (Mathematics AA SL 2027, no modules yet) sits in the catalog so "Ask to join" can be tried.
 
 Optional extras:
 
@@ -80,14 +82,20 @@ the video step the player shows a friendly "still processing" note.
 | `npm run db:generate` | generate a migration from `db/schema.ts` |
 | `npm run db:migrate` | apply migrations |
 | `npm run db:seed` | reset + seed demo data (writes placeholder PDFs to `./storage`) — stop `npm run dev` first (the embedded DB is single-process; a second opener is refused); a non-empty `DATABASE_URL` database additionally requires `npm run db:seed -- --force` |
-| `npm test` | vitest — the §5 gating rules + Bunny token math |
+| `npm test` | vitest — gating rules, soft deadlines, timezone math, the enrollments backfill migration, DB-backed query tests (in-memory PGlite), Bunny token math, stamping, auth |
 | `npm run typecheck` / `lint` | TypeScript strict / ESLint |
 
 ## How it hangs together
 
-- `lib/gating.ts` — Rules 1–3 as pure functions; **every** access decision
-  (pages *and* the material-bytes API) goes through them. Unit-tested.
-- `db/schema.ts` — the six SPEC §6 tables + `sessions`.
+- `lib/gating.ts` — Rules 1–3 as pure functions (Rule 1 is enrollment-based
+  since Phase 2 — SPEC §15.2 — plus the soft-deadline "overdue" rule);
+  **every** access decision (pages *and* the material-bytes API) goes
+  through them. `lib/access.ts` loads a student's enrollments per request.
+  Unit-tested, plus DB-backed query tests on an in-memory PGlite.
+- `db/schema.ts` — the six SPEC §6 tables + `sessions`, plus the Phase 2
+  tables (`enrollments`, `messages`, `settings`) and fields (cohort `blurb` /
+  `is_listed`, module `due_date`). Migration 0005 backfilled one active
+  enrollment per old `users.cohort_id` before dropping that column.
 - `lib/auth.ts` — hashed server-side sessions; `lib/password.ts` — scrypt
   password hashing. Sign-in is username + password; the tutor creates
   accounts and resets passwords in `/admin`. No email service anywhere.
@@ -97,9 +105,13 @@ the video step the player shows a friendly "still processing" note.
   creation, TUS upload signatures; local `<video>` streaming in dev.
 - `lib/stamp.ts` — every student PDF download gets "Prepared for {name} ·
   {email}" stamped on each page (pdf-lib).
-- `app/app/*` — student screens (mobile-first, 390px-checked, per DESIGN.md).
-- `app/admin/*` — students (create/pause/reset password), modules (create/edit/upload/
-  reorder), progress matrix. Function over beauty.
+- `app/app/*` — student screens (mobile-first, 390px-checked, per DESIGN.md):
+  `/app` dashboard (due dates, overdue badges), `/app/courses` (my courses +
+  catalog with "Ask to join"), `/app/assignments` (what I owe), module pages.
+- `app/admin/*` — students (create/pause/reset password, per-course
+  enrollments), join-request queue, courses (blurb + catalog listing),
+  modules (create/edit/upload/reorder, due dates), progress matrix.
+  Function over beauty.
 - `events` table is **write-only** in V1 (views, downloads, video progress
   every 30s) — parent digests and clinic briefs build on it later.
 

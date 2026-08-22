@@ -120,7 +120,7 @@ Interaction defaults: hover = `filter: brightness(.96)` (filled buttons) or back
 
 **Avatar** — circle, 700 initials at ≈ 38% of size; sizes sm 28 / md 36 / lg 48 / xl 72. Tones: indigo (default; `--accent-dimitra` bg, white text — Dimitra) · yellow (sunbeam bg, on-yellow text) · neutral (linen bg, `--text-secondary` — students).
 
-**Badge** — inline pill, 4×10 pad, caption 500, gap 4, optional 13px icon. Tones: neutral (cream bg + card border, text-secondary) · new (sunbeam bg, on-yellow) · done (`rgba(0,97,239,.08)` bg, action-primary) · locked (linen bg, text-tertiary) · live (deep-indigo bg, white).
+**Badge** — inline pill, 4×10 pad, caption 500, gap 4, optional 13px icon. Tones: neutral (cream bg + card border, text-secondary) · new (sunbeam bg, on-yellow) · done (`rgba(0,97,239,.08)` bg, action-primary) · locked (linen bg, text-tertiary) · live (deep-indigo bg, white) · **alert** (Phase 2 — `rgba(196,50,10,.08)` bg, `#c4320a` text, derived from the documented input-error literal; used only for "Overdue").
 
 **Card** — radius cards + 20px pad; featured → radius featured + 32px pad. Surfaces: white (card bg + card border + `--shadow-card`) · cream · yellow (on-yellow text) · indigo (`--surface-contemplative`, white text).
 
@@ -138,7 +138,7 @@ Interaction defaults: hover = `filter: brightness(.96)` (filled buttons) or back
 
 **LockPanel** — radius featured, 24px pad, centered text. **Locked:** cream bg, `1px dashed --border-divider`, 28px `lock` at `--state-locked`, title subheading 700 text-primary, body body-sm (max-width 400 centered), dark Button CTA. **Unlocked:** `--surface-contemplative` bg, no border, 28px `lock_open` at sunbeam-yellow, white title/body (body .85 opacity), primary Button CTA.
 
-**ModuleCard** (current-week hero) — white, card border, radius featured, 24px pad, `--shadow-card`. Header row: uppercase caption 700 `+.02em` week label at text-tertiary + optional New badge. Title heading-sm 700 (1.25). Meta body-sm text-tertiary (0 0 16px). Optional per-lesson ProgressBar *(deferred — §9 #8)*. Full-width primary Button CTA.
+**ModuleCard** (current-week hero) — white, card border, radius featured, 24px pad, `--shadow-card`. Header row: uppercase caption 700 `+.02em` week label at text-tertiary + optional New badge + (Phase 2) further badges, e.g. Overdue. Title heading-sm 700 (1.25). Meta body-sm text-tertiary (0 0 16px; 0 0 4px when a due line follows). (Phase 2) Optional due line: caption 500 text-tertiary, "Due Sun 30 Aug 23:59" (0 0 16px). Optional per-lesson ProgressBar *(deferred — §9 #8)*. Full-width primary Button CTA.
 
 **NoteCard** (tutor note strip) — sunbeam-yellow bg, radius featured, 24px pad (compact 20px), on-yellow text. Header: sm Avatar (indigo) + "This week from Dimitra" body-sm 700 + right-aligned date caption 500 at .7 opacity (12px below). Note body (compact: body-sm), 1.5. Signature "— Dimitra" body-sm 500 italic .85 opacity, 12px above.
 
@@ -146,7 +146,7 @@ Interaction defaults: hover = `filter: brightness(.96)` (filled buttons) or back
 
 **TopBar** — 14×20 pad, `--surface-page` bg, gap 12. Either back IconButton (`arrow_back`, −8px left margin) + subheading 700 title (ellipsized), or sm Wordmark; optional trailing node (avatar).
 
-**DeskNav** (desktop top bar) — white bg + bottom card border; inner 1040px, 14×32 pad; sm Wordmark, nav links body 500 8×12 (active text-primary, rest text-tertiary), trailing Avatar. V1: wordmark + avatar only (links belong to deferred screens).
+**DeskNav** (desktop top bar) — white bg + bottom card border; inner 1040px, 14×32 pad; sm Wordmark, nav links body 500 8×12 (active text-primary, rest text-tertiary), trailing Avatar. V1 shipped wordmark + avatar only. **Phase 2 (SPEC §15.4):** one header for every width — sm Wordmark · links (body-sm 500, 8×12, active = text-primary on a cream pill, rest text-tertiary): Home · Courses · Assignments (+ Messages · Sessions · Account as M7/M8 land) · sign-out IconButton · neutral Avatar. Under 1024px the link row wraps beneath the wordmark and scrolls sideways; there is no separate mobile header. Built once in `app/app/layout.tsx` (`components/app/student-nav.tsx`).
 
 **SessionCard, TabBar** — *specced-but-deferred*, recipes live in `design/extracted/design-system.js` (`SessionCard.jsx`, `TabBar.jsx`).
 
@@ -173,6 +173,12 @@ Desktop ≥1024: DeskNav shell (wordmark + avatar), 1040px, grid 1.6fr/1fr — l
 TopBar("Week {N}", back → /app) → h1 title heading-sm 700 (4px top) → badge row (gap 8): New badge "New this Monday" when just released; topic badge parked (§9 #14) → LessonRows: videos (`play_circle`, title, meta = material title context only; durations parked §9 #15), slides (`description`), exercises (`edit_note`) → solutions block (8px top): when unlocked, solutions LessonRow (`lock_open`) + unlocked LockPanel("Solutions unlocked", "Nice work…" body, primary "Open solutions"); when locked, LockPanel(title per SPEC copy **"Submit your attempt to unlock solutions"** — §9 #16, body "Upload a photo of your working — marks don't matter here, honest attempts do.", dark CTA "Submit my attempt").
 **Submit bottom sheet (M4):** scrim `rgba(45,44,43,.4)`, sheet white radius `24px 24px 0 0`, pad 24/20/28, gap 14: subheading 700 "Submit your attempt" → dashed upload button (cream bg, dashed divider border, radius cards, 22px pad, camera icon + body-sm 500 "Photo of your working") → optional TextArea("Anything you got stuck on? (optional)") → primary full-width "Send to Dimitra" → ghost full-width "Just mark as attempted" (SPEC's third mode; absent from mockup — §9 #9). Success: Toast("Attempt sent to Dimitra", "Solutions are unlocked below") top-centered, ~2.6s.
 
+### `/app/courses` — my courses + catalog (Phase 2, M6)
+h1 "Courses" heading 700 → section label "My courses" (body-sm 700) → one white Card (20px pad) per active/paused enrollment: name heading-sm 700 + trailing Badge (done "Enrolled" / locked "Paused"), caption subline "{subject} {level} · Class of {year}", then ProgressBar("{c} of {r} modules") + sm primary Button "Open modules" — or, when paused, body-sm "Paused — talk to Dimitra to continue…" → section "Catalog" → one Card per listed cohort the student isn't in: subheading 700 name, caption subline, body-sm blurb, sm dark Button "Ask to join" (a plain form → server action) or disabled secondary "Requested" + caption "Dimitra will confirm your place." Empty states are body-sm Cards. 20px gutters at 390px; desktop 1040px shell, two-column card grid.
+
+### `/app/assignments` — what I owe (Phase 2, M6)
+h1 "Assignments" → "To do": ListRows (`edit_note` at subject color, label "Week N — {title}", meta "{course} · Due …" or "No due date", trailing alert Badge "Overdue" when past due with no submission) ordered by due date → "Completed": ListRows (`check_circle`, meta "Sent {day}", done Badge, no chevron). Mobile stacks the sections; desktop uses the 1.6fr/1fr grid. The course name appears in metas only when the student has more than one active enrollment — a single-course student sees the V1 layout unchanged.
+
 ### Paused state (Rule 3) — full-screen, replaces everything under `/app`
 No mockup; compose: page-cream screen, centered column (24px pad): md Wordmark → locked-style LockPanel (cream, dashed border, `lock`) with title "Your access is paused", body "Message Dimitra to continue — your account and progress are safe." No nav, no content. Copy stays friendly per SPEC §5.
 
@@ -197,7 +203,7 @@ Wordmark sm + "Admin" label; zero custom design effort (SPEC §12). Tables, form
 - **Multi-class switcher** + Math AA SL content — one cohort per student (SPEC §6).
 - **Per-lesson done tracking** (LessonRow done state, ModuleCard "x of y done" bar) — V1 completion is submission-per-module.
 - **"Message Dimitra"** buttons — messaging is a non-goal (SPEC §3).
-- **DeskNav page links** (Home/Modules/Clinics/Progress/About) — V1 keeps wordmark + avatar.
+- **DeskNav page links** as mocked (Home/Modules/Clinics/Progress/About) — Phase 2 builds its own set (Home/Courses/Assignments/…, see §5 DeskNav); the mocked Clinics/About links stay parked.
 - Design-only content strings (Nikos, Week 6 buffers copy, clinic dates) — placeholder narrative, not product copy.
 
 ## 9. Conflicts (design vs SPEC) — SPEC wins on scope/behavior, design wins on skin
@@ -209,7 +215,7 @@ Wordmark sm + "Admin" label; zero custom design effort (SPEC §12). Tables, form
 | 3 | In-app About Dimitra (phone+desktop) + nav link | Tutor bio lives on public landing `/` §7 | Parked; content → landing |
 | 4 | Separate Home + Modules screens, 4-tab TabBar | One list route `/app` §7 | Merged /app, no tab bar (user-confirmed) |
 | 5 | "This week from Dimitra" note card | No note feature/field §6 | Skin `modules.description` (user-confirmed) |
-| 6 | Class switcher; student in Chemistry HL + Math AA SL | `users.cohort_id` — exactly one cohort §6 | Single cohort; subject color from cohort |
+| 6 | Class switcher; student in Chemistry HL + Math AA SL | `users.cohort_id` — exactly one cohort §6 | Single cohort; subject color from cohort. **Phase 2 (SPEC §15):** enrollments allow several cohorts — `/app` aggregates them (rows name their course), `/app/courses` lists them; still no class switcher |
 | 7 | Welcome = email + invite-code + "Sign in" | `/login` email→magic-link; `/invite/[token]` §7 | SPEC mechanics, Welcome skin; no code field |
 | 8 | Per-lesson done states, "2 of 5 done" progress | Completion = submission exists; events write-only §6 | Parked; binary module completion |
 | 9 | Submit sheet lacks "mark attempted" | Submission = file OR note OR "attempted" §6 | Add ghost "Just mark as attempted" |
@@ -224,3 +230,4 @@ Wordmark sm + "Admin" label; zero custom design effort (SPEC §12). Tables, form
 | 18 | Badge copy "New this Monday" | Releases aren't necessarily Mondays (release_date is free §6) | Built copy: "New this week" (released < 7 days) |
 | 19 | Welcome CTA "Sign in"; invite-only helper on the combined screen | §7 splits the screen: /login (email → link) + /invite/[token] | /login CTA reads "Email me a sign-in link" (honest about the magic link); the invite-only caption appears on both screens |
 | 20 | — (no landing mockup; SPEC §7 wants tutor bio + **photo**) | Photo required | Initials Avatar stands in until a real photo is provided (see README pre-launch); contact email is a placeholder |
+| 21 | No overdue / deadline state anywhere | SPEC §15.1 soft deadlines need an "Overdue" badge | New `alert` Badge tone derived from the documented `#c4320a` error literal (§5); M9 restyles it with the rest |

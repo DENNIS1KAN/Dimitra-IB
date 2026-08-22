@@ -1,6 +1,6 @@
 # Lumen — Project Report
 
-*A complete technical report on what has been built and how it works. Written to be handed to an AI assistant (or a new developer) as full project context. State of the codebase as of 2026-08-22, after a full adversarial code review, a fix pass (30 confirmed findings resolved), an owner-directed auth change (magic links replaced by username + password), and a follow-up hardening pass (login lockout, zod-backed id validation, expanded test coverage).*
+*A complete technical report on what has been built and how it works. Written to be handed to an AI assistant (or a new developer) as full project context. State of the codebase as of 2026-08-22, after a full adversarial code review, a fix pass (30 confirmed findings resolved), an owner-directed auth change (magic links replaced by username + password), a follow-up hardening pass (login lockout, zod-backed id validation, expanded test coverage), and **Phase 2 milestone M6** (enrollments + course catalog + soft deadlines — SPEC §15). M7 (messages), M8 (sessions, account password, submission viewer, settings) and M9 (restyle) are next, one per session.*
 
 ---
 
@@ -9,7 +9,7 @@
 Lumen (working title) is a **private learning platform for one IB tutor, Dimitra**. Her 1:1 chemistry students move to weekly pre-recorded modules — videos, slides, exercise sets — with worked solutions gated behind a submitted attempt. Payment happens offline (PayPal); the platform mirrors it with a single per-student toggle.
 
 - **Scale:** 10–30 students, one admin (the tutor), one tenant. Deliberately small and boring.
-- **Sources of truth in the repo:** `SPEC.md` (scope/behavior), `DESIGN.md` (visual tokens + component recipes), `CLAUDE.md` (working rules). SPEC §5's three gating rules are *the entire business logic*.
+- **Sources of truth in the repo:** `SPEC.md` (scope/behavior — §15 holds the owner's Phase 2 amendments and the M6–M9 milestones), `DESIGN.md` (visual tokens + component recipes), `CLAUDE.md` (working rules). SPEC §5's three gating rules (Rule 1 rewritten enrollment-based in §15.2) are *the entire business logic*.
 - **Audience note:** students are mostly minors; the app stores minimal PII (name, email, cohort — nothing else) and is meant to deploy EU-only.
 
 ## 2. Tech stack
@@ -23,7 +23,7 @@ Lumen (working title) is a **private learning platform for one IB tutor, Dimitra
 | Files | One `FileStorage` interface: local `./storage` folder in dev, Bunny Storage in production |
 | Video | Local `<video>` streaming in dev; Bunny Stream signed embeds in production (upload wiring deferred — see §11) |
 | PDF stamping | pdf-lib + @pdf-lib/fontkit with a bundled Noto Sans (Greek-capable) |
-| Tests | Vitest — 43 unit tests over the gating rules, timezone math, Bunny token math, PDF stamping (incl. Greek rendering), password hashing, login lockout, and id validation |
+| Tests | Vitest — 71 tests: the gating rules (enrollment-based Rule 1, soft deadlines), timezone math incl. the Sunday-23:59 due default, the enrollments backfill migration run against real SQL, DB-backed query tests on an in-memory PGlite (two-course / requested / paused / overdue scenarios), Bunny token math, PDF stamping (incl. Greek rendering), password hashing, login lockout, id validation |
 
 Every vendor dependency is env-switched; a fresh clone needs **only Node.js** (`npm install && npm run dev`).
 
@@ -40,10 +40,12 @@ Seeded accounts — **the password for every account is `lumen123`**:
 
 | Account | Username | State |
 |---|---|---|
-| Admin (tutor) | `dimitra` | full admin panel |
-| Student | `nikos` | active, already submitted week 5 |
-| Student | `eleni` | active, nothing submitted |
-| Student | `petros` | **paused** → sees the Rule 3 screen |
+| Admin (tutor) | `dimitra` | full admin panel; one pending join request (nikos → Chemistry SL) |
+| Student | `nikos` | Chemistry HL active, week 5 submitted; has asked to join Chemistry SL |
+| Student | `eleni` | Chemistry HL **and** SL active (two courses); week 5 overdue |
+| Student | `petros` | **paused** globally → sees the Rule 3 screen |
+
+A listed Mathematics AA SL 2027 cohort (no modules) sits in the catalog for "Ask to join".
 
 Sign-in: username + password on `/login`.
 
@@ -58,17 +60,21 @@ The tutor controls access with exactly two levers:
 
 Three rules, implemented as pure functions in `lib/gating.ts` and unit-tested:
 
-1. **Module visibility** (`moduleState(module, student, now)` → `"open" | "locked-teaser" | "invisible"`): a module is **open** iff same cohort AND `release_date <= now` AND the student is active. Future modules in the student's cohort render as **locked teasers** ("Unlocks {date}"). Other cohorts' modules are **invisible** — never rendered, even by direct URL (pages 404).
+1. **Module visibility** (`moduleState(module, access, now)` → `"open" | "locked-teaser" | "invisible"`): since M6 (SPEC §15.2) a module is **open** iff the student has an **active enrollment** in its cohort AND `release_date <= now` AND `users.active`. Future modules in actively enrolled cohorts render as **locked teasers** ("Unlocks {date}"). Everything else — no enrollment, a *requested* / *paused* / *ended* enrollment, another cohort — is **invisible**: never rendered, 404 by direct URL. A paused *enrollment* hides only that course (the course card says "Paused — talk to Dimitra"); `users.active = false` still hides everything (Rule 3). `lib/access.ts` loads the enrollment list once per request and every consumer passes it in.
+   - **Soft deadline** (`isOverdue(dueDate, hasSubmission, now)`, SPEC §15.1): a released module is *overdue* iff it has a due date that has passed and no submission — a badge only; submitting is never blocked and clears it.
 2. **Solutions gating** (`solutionsVisible(hasSubmission)`): materials of type `solutions` stay hidden until the student has *any* submission for that module (a file, a note, or a bare "I attempted this" all count). The same fact marks the module complete.
 3. **Paused behavior** (`isPaused`): an inactive student sees only a friendly full-screen "Your access is paused" state. No lists, no content; data preserved; unpausing restores everything instantly.
 
 **Enforcement is server-side everywhere**: every student page *and* every byte-serving API route re-derives these rules per request (queries additionally filter by cohort in SQL, so foreign modules never leave the database layer). A verified review specifically hunted for bypasses (direct storage keys, ID enumeration, solutions via direct URL, unreleased-module metadata leaks) and found none.
 
-## 5. Data model (`db/schema.ts`, 7 tables)
+## 5. Data model (`db/schema.ts`, 10 tables)
 
-- **`cohorts`** — name, subject, level (HL/SL), exam year.
-- **`users`** — role (`admin`/`student`), name, `username` (unique, login identity), `password_hash` (scrypt), `failed_logins` + `locked_until` (brute-force lockout state), email (unique — contact + PDF stamping only, no auth role), `cohort_id`, `active` flag (Lever 1), `last_seen_at` (stamped on sign-in, refreshed on activity), `created_at`.
-- **`modules`** — cohort, week number (unique per cohort), title, description ("your weekly note to students"), `release_date` (Lever 2).
+- **`cohorts`** — name, subject, level (HL/SL), exam year; Phase 2: `blurb` + `is_listed` (catalog fields — listed cohorts appear on `/app/courses`).
+- **`users`** — role (`admin`/`student`), name, `username` (unique, login identity), `password_hash` (scrypt), `failed_logins` + `locked_until` (brute-force lockout state), email (unique — contact + PDF stamping only, no auth role), `active` flag (Lever 1, the global master switch), `last_seen_at` (stamped on sign-in, refreshed on activity), `created_at`. *`cohort_id` was removed in M6 — membership lives in `enrollments`.*
+- **`enrollments`** (M6) — student × cohort (unique pair), `status` `requested | active | paused | ended`, `requested_at`, `decided_at`. Migration `0005` created one *active* row per pre-existing `users.cohort_id` (dated to the account's creation) before dropping that column; the backfill is tested against real SQL in `db/migrate.test.ts`. Lifecycle: student asks → `requested` → admin approves (`active`) or declines (row deleted); admin can pause / resume / end; an ended student may ask again.
+- **`modules`** — cohort, week number (unique per cohort), title, description ("your weekly note to students"), `release_date` (Lever 2); Phase 2: nullable `due_date` (soft deadline; the admin form defaults it to the Sunday 23:59 after release in the tutor's timezone — `defaultDueLocal` in `lib/tz.ts`).
+- **`messages`** (schema only until M7) — student, sender (`student`/`tutor`), body, `created_at`, `read_at`; one thread per student.
+- **`settings`** (schema only until M8) — key/value: `booking_url`, `clinic_text`.
 - **`materials`** — module, type (`video`/`slides`/`exercises`/`solutions`), title, `storage_key`, sort order.
 - **`submissions`** — student × module (unique pair), optional uploaded file key, optional note, timestamp.
 - **`events`** — **write-only analytics** in V1: `view`, `download`, `video_progress` (every 30s from the player). Parent digests / clinic briefs build on this later.
@@ -91,7 +97,11 @@ Username + password, hand-rolled and minimal (an owner-directed substitution rec
 
 ## 7. Student experience (`app/app/*`, mobile-first at 390px)
 
-- **`/app`** — module list for the student's cohort: open modules, locked teasers with unlock dates, completion state (has a submission). Paused students see only the Rule 3 screen.
+One header for every width (`app/app/layout.tsx`) carries the student nav — Home · Courses · Assignments (Messages / Sessions / Account arrive with M7/M8) — mounted once; under 1024px the links wrap to a second row.
+
+- **`/app`** — module list across every **active enrollment**: open modules, locked teasers with unlock dates, completion state (has a submission), the hero's due date, and an **Overdue** badge on rows past their due date with no submission. With a single enrollment the page is exactly the V1 layout; with several, rows name their course. The empty hero distinguishes "paused", "request pending", "not enrolled" (with a link to the catalog) and "nothing released yet". Paused students (`users.active = false`) see only the Rule 3 screen.
+- **`/app/courses`** (M6) — *My courses* (one card per active/paused enrollment with progress, or "Paused — talk to Dimitra") and the *Catalog* of listed cohorts with **Ask to join** (a plain form → `requestToJoin` server action; the button becomes "Requested"). Only listed cohorts can be requested, even by a tampered POST.
+- **`/app/assignments`** (M6) — every open module across enrollments ordered by due date with overdue badges ("what do I owe"), then the completed ones with their sent date.
 - **`/app/modules/[id]`** — one module: the tutor's weekly note, materials list (videos link to the watch page; slides/exercises view inline or download), the submission form, and the solutions panel (locked until an attempt is submitted, with "Submit your attempt to unlock solutions").
 - **`/app/modules/[id]/watch/[materialId]`** — video player page. Dev: local `<video>` streaming from `/api/materials/{id}` with proper byte-range support. Prod (Bunny configured): a signed Bunny Stream embed. Logs one `view` event per visit and `video_progress` every 30 seconds (fire-and-forget; can never break playback).
 - **Submissions** — a photo/PDF upload (25MB cap, extension whitelist), a note, or a bare "mark attempted"; unique per student × module, enforced by DB index with a friendly 409 on races; files are stored under per-attempt keys so nothing can be overwritten, and are **write-only** (never served back — no IDOR surface).
@@ -101,10 +111,12 @@ Desktop is a responsive layout of the same routes, not separate pages. All UI co
 
 ## 8. Admin experience (`app/admin/*` — "function over beauty", SPEC §12)
 
-- **`/admin`** — students table: name + contact email, username, cohort, active toggle (Lever 1 — one click pauses/unpauses), honest "last seen" (survives sign-out; reflects activity), inline password-reset per row; plus account creation and cohort creation forms.
-- **`/admin/modules`** — modules grouped by cohort; create form (cohort, week number, release date-time, title, description). Week-taken conflicts (unique per cohort) return a friendly banner **and preserve everything typed**.
-- **`/admin/modules/[id]`** — edit module details; drag-and-drop material upload (`components/admin/upload-dropzone.tsx` → `/api/admin/materials`); rename, reorder (self-healing renumber in a transaction), and delete materials (with a confirmation dialog — delete removes the DB row, the stored file, and cascades event history).
-- **Progress matrix** — per-student × per-module completion, built from submissions.
+- **`/admin`** — students table: name + contact email, username, **courses** (each enrollment with its status and Pause / Resume / End, plus an "Add to course…" select), global active toggle (Lever 1 — one click pauses/unpauses everything), honest "last seen" (survives sign-out; reflects activity), inline password-reset per row; plus the account-creation form (its cohort becomes the first active enrollment, created in one transaction with the user).
+- **`/admin/requests`** (M6) — the join-request queue: approve (→ active enrollment) or decline (row deleted; the student may ask again). The nav label shows the pending count.
+- **`/admin/courses`** (M6) — per cohort: blurb + "Listed in the student catalog" checkbox, member counts; cohort creation moved here (new courses start unlisted).
+- **`/admin/modules`** — modules grouped by cohort with release and due badges; create form (cohort, week number, release date-time, **due date** — a client pair `components/admin/release-due-fields.tsx` pre-fills the due date with the Sunday 23:59 after release until the tutor edits it; empty = no due date, title, description). Week-taken conflicts (unique per cohort) return a friendly banner **and preserve everything typed**.
+- **`/admin/modules/[id]`** — edit module details incl. due date; drag-and-drop material upload (`components/admin/upload-dropzone.tsx` → `/api/admin/materials`); rename, reorder (self-healing renumber in a transaction), and delete materials (with a confirmation dialog — delete removes the DB row, the stored file, and cascades event history).
+- **Progress matrix** — per-student × per-module completion, built from submissions; rows come from active + paused enrollments (paused ones marked). Opening a submission from a cell is M8.
 - All release-date inputs and displayed dates speak the **tutor's timezone** (`APP_TIMEZONE`, default `Europe/Athens`) via `lib/tz.ts`, not the server's — datetime-local round-trips are DST-correct and tested.
 
 ## 9. File storage (`lib/storage.ts`)
@@ -148,7 +160,7 @@ interface FileStorage {
 | `/api/events` | POST | student session | video-progress capture (write-only analytics) |
 | `/api/admin/materials` | POST | admin session | dropzone upload → storage + materials row |
 
-Everything else is server components + server actions (sign-in, sign-out, all admin mutations). All ID inputs are shape-validated (`lib/validate.ts`, zod-backed `isUuid`, unit-tested) before touching uuid columns — malformed IDs return clean 404/400s.
+Everything else is server components + server actions (sign-in, sign-out, all admin mutations, and the student's `requestToJoin`). Admin actions go through `requireAdmin()`, student actions through `requireStudent()` (`lib/student.ts`). All ID inputs are shape-validated (`lib/validate.ts`, zod-backed `isUuid`, unit-tested) before touching uuid columns — malformed IDs return clean 404/400s.
 
 ## 13. Dev database bootstrap (`scripts/ensure-dev-db.ts`)
 
@@ -163,7 +175,8 @@ Runs as `predev` before every `npm run dev`:
 
 ## 14. Quality status & history
 
-- **Checks:** TypeScript strict clean, ESLint clean, **43/43 unit tests pass** (gating rules incl. exact-release-time and paused edges, timezone round-trips + DST, Monday-anchor boundaries, Bunny token formulas, PDF stamping incl. a test that "Νίκος Καρράς" renders through the embedded NotoSans subset, password hashing round-trips + the dummy-hash timing property + the shared min-8 rule, login-lockout policy, and uuid shape validation). `npm run build` passes with zero env vars.
+- **Checks:** TypeScript strict clean, ESLint clean, **71/71 tests pass** (gating rules incl. every enrollment status, exact-release-time and paused edges, the soft-deadline rule; timezone round-trips + DST, Monday-anchor boundaries, the Sunday-23:59 due default; the 0005 backfill migration executed against real SQL; DB-backed query tests on an in-memory PGlite — two-course, requested, paused-one-course, globally paused, overdue-clears-on-submit, catalog/assignments shapes; Bunny token formulas; PDF stamping incl. a test that "Νίκος Καρράς" renders through the embedded NotoSans subset; password hashing round-trips + the dummy-hash timing property + the shared min-8 rule; login-lockout policy; uuid shape validation). `npm run build` passes with zero env vars.
+- **M6 verification (2026-08-22):** the SPEC §15.6 checklist was walked in headless Chrome at 390px and 1280px against the seeded dev DB (35 scripted checks): a two-course student sees both courses; a requested course shows no modules; pausing one enrollment hides only that course (direct URL → 404); the overdue badge appears after the due date and clears on submit; a single-enrollment student's dashboard is unchanged from V1; approve/decline, the due-date default, and a tampered "Ask to join" for an unlisted cohort (creates nothing) all behaved.
 - **Review:** a full adversarial review (12 finder agents + 9 verifier agents, with empirical reproductions) confirmed 30 findings; **all 30 were fixed** in 14 commits (auth hardening, stamping fixes, uuid guards, ranged serving, admin UX safeguards, the dev-bootstrap rework, docs corrections, and the Next 16 `middleware → proxy` migration). The fixes were then verified end-to-end over HTTP: real sign-in flow, stamped downloads, 206/416 range behavior, cooldown, reseed-guard refusal, and the no-env production build.
 - **Verified-clean areas worth knowing:** session tokens hashed at rest; no open redirects; correct cookie flags; CSRF covered by Next's origin checks + Lax cookies; no gating bypasses; storage traversal-safe; no N+1 query patterns; events writes can never surface user-facing errors. (The magic-link findings from the review were fixed and then superseded entirely by the password switch.)
 
@@ -180,12 +193,14 @@ Runs as `predev` before every `npm run dev`:
 SPEC.md  DESIGN.md  CLAUDE.md          # the three sources of truth
 PROJECT_REPORT.md                      # this report
 design/                                # approved mockup sources
-db/                                    # schema.ts, migrations/, seed-data.ts
-lib/                                   # gating, auth, password, lockout, storage, video, stamp, tz, queries, validate
+db/                                    # schema.ts, migrations/ (0005 = enrollments backfill), seed-data.ts, migrate.test.ts
+lib/                                   # gating, access, student, auth, password, lockout, storage, video, stamp, tz, queries, validate
+lib/testing/memory-db.ts               # in-memory PGlite seam for DB-backed tests
+docs/superpowers/plans/                # per-milestone implementation plans
 app/                                   # / (landing) · /login
                                        # /app/* (student) · /admin/* (tutor) · /api/*
 components/lumen/                      # design system from DESIGN.md recipes
-components/app/  components/admin/     # feature components (player, dropzone, confirm)
+components/app/  components/admin/     # feature components (student nav, player, dropzone, confirm, release+due fields)
 scripts/ensure-dev-db.ts               # predev bootstrap (embedded DB, migrate, seed)
 assets/fonts/                          # bundled Noto Sans (OFL) for PDF stamping
 proxy.ts                               # cookie-presence gate (Next 16 proxy convention)
