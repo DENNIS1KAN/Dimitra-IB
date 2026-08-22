@@ -11,7 +11,10 @@ const TYPE_OPTIONS = [
 ];
 
 // Drag-and-drop material upload (SPEC §7). Dev mode lands in ./storage;
-// with Bunny configured the same endpoint forwards to the vendor.
+// with Bunny Storage configured the same endpoint forwards file bytes
+// there. Video does NOT reach Bunny Stream this way — wiring this dropzone
+// to the TUS handshake (lib/video.ts createBunnyVideo +
+// bunnyUploadSignature) is the documented M3 finishing step.
 export function UploadDropzone({ moduleId }: { moduleId: string }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);

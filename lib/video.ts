@@ -1,8 +1,10 @@
 import { createHash } from "node:crypto";
 
 // Bunny Stream helpers (SPEC §9): one library, token authentication ON.
-// Playback URLs are signed server-side and expire; pasting the embed URL
-// into another browser fails (M3 verify). Dev mode (no env vars) streams
+// Playback URLs are signed server-side and expire. Bunny's embed-token
+// scheme supports no session/IP binding, so within its TTL the URL is a
+// bearer URL — the short TTL below is what makes a pasted link die in any
+// realistic sharing scenario (M3 verify). Dev mode (no env vars) streams
 // local files via /api/materials instead.
 
 export const bunnyConfigured = () =>
@@ -16,8 +18,12 @@ export function bunnyEmbedToken(tokenKey: string, videoId: string, expiresUnix: 
   return createHash("sha256").update(`${tokenKey}${videoId}${expiresUnix}`).digest("hex");
 }
 
-/** Signed iframe src for a Bunny-hosted video, valid for `ttlSeconds`. */
-export function signedEmbedUrl(videoId: string, ttlSeconds = 3600): string {
+/**
+ * Signed iframe src for a Bunny-hosted video. The token only gates the
+ * iframe load, so the TTL can be short — 5 minutes covers the page opening
+ * its player while keeping a copied URL near-useless to share.
+ */
+export function signedEmbedUrl(videoId: string, ttlSeconds = 300): string {
   const library = process.env.BUNNY_STREAM_LIBRARY_ID;
   const tokenKey = process.env.BUNNY_STREAM_TOKEN_KEY;
   if (!library || !tokenKey) throw new Error("Bunny Stream is not configured");

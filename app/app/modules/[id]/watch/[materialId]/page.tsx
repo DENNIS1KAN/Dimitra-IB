@@ -26,7 +26,12 @@ export default async function WatchPage({
   await logMaterialEvent(user.id, material.id, "view");
 
   const { bunnyConfigured, signedEmbedUrl } = await import("@/lib/video");
-  const bunny = bunnyConfigured();
+  const { isUuid } = await import("@/lib/validate");
+  // Bunny Stream videos are stored by GUID; dropzone uploads land in file
+  // storage under path-shaped keys (modules/…). Signing a path into the
+  // embed would 404 inside the player, so those fall back to the local
+  // player until they're migrated to Bunny Stream (M3 finishing step).
+  const bunny = bunnyConfigured() && isUuid(material.storageKey);
 
   return (
     <main style={{ maxWidth: 720, margin: "0 auto" }}>
@@ -41,8 +46,9 @@ export default async function WatchPage({
           }}
         >
           {bunny ? (
-            // Bunny embed with signed, expiring token (M3) — built server-side,
-            // tied to this logged-in request; pasting it elsewhere fails.
+            // Bunny embed with a signed short-TTL token (M3), built
+            // server-side. Bunny tokens can't be session-bound, so the short
+            // expiry is what makes a copied URL die quickly elsewhere.
             <iframe
               src={signedEmbedUrl(material.storageKey)}
               style={{ width: "100%", height: "100%", border: 0 }}
