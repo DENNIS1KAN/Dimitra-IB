@@ -4,7 +4,7 @@
 // so the "other cohort's modules invisible even by direct URL" checklist
 // item can actually be walked. Callable from the CLI seed and from the
 // dev-db bootstrap.
-import { parseLocalInTz } from "../lib/tz";
+import { mostRecentMondayAt } from "../lib/tz";
 import type { Db } from "./index";
 import {
   cohorts,
@@ -20,17 +20,8 @@ import {
 const DAY = 24 * 60 * 60 * 1000;
 
 export async function runSeed(db: Db, log: (msg: string) => void = console.log) {
-  const now = Date.now();
   // Most recent Monday 09:00 in the tutor's timezone that is already past.
-  const monday = (() => {
-    const d = new Date(now);
-    const dow = (d.getDay() + 6) % 7; // 0 = Monday
-    const mondayDate = new Date(d.getTime() - dow * DAY);
-    const iso = mondayDate.toISOString().slice(0, 10);
-    let t = parseLocalInTz(`${iso}T09:00`).getTime();
-    if (t > now) t -= 7 * DAY;
-    return t;
-  })();
+  const monday = mostRecentMondayAt("09:00").getTime();
 
   log("[seed] wiping…");
   await db.delete(events);

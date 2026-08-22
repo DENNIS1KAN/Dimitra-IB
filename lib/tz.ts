@@ -55,3 +55,30 @@ export function toLocalInputValue(date: Date, timeZone: string = APP_TIMEZONE): 
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${w.y}-${pad(w.mo)}-${pad(w.d)}T${pad(w.h)}:${pad(w.mi)}`;
 }
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Instant of the most recent Monday at wall-clock `time` ("HH:mm") in
+ * `timeZone` that is at or before `now`. The weekday and calendar date are
+ * derived in `timeZone` (never the server's), and the week step is
+ * calendar-based, so DST transitions cannot shift the result off Monday or
+ * off `time`.
+ */
+export function mostRecentMondayAt(
+  time: string,
+  now: Date = new Date(),
+  timeZone: string = APP_TIMEZONE,
+): Date {
+  const w = wallParts(now, timeZone);
+  // The tz's calendar date pinned to UTC midnight: pure date arithmetic on it
+  // is DST-free, and getUTCDay() gives that calendar date's weekday.
+  const todayUtc = Date.UTC(w.y, w.mo - 1, w.d);
+  const daysSinceMonday = (new Date(todayUtc).getUTCDay() + 6) % 7;
+  const isoDate = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+  const at = (ms: number) => parseLocalInTz(`${isoDate(ms)}T${time}`, timeZone);
+  const candidate = at(todayUtc - daysSinceMonday * DAY_MS);
+  return candidate.getTime() > now.getTime()
+    ? at(todayUtc - (daysSinceMonday + 7) * DAY_MS)
+    : candidate;
+}
