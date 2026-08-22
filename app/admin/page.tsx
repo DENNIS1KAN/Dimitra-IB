@@ -60,15 +60,18 @@ export default async function AdminStudents({
         Students
       </h1>
 
-      {ok === "invited" && link && (
+      {ok === "invited" && (
         <Card padding="16px" style={{ borderColor: "var(--action-primary)" }}>
-          <p style={{ margin: "0 0 6px", fontSize: "var(--text-body-sm)", fontWeight: 700 }}>
-            Invite created — the link was also printed to the server console
-            {process.env.RESEND_API_KEY ? " and emailed" : ""}.
+          <p style={{ margin: link ? "0 0 6px" : 0, fontSize: "var(--text-body-sm)", fontWeight: 700 }}>
+            {link
+              ? "Invite created — the link was also printed to the server console."
+              : "Invite created and emailed to the student."}
           </p>
-          <code style={{ fontSize: 12, wordBreak: "break-all", color: "var(--text-secondary)" }}>
-            {link}
-          </code>
+          {link && (
+            <code style={{ fontSize: 12, wordBreak: "break-all", color: "var(--text-secondary)" }}>
+              {link}
+            </code>
+          )}
         </Card>
       )}
       {error && (

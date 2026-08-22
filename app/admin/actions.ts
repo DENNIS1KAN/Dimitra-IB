@@ -48,8 +48,14 @@ export async function createStudentAndInvite(formData: FormData) {
   const link = await createMagicLink(student.id, "invite");
   await deliverMagicLink(email, link);
   revalidatePath("/admin");
-  // Dev convenience: surface the link in the UI as well as the console.
-  redirect(`/admin?ok=invited&link=${encodeURIComponent(link)}`);
+  // Console mode only: surface the link in the UI as well as the console.
+  // With email configured the raw single-use token must never ride in a GET
+  // query string (access logs, browser history).
+  redirect(
+    process.env.RESEND_API_KEY
+      ? "/admin?ok=invited"
+      : `/admin?ok=invited&link=${encodeURIComponent(link)}`,
+  );
 }
 
 export async function reinviteStudent(formData: FormData) {
@@ -62,7 +68,11 @@ export async function reinviteStudent(formData: FormData) {
   if (!student) redirect("/admin?error=missing");
   const link = await createMagicLink(student.id, "invite");
   await deliverMagicLink(student.email, link);
-  redirect(`/admin?ok=invited&link=${encodeURIComponent(link)}`);
+  redirect(
+    process.env.RESEND_API_KEY
+      ? "/admin?ok=invited"
+      : `/admin?ok=invited&link=${encodeURIComponent(link)}`,
+  );
 }
 
 /** Lever 1 (SPEC §5): the active flag mirrors PayPal reality. */

@@ -33,15 +33,45 @@ export async function createMagicLink(
 
 /**
  * Dev mode (SPEC §9): magic links print to the server console — no email
- * service needed. Prod (M3): Resend, switched purely on RESEND_API_KEY.
+ * service needed. Prod (M3): Resend, switched on RESEND_API_KEY — and prod
+ * refuses to fall back, because "printing" there means writing live
+ * session-granting URLs into the hosting platform's logs while the UI tells
+ * the student their email is on its way.
  */
 export async function deliverMagicLink(email: string, link: string) {
   if (process.env.RESEND_API_KEY) {
     const { sendMagicLinkEmail } = await import("./email");
     await sendMagicLinkEmail(email, link);
+  } else if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "RESEND_API_KEY is not set. The console fallback is dev-only — " +
+        "production must email magic links (see .env.example).",
+    );
   } else {
     console.log(`\n[lumen] magic link for ${email}:\n${link}\n`);
   }
+}
+
+/**
+ * True if the user already received a login link in the last `windowMs` —
+ * the one-query rate limit that stops the login form being used to bomb a
+ * student's inbox. login_tokens has no createdAt; recency derives from
+ * expiresAt − TTL.
+ */
+export async function hasRecentLoginToken(userId: string, windowMs = 60_000): Promise<boolean> {
+  const createdAfter = new Date(Date.now() - windowMs + LOGIN_TOKEN_TTL_MS);
+  const [row] = await db
+    .select({ token: loginTokens.token })
+    .from(loginTokens)
+    .where(
+      and(
+        eq(loginTokens.userId, userId),
+        isNull(loginTokens.usedAt),
+        gt(loginTokens.expiresAt, createdAfter),
+      ),
+    )
+    .limit(1);
+  return row !== undefined;
 }
 
 /** Consumes a login token (single use). Returns its row or null. */
