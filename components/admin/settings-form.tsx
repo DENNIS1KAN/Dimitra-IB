@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/lumen/core";
 import { Input, TextArea } from "@/components/lumen/forms";
@@ -20,6 +20,9 @@ function SaveButton() {
   );
 }
 
+// Controlled fields on purpose: React resets uncontrolled form fields after
+// every action result, which would wipe the clinic note when the URL is
+// rejected. The server (lib/settings) is the only enforcer.
 export function SettingsForm({
   action,
   initial,
@@ -28,6 +31,8 @@ export function SettingsForm({
   initial: { bookingUrl: string; clinicText: string };
 }) {
   const [state, formAction] = useActionState(action, null);
+  const [bookingUrl, setBookingUrl] = useState(initial.bookingUrl);
+  const [clinicText, setClinicText] = useState(initial.clinicText);
   return (
     <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 560 }}>
       {state?.ok && (
@@ -46,7 +51,8 @@ export function SettingsForm({
         label="Google Calendar booking page (booking_url)"
         name="bookingUrl"
         type="url"
-        defaultValue={initial.bookingUrl}
+        value={bookingUrl}
+        onChange={(e) => setBookingUrl(e.target.value)}
         placeholder="https://calendar.app.google/…"
         helper='Students see it as "Book a 1:1 on Google Meet" on their Sessions page; opens in a new tab.'
       />
@@ -55,7 +61,8 @@ export function SettingsForm({
         name="clinicText"
         rows={3}
         maxLength={MAX_CLINIC_TEXT}
-        defaultValue={initial.clinicText}
+        value={clinicText}
+        onChange={(e) => setClinicText(e.target.value)}
         placeholder="Thursday 18:00 — bring your kinetics questions."
       />
       <div>

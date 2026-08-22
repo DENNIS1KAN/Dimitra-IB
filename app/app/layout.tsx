@@ -65,7 +65,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           <span className="flex flex-1 lg:flex-none">
             <Wordmark size="sm" />
           </span>
-          <div className="order-last basis-full lg:order-none lg:basis-auto lg:flex-1 lg:pl-4">
+          {/* min-w-0: a flex item's auto min-width is its content width, which
+              would stop the nav from scrolling inside itself and push the page
+              wider than 390px once it holds six items. */}
+          <div className="order-last min-w-0 basis-full lg:order-none lg:basis-auto lg:flex-1 lg:pl-4">
             <StudentNav unread={unread} />
           </div>
           {signOutButton}

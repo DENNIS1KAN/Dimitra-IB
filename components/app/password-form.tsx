@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/lumen/core";
 import { Input } from "@/components/lumen/forms";
-import { MIN_PASSWORD_LENGTH } from "@/lib/password";
+import { MIN_PASSWORD_LENGTH } from "@/lib/password-rules";
 
 export type PasswordFormState =
   | { ok: true; at: number }
