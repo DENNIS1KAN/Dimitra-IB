@@ -1,6 +1,6 @@
 # Lumen — Project Report
 
-*A complete technical report on what has been built and how it works. Written to be handed to an AI assistant (or a new developer) as full project context. State of the codebase as of 2026-08-22, after a full adversarial code review, a fix pass (30 confirmed findings resolved), and an owner-directed auth change (magic links replaced by username + password).*
+*A complete technical report on what has been built and how it works. Written to be handed to an AI assistant (or a new developer) as full project context. State of the codebase as of 2026-08-22, after a full adversarial code review, a fix pass (30 confirmed findings resolved), an owner-directed auth change (magic links replaced by username + password), and a follow-up hardening pass (login lockout, zod-backed id validation, expanded test coverage).*
 
 ---
 
@@ -19,11 +19,11 @@ Lumen (working title) is a **private learning platform for one IB tutor, Dimitra
 | Framework | Next.js 16.3.2 (App Router, Turbopack), TypeScript strict, single monolith |
 | Database | Postgres + Drizzle ORM 0.45.2 with SQL migrations. Dev default: **embedded Postgres (PGlite 0.5.5)** in `./pgdata-lite` — zero external processes. Optional real Postgres 16 via Docker (`docker-compose.yml` + `.env`). Production requires `DATABASE_URL` (the app refuses PGlite in production). |
 | Styling | Tailwind 4 + a small in-repo design system (`components/lumen/`) built from `DESIGN.md` tokens |
-| Auth | Username + password (scrypt hashes via `lib/password.ts`) + hashed server-side sessions — no auth library, no email service |
+| Auth | Username + password (scrypt hashes via `lib/password.ts`) + hashed server-side sessions + DB-backed brute-force lockout (`lib/lockout.ts`) — no auth library, no email service |
 | Files | One `FileStorage` interface: local `./storage` folder in dev, Bunny Storage in production |
 | Video | Local `<video>` streaming in dev; Bunny Stream signed embeds in production (upload wiring deferred — see §11) |
 | PDF stamping | pdf-lib + @pdf-lib/fontkit with a bundled Noto Sans (Greek-capable) |
-| Tests | Vitest — 33 unit tests over the gating rules, timezone math, Bunny token math, PDF stamping, and password hashing |
+| Tests | Vitest — 43 unit tests over the gating rules, timezone math, Bunny token math, PDF stamping (incl. Greek rendering), password hashing, login lockout, and id validation |
 
 Every vendor dependency is env-switched; a fresh clone needs **only Node.js** (`npm install && npm run dev`).
 
@@ -67,7 +67,7 @@ Three rules, implemented as pure functions in `lib/gating.ts` and unit-tested:
 ## 5. Data model (`db/schema.ts`, 7 tables)
 
 - **`cohorts`** — name, subject, level (HL/SL), exam year.
-- **`users`** — role (`admin`/`student`), name, `username` (unique, login identity), `password_hash` (scrypt), email (unique — contact + PDF stamping only, no auth role), `cohort_id`, `active` flag (Lever 1), `last_seen_at` (stamped on sign-in, refreshed on activity), `created_at`.
+- **`users`** — role (`admin`/`student`), name, `username` (unique, login identity), `password_hash` (scrypt), `failed_logins` + `locked_until` (brute-force lockout state), email (unique — contact + PDF stamping only, no auth role), `cohort_id`, `active` flag (Lever 1), `last_seen_at` (stamped on sign-in, refreshed on activity), `created_at`.
 - **`modules`** — cohort, week number (unique per cohort), title, description ("your weekly note to students"), `release_date` (Lever 2).
 - **`materials`** — module, type (`video`/`slides`/`exercises`/`solutions`), title, `storage_key`, sort order.
 - **`submissions`** — student × module (unique pair), optional uploaded file key, optional note, timestamp.
@@ -81,8 +81,9 @@ Deletion cascades are wired so account deletion = delete the user row (+ remove 
 Username + password, hand-rolled and minimal (an owner-directed substitution recorded in SPEC §7/§9 — the original spec said magic links; there is now **no email service anywhere**):
 
 1. `/login` shows a username + password form. The server action (`app/login/actions.ts`) looks up the username, verifies the password against a per-user salted **scrypt** hash (`lib/password.ts`, node:crypto — no extra dependency, timing-safe compare), and verifies against a dummy hash when the username is unknown so response timing is uniform (no username enumeration).
-2. On success a session row is created (only the SHA-256 hash of the 32-byte session token is stored, 30-day expiry) and the cookie is set: `httpOnly`, `SameSite=Lax`, `Secure` in production, `path=/`. Wrong credentials → one generic "Wrong username or password" message.
-3. Sign-out deletes the session row and the cookie. `getSessionUser()` re-reads the user row on every request, so pausing a student cuts them off instantly.
+2. **Brute-force lockout** (`lib/lockout.ts`, pure and unit-tested; state in `users.failed_logins`/`locked_until` so it survives restarts and works across processes): the 10th consecutive failure locks the account for 15 minutes and resets the counter; success clears both. Responses stay uniform — unknown username, wrong password, and a locked account (even with the correct password) all run the same scrypt verify and get the same generic error, so there is no lock-state or enumeration oracle.
+3. On success a session row is created (only the SHA-256 hash of the 32-byte session token is stored, 30-day expiry) and the cookie is set: `httpOnly`, `SameSite=Lax`, `Secure` in production, `path=/`. Wrong credentials → one generic "Wrong username or password" message.
+4. Sign-out deletes the session row and the cookie. `getSessionUser()` re-reads the user row on every request, so pausing a student cuts them off instantly.
 
 **Account management (no self-service):** the tutor creates each account in `/admin` — name, username, initial password (typed in the form, min 8 chars; nothing secret ever rides in a URL), contact email, cohort — and hands the credentials to the student herself. Each student row has an inline "Set password" reset form. Passwords are stored only as `scrypt:{salt}:{hash}`. Existing rows migrated before this change carry an unverifiable `locked` placeholder until a password is set.
 
@@ -147,7 +148,7 @@ interface FileStorage {
 | `/api/events` | POST | student session | video-progress capture (write-only analytics) |
 | `/api/admin/materials` | POST | admin session | dropzone upload → storage + materials row |
 
-Everything else is server components + server actions (sign-in, sign-out, all admin mutations). All ID inputs are shape-validated (`lib/validate.ts` `isUuid`) before touching uuid columns — malformed IDs return clean 404/400s.
+Everything else is server components + server actions (sign-in, sign-out, all admin mutations). All ID inputs are shape-validated (`lib/validate.ts`, zod-backed `isUuid`, unit-tested) before touching uuid columns — malformed IDs return clean 404/400s.
 
 ## 13. Dev database bootstrap (`scripts/ensure-dev-db.ts`)
 
@@ -162,7 +163,7 @@ Runs as `predev` before every `npm run dev`:
 
 ## 14. Quality status & history
 
-- **Checks:** TypeScript strict clean, ESLint clean, **33/33 unit tests pass** (gating rules incl. exact-release-time and paused edges, timezone round-trips + DST, Monday-anchor boundaries, Bunny token formulas, PDF stamping incl. Greek names and fail-open, password hashing round-trips). `npm run build` passes with zero env vars.
+- **Checks:** TypeScript strict clean, ESLint clean, **43/43 unit tests pass** (gating rules incl. exact-release-time and paused edges, timezone round-trips + DST, Monday-anchor boundaries, Bunny token formulas, PDF stamping incl. a test that "Νίκος Καρράς" renders through the embedded NotoSans subset, password hashing round-trips + the dummy-hash timing property + the shared min-8 rule, login-lockout policy, and uuid shape validation). `npm run build` passes with zero env vars.
 - **Review:** a full adversarial review (12 finder agents + 9 verifier agents, with empirical reproductions) confirmed 30 findings; **all 30 were fixed** in 14 commits (auth hardening, stamping fixes, uuid guards, ranged serving, admin UX safeguards, the dev-bootstrap rework, docs corrections, and the Next 16 `middleware → proxy` migration). The fixes were then verified end-to-end over HTTP: real sign-in flow, stamped downloads, 206/416 range behavior, cooldown, reseed-guard refusal, and the no-env production build.
 - **Verified-clean areas worth knowing:** session tokens hashed at rest; no open redirects; correct cookie flags; CSRF covered by Next's origin checks + Lax cookies; no gating bypasses; storage traversal-safe; no N+1 query patterns; events writes can never surface user-facing errors. (The magic-link findings from the review were fixed and then superseded entirely by the password switch.)
 
@@ -180,7 +181,7 @@ SPEC.md  DESIGN.md  CLAUDE.md          # the three sources of truth
 PROJECT_REPORT.md                      # this report
 design/                                # approved mockup sources
 db/                                    # schema.ts, migrations/, seed-data.ts
-lib/                                   # gating, auth, password, storage, video, stamp, tz, queries, validate
+lib/                                   # gating, auth, password, lockout, storage, video, stamp, tz, queries, validate
 app/                                   # / (landing) · /login
                                        # /app/* (student) · /admin/* (tutor) · /api/*
 components/lumen/                      # design system from DESIGN.md recipes
