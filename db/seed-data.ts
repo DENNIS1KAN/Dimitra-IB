@@ -19,11 +19,11 @@ import {
 
 const DAY = 24 * 60 * 60 * 1000;
 
-export async function runSeed(db: Db, log: (msg: string) => void = console.log) {
+export async function runSeed(db: Db) {
   // Most recent Monday 09:00 in the tutor's timezone that is already past.
   const monday = mostRecentMondayAt("09:00").getTime();
 
-  log("[seed] wiping…");
+  console.log("[seed] wiping…");
   await db.delete(events);
   await db.delete(submissions);
   await db.delete(materials);
@@ -33,7 +33,7 @@ export async function runSeed(db: Db, log: (msg: string) => void = console.log) 
   await db.delete(users);
   await db.delete(cohorts);
 
-  log("[seed] cohorts…");
+  console.log("[seed] cohorts…");
   const [chem] = await db
     .insert(cohorts)
     .values({ name: "Chemistry HL 2027", subject: "Chemistry", level: "HL", examYear: 2027 })
@@ -43,7 +43,7 @@ export async function runSeed(db: Db, log: (msg: string) => void = console.log) 
     .values({ name: "Chemistry SL 2027", subject: "Chemistry", level: "SL", examYear: 2027 })
     .returning();
 
-  log("[seed] users…");
+  console.log("[seed] users…");
   await db.insert(users).values({
     role: "admin",
     name: "Dimitra Anglou",
@@ -65,7 +65,7 @@ export async function runSeed(db: Db, log: (msg: string) => void = console.log) 
     },
   ]);
 
-  log("[seed] modules…");
+  console.log("[seed] modules…");
   const weeks = [
     {
       weekNumber: 5,
@@ -109,8 +109,7 @@ export async function runSeed(db: Db, log: (msg: string) => void = console.log) 
     })
     .returning();
 
-  log("[seed] materials…");
-  const byWeek = Object.fromEntries(chemModules.map((m) => [m.weekNumber, m]));
+  console.log("[seed] materials…");
   // Keys are per-cohort (prefix) so deleting a material in one cohort can
   // never break another cohort's copy.
   const placeholder = (moduleId: string, week: number, prefix = "w") => [
@@ -120,19 +119,20 @@ export async function runSeed(db: Db, log: (msg: string) => void = console.log) 
     { moduleId, type: "exercises" as const, title: "Exercises — set A", storageKey: `seed/${prefix}${week}-exercises.pdf`, sortOrder: 3 },
     { moduleId, type: "solutions" as const, title: "Worked solutions", storageKey: `seed/${prefix}${week}-solutions.pdf`, sortOrder: 4 },
   ];
-  for (const m of chemModules) await db.insert(materials).values(placeholder(m.id, m.weekNumber));
-  await db.insert(materials).values(placeholder(otherModule.id, 6, "sl-w"));
+  // One list feeds both the insert and the PDF writing below, so the rows in
+  // the database and the files in storage can never drift apart.
+  const allMaterials = [
+    ...chemModules.flatMap((m) => placeholder(m.id, m.weekNumber)),
+    ...placeholder(otherModule.id, otherModule.weekNumber, "sl-w"),
+  ];
+  await db.insert(materials).values(allMaterials);
 
-  log("[seed] placeholder files…");
+  console.log("[seed] placeholder files…");
   // Real bytes for the placeholder PDF materials so the whole student loop
   // works in dev (inline view, stamped download). Videos come from
   // scripts/make-seed-videos.mjs — the player copes when they're absent.
   const { storage } = await import("../lib/storage");
   const { PDFDocument, StandardFonts } = await import("pdf-lib");
-  const allMaterials = [
-    ...chemModules.flatMap((m) => placeholder(m.id, m.weekNumber)),
-    ...placeholder(otherModule.id, 6, "sl-w"),
-  ];
   for (const mat of allMaterials) {
     if (!mat.storageKey.endsWith(".pdf")) continue;
     const doc = await PDFDocument.create();
@@ -150,18 +150,20 @@ export async function runSeed(db: Db, log: (msg: string) => void = console.log) 
     await storage.put(mat.storageKey, Buffer.from(await doc.save()), "application/pdf");
   }
 
-  log("[seed] submission…");
+  console.log("[seed] submission…");
   // Nikos already attempted week 5 → solutions visible there, hidden on week 6.
+  const week5 = chemModules.find((m) => m.weekNumber === 5);
+  if (!week5) throw new Error("seed: week 5 module missing");
   await db.insert(submissions).values({
     studentId: nikos.id,
-    moduleId: byWeek[5].id,
+    moduleId: week5.id,
     note: "Attempted on paper — struggled with lattice enthalpy signs.",
     createdAt: new Date(monday - 5 * DAY),
   });
 
-  log("[seed] done.");
-  log("  admin:   dimitra@example.com");
-  log("  student: nikos@example.com  (active, 1 submission on week 5)");
-  log("  student: eleni@example.com  (active, no submissions)");
-  log("  student: petros@example.com (PAUSED — Rule 3 screen)");
+  console.log("[seed] done.");
+  console.log("  admin:   dimitra@example.com");
+  console.log("  student: nikos@example.com  (active, 1 submission on week 5)");
+  console.log("  student: eleni@example.com  (active, no submissions)");
+  console.log("  student: petros@example.com (PAUSED — Rule 3 screen)");
 }
