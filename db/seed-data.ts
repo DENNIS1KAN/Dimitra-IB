@@ -1,14 +1,17 @@
-// Demo data per SPEC §10 M1: 1 admin, 1 cohort, 3 students (one paused),
-// 4 modules (2 released / 2 future), placeholder materials, 1 pre-seeded
-// submission. Plus one extra cohort with a released module and no members,
-// so the "other cohort's modules invisible even by direct URL" checklist
-// item can actually be walked. Callable from the CLI seed and from the
-// dev-db bootstrap.
+// Demo data per SPEC §10 M1 + §15.6 M6: 1 admin, 3 cohorts, 3 students (one
+// paused), 4 HL modules (2 released / 2 future) + 1 SL module, placeholder
+// materials, 1 pre-seeded submission, and enrollments that let every M6
+// checklist item be walked: nikos = HL active + SL *requested* (a requested
+// course shows no modules); eleni = HL + SL active (a two-course student,
+// overdue on week 5); petros = HL active but globally paused (Rule 3). The
+// Maths cohort is listed with no modules — something to "Ask to join".
+// Callable from the CLI seed and from the dev-db bootstrap.
 import { hashPassword } from "../lib/password";
-import { mostRecentMondayAt } from "../lib/tz";
+import { defaultDueDate, mostRecentMondayAt } from "../lib/tz";
 import type { Db } from "./index";
 import {
   cohorts,
+  enrollments,
   events,
   materials,
   modules,
@@ -28,6 +31,7 @@ export async function runSeed(db: Db) {
   await db.delete(submissions);
   await db.delete(materials);
   await db.delete(sessions);
+  await db.delete(enrollments);
   await db.delete(modules);
   await db.delete(users);
   await db.delete(cohorts);
@@ -35,11 +39,38 @@ export async function runSeed(db: Db) {
   console.log("[seed] cohorts…");
   const [chem] = await db
     .insert(cohorts)
-    .values({ name: "Chemistry HL 2027", subject: "Chemistry", level: "HL", examYear: 2027 })
+    .values({
+      name: "Chemistry HL 2027",
+      subject: "Chemistry",
+      level: "HL",
+      examYear: 2027,
+      blurb:
+        "The full HL syllabus in weekly modules — videos, annotated slides, exercise sets, and worked solutions once you've had a go. Thursday clinics for the sticky bits.",
+      isListed: true,
+    })
     .returning();
   const [other] = await db
     .insert(cohorts)
-    .values({ name: "Chemistry SL 2027", subject: "Chemistry", level: "SL", examYear: 2027 })
+    .values({
+      name: "Chemistry SL 2027",
+      subject: "Chemistry",
+      level: "SL",
+      examYear: 2027,
+      blurb: "SL core topics, one module a week, paced for the May 2027 exams.",
+      isListed: true,
+    })
+    .returning();
+  const [maths] = await db
+    .insert(cohorts)
+    .values({
+      name: "Mathematics AA SL 2027",
+      subject: "Mathematics",
+      level: "SL",
+      examYear: 2027,
+      blurb:
+        "Analysis & Approaches SL — weekly problem sets with full worked solutions. Starting September.",
+      isListed: true,
+    })
     .returning();
 
   console.log("[seed] users…");
@@ -51,7 +82,6 @@ export async function runSeed(db: Db) {
     username: "dimitra",
     passwordHash: devPassword(),
     email: "dimitra@example.com",
-    cohortId: null,
   });
   const [nikos] = await db
     .insert(users)
@@ -61,29 +91,40 @@ export async function runSeed(db: Db) {
       username: "nikos",
       passwordHash: devPassword(),
       email: "nikos@example.com",
-      cohortId: chem.id,
       lastSeenAt: new Date(monday - 5 * DAY), // matches his week-5 submission
     })
     .returning();
-  await db.insert(users).values([
-    {
-      role: "student",
-      name: "Eleni Vasil",
-      username: "eleni",
-      passwordHash: devPassword(),
-      email: "eleni@example.com",
-      cohortId: chem.id,
-    },
-    {
-      role: "student",
-      name: "Petros Adamou",
-      username: "petros",
-      passwordHash: devPassword(),
-      email: "petros@example.com",
-      cohortId: chem.id,
-      active: false, // the paused student (Rule 3)
-    },
+  const [eleni, petros] = await db
+    .insert(users)
+    .values([
+      {
+        role: "student",
+        name: "Eleni Vasil",
+        username: "eleni",
+        passwordHash: devPassword(),
+        email: "eleni@example.com",
+      },
+      {
+        role: "student",
+        name: "Petros Adamou",
+        username: "petros",
+        passwordHash: devPassword(),
+        email: "petros@example.com",
+        active: false, // the paused student (Rule 3)
+      },
+    ])
+    .returning();
+
+  console.log("[seed] enrollments…");
+  const joined = new Date(monday - 60 * DAY);
+  await db.insert(enrollments).values([
+    { studentId: nikos.id, cohortId: chem.id, status: "active", requestedAt: joined, decidedAt: joined },
+    { studentId: nikos.id, cohortId: other.id, status: "requested" }, // pending → no modules
+    { studentId: eleni.id, cohortId: chem.id, status: "active", requestedAt: joined, decidedAt: joined },
+    { studentId: eleni.id, cohortId: other.id, status: "active", requestedAt: joined, decidedAt: joined }, // two courses
+    { studentId: petros.id, cohortId: chem.id, status: "active", requestedAt: joined, decidedAt: joined },
   ]);
+  void maths; // listed, no modules, nobody enrolled — the catalog's "Ask to join" card
 
   console.log("[seed] modules…");
   const weeks = [
@@ -114,9 +155,13 @@ export async function runSeed(db: Db) {
       releaseDate: new Date(monday + 14 * DAY),
     },
   ];
+  // Soft due dates: the Sunday 23:59 after each release (SPEC §15.3) — so
+  // week 5 is already overdue for anyone who hasn't submitted it.
   const chemModules = await db
     .insert(modules)
-    .values(weeks.map((w) => ({ ...w, cohortId: chem.id })))
+    .values(
+      weeks.map((w) => ({ ...w, cohortId: chem.id, dueDate: defaultDueDate(w.releaseDate) })),
+    )
     .returning();
   const [otherModule] = await db
     .insert(modules)
@@ -124,8 +169,9 @@ export async function runSeed(db: Db) {
       cohortId: other.id,
       weekNumber: 6,
       title: "Acids & bases essentials",
-      description: "SL cohort module — must never render for HL students.",
+      description: "SL cohort module — only students enrolled in the SL course see it.",
       releaseDate: new Date(monday),
+      dueDate: defaultDueDate(new Date(monday)),
     })
     .returning();
 
@@ -182,8 +228,8 @@ export async function runSeed(db: Db) {
   });
 
   console.log("[seed] done. Password for every account: lumen123");
-  console.log("  admin:   dimitra  (full admin panel)");
-  console.log("  student: nikos    (active, 1 submission on week 5)");
-  console.log("  student: eleni    (active, no submissions)");
-  console.log("  student: petros   (PAUSED — Rule 3 screen)");
+  console.log("  admin:   dimitra  (full admin panel; 1 pending join request)");
+  console.log("  student: nikos    (Chemistry HL active, week 5 submitted; asked to join SL)");
+  console.log("  student: eleni    (Chemistry HL + SL active — two courses; week 5 overdue)");
+  console.log("  student: petros   (PAUSED globally — Rule 3 screen)");
 }

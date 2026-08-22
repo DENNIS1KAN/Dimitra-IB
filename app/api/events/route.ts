@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/db";
 import { materials, modules } from "@/db/schema";
+import { loadStudentAccess } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
 import { moduleState } from "@/lib/gating";
 import { logMaterialEvent } from "@/lib/material-access";
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
   const [material] = await db.select().from(materials).where(eq(materials.id, materialId));
   if (!material) return NextResponse.json({ error: "not found" }, { status: 404 });
   const [module] = await db.select().from(modules).where(eq(modules.id, material.moduleId));
-  if (!module || moduleState(module, user, new Date()) !== "open") {
+  if (!module || moduleState(module, await loadStudentAccess(user), new Date()) !== "open") {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
 

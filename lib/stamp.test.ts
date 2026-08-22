@@ -9,7 +9,6 @@ const student = (name: string): User =>
     role: "student",
     name,
     email: "student@example.com",
-    cohortId: null,
     active: true,
     createdAt: new Date(),
   }) as User;

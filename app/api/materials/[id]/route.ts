@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/db";
 import { materials, modules } from "@/db/schema";
+import { loadStudentAccess } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
 import { moduleState, solutionsVisible } from "@/lib/gating";
 import { hasSubmissionFor, logMaterialEvent } from "@/lib/material-access";
@@ -36,7 +37,7 @@ export async function GET(
 
   if (user.role !== "admin") {
     // Rule 1: foreign / unreleased / paused ⇒ this material does not exist.
-    if (moduleState(module, user, new Date()) !== "open") {
+    if (moduleState(module, await loadStudentAccess(user), new Date()) !== "open") {
       return NextResponse.json({ error: "not found" }, { status: 404 });
     }
     // Rule 2: solutions stay hidden until an attempt is submitted.

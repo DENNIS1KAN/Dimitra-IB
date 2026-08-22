@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/db";
 import { modules, submissions } from "@/db/schema";
+import { loadStudentAccess } from "@/lib/access";
 import { getSessionUser } from "@/lib/auth";
 import { isUniqueViolation } from "@/lib/db-errors";
 import { moduleState } from "@/lib/gating";
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "module not found" }, { status: 404 });
   }
   const [module] = await db.select().from(modules).where(eq(modules.id, moduleId));
-  if (!module || moduleState(module, user, new Date()) !== "open") {
+  if (!module || moduleState(module, await loadStudentAccess(user), new Date()) !== "open") {
     return NextResponse.json({ error: "module not found" }, { status: 404 });
   }
 

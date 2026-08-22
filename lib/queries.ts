@@ -6,23 +6,31 @@ import {
   materials,
   modules,
   submissions,
+  type Cohort,
+  type Enrollment,
   type Material,
   type Module,
   type User,
 } from "@/db/schema";
+import { loadStudentAccess, type StudentAccess } from "./access";
 import { compareByRecency, pickCurrent } from "./current";
-import { isModuleComplete, moduleState, type ModuleState } from "./gating";
+import { isModuleComplete, isOverdue, moduleState, type ModuleState } from "./gating";
 import { isUuid } from "./validate";
 
 export type ModuleListEntry = {
   module: Module;
+  cohort: Cohort;
   state: ModuleState;
   complete: boolean;
+  overdue: boolean;
   materialCounts: Record<string, number>;
 };
 
 export type StudentModuleList = {
-  cohort: typeof cohorts.$inferSelect | null;
+  access: StudentAccess;
+  /** Cohorts with an ACTIVE enrollment — the only ones Rule 1 can open. */
+  activeCohorts: Cohort[];
+  pausedCohorts: Cohort[];
   current: ModuleListEntry | null;
   olderReleased: ModuleListEntry[];
   future: ModuleListEntry[];
@@ -30,47 +38,65 @@ export type StudentModuleList = {
   releasedCount: number;
 };
 
+async function cohortsById(ids: string[]) {
+  const rows = ids.length ? await db.select().from(cohorts).where(inArray(cohorts.id, ids)) : [];
+  return new Map(rows.map((c) => [c.id, c]));
+}
+
+async function submissionMap(studentId: string, moduleIds: string[]) {
+  const subs = moduleIds.length
+    ? await db
+        .select()
+        .from(submissions)
+        .where(and(eq(submissions.studentId, studentId), inArray(submissions.moduleId, moduleIds)))
+    : [];
+  return new Map(subs.map((s) => [s.moduleId, s]));
+}
+
 /**
- * Everything /app needs. Cohort filtering happens in SQL (other cohorts'
- * modules never leave the DB layer — Rule 1's "invisible"); open/teaser
- * classification goes through lib/gating so the tested rules are the only
- * decision point.
+ * Everything /app needs. Cohort filtering happens in SQL on the student's
+ * ACTIVE enrollments (other cohorts' modules never leave the DB layer —
+ * Rule 1's "invisible"); open/teaser classification still goes through
+ * lib/gating so the tested rules are the only decision point.
  */
 export async function studentModuleList(student: User): Promise<StudentModuleList> {
-  if (!student.cohortId) {
-    return {
-      cohort: null,
-      current: null,
-      olderReleased: [],
-      future: [],
-      completedCount: 0,
-      releasedCount: 0,
-    };
-  }
   const now = new Date();
-  const [cohort] = await db.select().from(cohorts).where(eq(cohorts.id, student.cohortId));
+  const access = await loadStudentAccess(student);
+  const byId = await cohortsById(access.enrollments.map((e) => e.cohortId));
+  const pick = (status: Enrollment["status"]) =>
+    access.enrollments
+      .filter((e) => e.status === status)
+      .map((e) => byId.get(e.cohortId))
+      .filter((c): c is Cohort => !!c)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  const activeCohorts = pick("active");
+  const pausedCohorts = pick("paused");
+  const empty: StudentModuleList = {
+    access,
+    activeCohorts,
+    pausedCohorts,
+    current: null,
+    olderReleased: [],
+    future: [],
+    completedCount: 0,
+    releasedCount: 0,
+  };
+  if (activeCohorts.length === 0 || !student.active) return empty;
+
   const rows = await db
     .select()
     .from(modules)
-    .where(eq(modules.cohortId, student.cohortId))
+    .where(
+      inArray(
+        modules.cohortId,
+        activeCohorts.map((c) => c.id),
+      ),
+    )
     .orderBy(asc(modules.weekNumber));
-
-  const subs = rows.length
-    ? await db
-        .select({ moduleId: submissions.moduleId })
-        .from(submissions)
-        .where(
-          and(
-            eq(submissions.studentId, student.id),
-            inArray(
-              submissions.moduleId,
-              rows.map((m) => m.id),
-            ),
-          ),
-        )
-    : [];
-  const submitted = new Set(subs.map((s) => s.moduleId));
-
+  const subs = await submissionMap(
+    student.id,
+    rows.map((m) => m.id),
+  );
   const mats = rows.length
     ? await db
         .select({ moduleId: materials.moduleId, type: materials.type })
@@ -89,12 +115,17 @@ export async function studentModuleList(student: User): Promise<StudentModuleLis
     countsByModule.set(m.moduleId, c);
   }
 
-  const entries: ModuleListEntry[] = rows.map((module) => ({
-    module,
-    state: moduleState(module, student, now),
-    complete: isModuleComplete(submitted.has(module.id)),
-    materialCounts: countsByModule.get(module.id) ?? {},
-  }));
+  const entries: ModuleListEntry[] = rows.map((module) => {
+    const has = subs.has(module.id);
+    return {
+      module,
+      cohort: byId.get(module.cohortId)!,
+      state: moduleState(module, access, now),
+      complete: isModuleComplete(has),
+      overdue: isOverdue(module.dueDate, has, now),
+      materialCounts: countsByModule.get(module.id) ?? {},
+    };
+  });
 
   const released = entries.filter((e) => e.state === "open");
   const future = entries
@@ -108,7 +139,7 @@ export async function studentModuleList(student: User): Promise<StudentModuleLis
     .sort((a, b) => compareByRecency(a.module, b.module)); // newest first below the hero
 
   return {
-    cohort: cohort ?? null,
+    ...empty,
     current,
     olderReleased,
     future,
@@ -119,16 +150,17 @@ export async function studentModuleList(student: User): Promise<StudentModuleLis
 
 export type StudentModuleDetail = {
   module: Module;
-  cohort: typeof cohorts.$inferSelect;
+  cohort: Cohort;
   materials: Material[];
   hasSubmission: boolean;
+  overdue: boolean;
   isCurrent: boolean;
 };
 
 /**
  * Module page data. Returns null when the module must not exist for this
- * student — other cohort, unreleased, or paused (Rule 1: invisible even by
- * direct URL → the page 404s).
+ * student — no active enrollment, unreleased, or paused (Rule 1: invisible
+ * even by direct URL → the page 404s).
  */
 export async function studentModuleDetail(
   moduleId: string,
@@ -138,7 +170,8 @@ export async function studentModuleDetail(
   const now = new Date();
   const [module] = await db.select().from(modules).where(eq(modules.id, moduleId));
   if (!module) return null;
-  if (moduleState(module, student, now) !== "open") return null;
+  const access = await loadStudentAccess(student);
+  if (moduleState(module, access, now) !== "open") return null;
 
   const [cohort] = await db.select().from(cohorts).where(eq(cohorts.id, module.cohortId));
   const mats = await db
@@ -159,7 +192,111 @@ export async function studentModuleDetail(
   // Same rule as the /app hero — the list and this badge can never disagree.
   const isCurrent = pickCurrent(releasedSiblings)?.id === module.id;
 
-  return { module, cohort, materials: mats, hasSubmission: !!sub, isCurrent };
+  return {
+    module,
+    cohort,
+    materials: mats,
+    hasSubmission: !!sub,
+    overdue: isOverdue(module.dueDate, !!sub, now),
+    isCurrent,
+  };
+}
+
+// --- /app/courses -----------------------------------------------------------
+
+export type MyCourse = {
+  cohort: Cohort;
+  enrollment: Enrollment;
+  releasedCount: number;
+  completedCount: number;
+};
+export type CatalogCourse = { cohort: Cohort; requested: boolean };
+export type StudentCourses = { mine: MyCourse[]; catalog: CatalogCourse[] };
+
+/** My courses (active / paused) + the catalog of listed cohorts I'm not in. */
+export async function studentCourses(student: User): Promise<StudentCourses> {
+  const now = new Date();
+  const access = await loadStudentAccess(student);
+  const byCohort = new Map(access.enrollments.map((e) => [e.cohortId, e]));
+  const listed = await db
+    .select()
+    .from(cohorts)
+    .where(eq(cohorts.isListed, true))
+    .orderBy(asc(cohorts.name));
+  const mineIds = access.enrollments
+    .filter((e) => e.status === "active" || e.status === "paused")
+    .map((e) => e.cohortId);
+  const byId = await cohortsById(mineIds);
+
+  const mods = mineIds.length
+    ? await db.select().from(modules).where(inArray(modules.cohortId, mineIds))
+    : [];
+  const subs = await submissionMap(
+    student.id,
+    mods.map((m) => m.id),
+  );
+
+  const mine: MyCourse[] = [...byId.values()]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((cohort) => {
+      const released = mods.filter(
+        (m) => m.cohortId === cohort.id && m.releaseDate.getTime() <= now.getTime(),
+      );
+      return {
+        cohort,
+        enrollment: byCohort.get(cohort.id)!,
+        releasedCount: released.length,
+        completedCount: released.filter((m) => subs.has(m.id)).length,
+      };
+    });
+
+  const catalog: CatalogCourse[] = listed
+    .filter((c) => !mineIds.includes(c.id))
+    .map((cohort) => ({ cohort, requested: byCohort.get(cohort.id)?.status === "requested" }));
+
+  return { mine, catalog };
+}
+
+// --- /app/assignments -------------------------------------------------------
+
+export type Assignment = {
+  module: Module;
+  cohort: Cohort;
+  overdue: boolean;
+  submittedAt: Date | null;
+};
+export type StudentAssignments = { open: Assignment[]; completed: Assignment[] };
+
+/**
+ * Every OPEN module across active enrollments: what the student owes (by due
+ * date, overdue first), then what they've done (latest first).
+ */
+export async function studentAssignments(student: User): Promise<StudentAssignments> {
+  const list = await studentModuleList(student);
+  const released = [list.current, ...list.olderReleased].filter(
+    (e): e is ModuleListEntry => !!e,
+  );
+  const subs = await submissionMap(
+    student.id,
+    released.map((e) => e.module.id),
+  );
+  const all: Assignment[] = released.map((e) => ({
+    module: e.module,
+    cohort: e.cohort,
+    overdue: e.overdue,
+    submittedAt: subs.get(e.module.id)?.createdAt ?? null,
+  }));
+  const dueOrder = (a: Assignment, b: Assignment) => {
+    const ad = a.module.dueDate?.getTime() ?? Number.POSITIVE_INFINITY;
+    const bd = b.module.dueDate?.getTime() ?? Number.POSITIVE_INFINITY;
+    return ad - bd || compareByRecency(a.module, b.module);
+  };
+  return {
+    open: all.filter((a) => !a.submittedAt).sort(dueOrder),
+    completed: all
+      .filter((a) => a.submittedAt)
+      .sort((a, b) => b.submittedAt!.getTime() - a.submittedAt!.getTime()),
+  };
 }
 
 /** "3 videos · slides · exercises" — counts derived from material rows. */

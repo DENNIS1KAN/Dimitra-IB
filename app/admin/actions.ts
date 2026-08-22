@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { cohorts, materials, modules, users } from "@/db/schema";
+import { cohorts, enrollments, materials, modules, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin";
 import { hashPassword, isAcceptablePassword } from "@/lib/password";
 import { storage } from "@/lib/storage";
@@ -46,13 +46,16 @@ export async function createStudent(formData: FormData) {
   if (!isAcceptablePassword(password)) redirect("/admin?error=password-short");
 
   try {
-    await db.insert(users).values({
-      role: "student",
-      name,
-      username,
-      passwordHash: hashPassword(password),
-      email,
-      cohortId,
+    // The cohort picked at creation becomes the student's first ACTIVE
+    // enrollment (SPEC §15.5) — user + enrollment land together or not at all.
+    await db.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(users)
+        .values({ role: "student", name, username, passwordHash: hashPassword(password), email })
+        .returning({ id: users.id });
+      await tx
+        .insert(enrollments)
+        .values({ studentId: created.id, cohortId, status: "active", decidedAt: new Date() });
     });
   } catch (err) {
     // Unique indexes on username and email are the truth; a duplicate (or a

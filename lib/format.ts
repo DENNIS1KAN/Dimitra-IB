@@ -33,3 +33,6 @@ export const isNewRelease = (releaseDate: Date, now = new Date()) => {
   const age = now.getTime() - releaseDate.getTime();
   return age >= 0 && age < 7 * 24 * 60 * 60 * 1000;
 };
+
+/** "Due Sun 30 Aug 23:59" — soft deadline copy (SPEC §15.1). */
+export const formatDue = (d: Date) => `Due ${dayFmt.format(d)} ${timeFmt.format(d)}`;

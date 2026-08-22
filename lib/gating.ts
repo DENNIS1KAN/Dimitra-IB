@@ -1,11 +1,16 @@
-// The three access rules from SPEC §5 — the entire business logic of V1.
-// Pure functions so they are trivially unit-testable; queries call these
-// (and additionally filter by cohort server-side so other cohorts' modules
-// never even leave the database layer).
+// The access rules from SPEC §5, as amended by §15.2 — the entire business
+// logic. Pure functions so they are trivially unit-testable; queries call
+// these (and additionally filter by the student's ACTIVE cohorts in SQL so
+// other cohorts' modules never even leave the database layer).
+
+export type EnrollmentStatus = "requested" | "active" | "paused" | "ended";
+
+export type GatingEnrollment = { cohortId: string; status: EnrollmentStatus };
 
 export type GatingStudent = {
-  cohortId: string | null;
+  /** users.active — the global master switch (Lever 1, Rule 3). */
   active: boolean;
+  enrollments: readonly GatingEnrollment[];
 };
 
 export type GatingModule = {
@@ -19,15 +24,26 @@ export type ModuleState = "open" | "locked-teaser" | "invisible";
  * Rule 3 — Paused behavior (deliberately blunt).
  * An inactive student sees only the full-screen paused state.
  */
-export function isPaused(student: GatingStudent): boolean {
+export function isPaused(student: { active: boolean }): boolean {
   return !student.active;
 }
 
+/** The student's standing in a cohort — "none" when there is no enrollment row. */
+export function courseAccess(
+  student: GatingStudent,
+  cohortId: string,
+): EnrollmentStatus | "none" {
+  return student.enrollments.find((e) => e.cohortId === cohortId)?.status ?? "none";
+}
+
 /**
- * Rule 1 — Module visibility.
- * open       iff same cohort AND released AND student active
- * locked-teaser  for future modules in the student's cohort
- * invisible  for other cohorts' modules (never rendered, even by direct URL)
+ * Rule 1 — Module visibility (enrollment-based).
+ * open           iff ACTIVE enrollment in the module's cohort AND released
+ *                AND users.active
+ * locked-teaser  for future modules in actively enrolled cohorts
+ * invisible      for everything else — no / requested / paused / ended
+ *                enrollment, or a globally paused student (never rendered,
+ *                404 by direct URL)
  *
  * Note: a paused student never reaches a module list (Rule 3 short-circuits
  * at the layout level), but the rule is still total: paused ⇒ nothing is open.
@@ -37,8 +53,8 @@ export function moduleState(
   student: GatingStudent,
   now: Date,
 ): ModuleState {
-  if (module.cohortId !== student.cohortId) return "invisible";
   if (isPaused(student)) return "invisible";
+  if (courseAccess(student, module.cohortId) !== "active") return "invisible";
   if (module.releaseDate.getTime() <= now.getTime()) return "open";
   return "locked-teaser";
 }
@@ -54,4 +70,12 @@ export function solutionsVisible(hasSubmission: boolean): boolean {
 
 export function isModuleComplete(hasSubmission: boolean): boolean {
   return hasSubmission;
+}
+
+/**
+ * Soft deadline (SPEC §15.1): overdue iff a due date exists, has passed, and
+ * nothing was submitted. A badge only — submission is never blocked by it.
+ */
+export function isOverdue(dueDate: Date | null, hasSubmission: boolean, now: Date): boolean {
+  return dueDate !== null && now.getTime() > dueDate.getTime() && !hasSubmission;
 }

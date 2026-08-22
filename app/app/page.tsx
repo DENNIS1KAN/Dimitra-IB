@@ -13,7 +13,7 @@ export default async function AppPage() {
   if (!user) redirect("/login");
 
   const list = await studentModuleList(user);
-  const color = subjectColor(list.cohort?.subject);
+  const color = subjectColor(list.activeCohorts[0]?.subject);
   const hero = list.current;
 
   const noteCard = hero?.module.description ? (

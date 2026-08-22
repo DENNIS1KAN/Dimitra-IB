@@ -1,6 +1,6 @@
 import { asc, eq, lte } from "drizzle-orm";
 import { db } from "@/db";
-import { cohorts, modules, submissions, users } from "@/db/schema";
+import { cohorts, enrollments, modules, submissions, users } from "@/db/schema";
 import { Card, Icon } from "@/components/lumen/core";
 import { requireAdmin } from "@/lib/admin";
 import { formatDay } from "@/lib/format";
@@ -23,6 +23,10 @@ export default async function AdminProgress() {
     .orderBy(asc(users.name));
   const subs = await db.select().from(submissions);
   const subByKey = new Map(subs.map((s) => [`${s.studentId}:${s.moduleId}`, s]));
+  // Rows come from enrollments (SPEC §15.3): active and paused members are
+  // shown (paused marked); requested / ended ones are not in the course.
+  const allEnrollments = await db.select().from(enrollments);
+  const membership = new Map(allEnrollments.map((e) => [`${e.studentId}:${e.cohortId}`, e.status]));
 
   const th: React.CSSProperties = {
     textAlign: "left",
@@ -57,7 +61,10 @@ export default async function AdminProgress() {
 
       {allCohorts.map((cohort) => {
         const cohortModules = released.filter((m) => m.cohortId === cohort.id);
-        const cohortStudents = students.filter((s) => s.cohortId === cohort.id);
+        const cohortStudents = students.filter((s) => {
+          const status = membership.get(`${s.id}:${cohort.id}`);
+          return status === "active" || status === "paused";
+        });
         if (cohortStudents.length === 0 && cohortModules.length === 0) return null;
         return (
           <Card key={cohort.id} padding="0">
@@ -91,9 +98,11 @@ export default async function AdminProgress() {
                     <tr key={s.id}>
                       <td style={{ ...td, fontWeight: 500 }}>
                         {s.name}
-                        {!s.active && (
+                        {!s.active ? (
                           <span style={{ color: "var(--text-tertiary)" }}> (paused)</span>
-                        )}
+                        ) : membership.get(`${s.id}:${cohort.id}`) === "paused" ? (
+                          <span style={{ color: "var(--text-tertiary)" }}> (course paused)</span>
+                        ) : null}
                       </td>
                       {cohortModules.map((m) => {
                         const sub = subByKey.get(`${s.id}:${m.id}`);

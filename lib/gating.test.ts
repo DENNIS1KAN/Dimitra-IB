@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  courseAccess,
   isModuleComplete,
+  isOverdue,
   isPaused,
   moduleState,
   solutionsVisible,
@@ -10,51 +12,75 @@ const NOW = new Date("2026-08-21T12:00:00Z");
 const past = new Date("2026-08-17T09:00:00Z");
 const future = new Date("2026-08-24T09:00:00Z");
 
-const activeStudent = { cohortId: "cohort-a", active: true };
-const pausedStudent = { cohortId: "cohort-a", active: false };
-const adminLike = { cohortId: null, active: true };
+const modA = (releaseDate: Date) => ({ cohortId: "cohort-a", releaseDate });
+const modB = (releaseDate: Date) => ({ cohortId: "cohort-b", releaseDate });
 
-describe("Rule 1 — module visibility", () => {
-  it("opens a released module in the student's cohort", () => {
-    expect(moduleState({ cohortId: "cohort-a", releaseDate: past }, activeStudent, NOW)).toBe(
-      "open",
-    );
+type Status = "requested" | "active" | "paused" | "ended";
+const student = (status: Status | null, active = true) => ({
+  active,
+  enrollments: status ? [{ cohortId: "cohort-a", status }] : [],
+});
+
+describe("Rule 1 — module visibility (enrollment-based, SPEC §15.2)", () => {
+  it("opens a released module in an actively enrolled cohort", () => {
+    expect(moduleState(modA(past), student("active"), NOW)).toBe("open");
   });
 
   it("opens a module released exactly now (release_date <= now)", () => {
-    expect(moduleState({ cohortId: "cohort-a", releaseDate: NOW }, activeStudent, NOW)).toBe(
-      "open",
-    );
+    expect(moduleState(modA(NOW), student("active"), NOW)).toBe("open");
   });
 
-  it("shows a future module in the cohort as a locked teaser", () => {
-    expect(moduleState({ cohortId: "cohort-a", releaseDate: future }, activeStudent, NOW)).toBe(
-      "locked-teaser",
-    );
+  it("shows a future module in an active cohort as a locked teaser", () => {
+    expect(moduleState(modA(future), student("active"), NOW)).toBe("locked-teaser");
   });
 
-  it("never renders another cohort's module — released or not", () => {
-    expect(moduleState({ cohortId: "cohort-b", releaseDate: past }, activeStudent, NOW)).toBe(
-      "invisible",
-    );
-    expect(moduleState({ cohortId: "cohort-b", releaseDate: future }, activeStudent, NOW)).toBe(
-      "invisible",
-    );
+  it("hides everything in a cohort the student only REQUESTED", () => {
+    expect(moduleState(modA(past), student("requested"), NOW)).toBe("invisible");
+    expect(moduleState(modA(future), student("requested"), NOW)).toBe("invisible");
   });
 
-  it("opens nothing for a paused student (Rule 3 wins over release state)", () => {
-    expect(moduleState({ cohortId: "cohort-a", releaseDate: past }, pausedStudent, NOW)).toBe(
-      "invisible",
-    );
-    expect(moduleState({ cohortId: "cohort-a", releaseDate: future }, pausedStudent, NOW)).toBe(
-      "invisible",
-    );
+  it("hides everything in a PAUSED enrollment — released or not", () => {
+    expect(moduleState(modA(past), student("paused"), NOW)).toBe("invisible");
+    expect(moduleState(modA(future), student("paused"), NOW)).toBe("invisible");
   });
 
-  it("shows nothing to a user with no cohort (admin browsing student routes)", () => {
-    expect(moduleState({ cohortId: "cohort-a", releaseDate: past }, adminLike, NOW)).toBe(
-      "invisible",
-    );
+  it("hides everything in an ENDED enrollment", () => {
+    expect(moduleState(modA(past), student("ended"), NOW)).toBe("invisible");
+  });
+
+  it("never renders a cohort the student has no enrollment in", () => {
+    expect(moduleState(modB(past), student("active"), NOW)).toBe("invisible");
+    expect(moduleState(modB(future), student("active"), NOW)).toBe("invisible");
+    expect(moduleState(modA(past), student(null), NOW)).toBe("invisible");
+  });
+
+  it("a paused enrollment hides only that course — the other keeps working", () => {
+    const two = {
+      active: true,
+      enrollments: [
+        { cohortId: "cohort-a", status: "paused" as const },
+        { cohortId: "cohort-b", status: "active" as const },
+      ],
+    };
+    expect(moduleState(modA(past), two, NOW)).toBe("invisible");
+    expect(moduleState(modB(past), two, NOW)).toBe("open");
+    expect(moduleState(modB(future), two, NOW)).toBe("locked-teaser");
+  });
+
+  it("opens nothing for a globally paused student (Rule 3 wins over everything)", () => {
+    expect(moduleState(modA(past), student("active", false), NOW)).toBe("invisible");
+    expect(moduleState(modA(future), student("active", false), NOW)).toBe("invisible");
+  });
+});
+
+describe("course access (drives the course cards)", () => {
+  it("reports the enrollment status for the cohort, or none", () => {
+    expect(courseAccess(student("active"), "cohort-a")).toBe("active");
+    expect(courseAccess(student("paused"), "cohort-a")).toBe("paused");
+    expect(courseAccess(student("requested"), "cohort-a")).toBe("requested");
+    expect(courseAccess(student("ended"), "cohort-a")).toBe("ended");
+    expect(courseAccess(student("active"), "cohort-b")).toBe("none");
+    expect(courseAccess(student(null), "cohort-a")).toBe("none");
   });
 });
 
@@ -75,10 +101,34 @@ describe("Rule 2 — solutions gating", () => {
 
 describe("Rule 3 — paused behavior", () => {
   it("flags an inactive student as paused", () => {
-    expect(isPaused(pausedStudent)).toBe(true);
+    expect(isPaused({ active: false })).toBe(true);
   });
 
   it("does not flag an active student", () => {
-    expect(isPaused(activeStudent)).toBe(false);
+    expect(isPaused({ active: true })).toBe(false);
+  });
+});
+
+describe("soft deadline — overdue is a badge, never a gate (SPEC §15.1)", () => {
+  const due = new Date("2026-08-20T20:59:00Z");
+
+  it("is overdue after the due date with no submission", () => {
+    expect(isOverdue(due, false, NOW)).toBe(true);
+  });
+
+  it("clears on submit", () => {
+    expect(isOverdue(due, true, NOW)).toBe(false);
+  });
+
+  it("is not overdue before the due date", () => {
+    expect(isOverdue(due, false, new Date("2026-08-19T00:00:00Z"))).toBe(false);
+  });
+
+  it("is not overdue exactly at the due instant", () => {
+    expect(isOverdue(due, false, due)).toBe(false);
+  });
+
+  it("is never overdue without a due date", () => {
+    expect(isOverdue(null, false, NOW)).toBe(false);
   });
 });

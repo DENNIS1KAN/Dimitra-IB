@@ -1,6 +1,6 @@
 import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { cohorts, users } from "@/db/schema";
+import { cohorts, enrollments, users, type Enrollment } from "@/db/schema";
 import { Badge, Button, Card } from "@/components/lumen/core";
 import { Input } from "@/components/lumen/forms";
 import { requireAdmin } from "@/lib/admin";
@@ -21,15 +21,24 @@ export default async function AdminStudents({
   // users.lastSeenAt survives sign-out (sessions rows don't) and tracks
   // activity, not just sign-ins.
   const students = await db
-    .select({
-      user: users,
-      cohortName: cohorts.name,
-      lastSeen: users.lastSeenAt,
-    })
+    .select({ user: users, lastSeen: users.lastSeenAt })
     .from(users)
-    .leftJoin(cohorts, eq(cohorts.id, users.cohortId))
     .where(eq(users.role, "student"))
     .orderBy(desc(users.lastSeenAt));
+  // Course standing per student (SPEC §15.3): one enrollment row per cohort.
+  const enrollmentRows = await db
+    .select({ enrollment: enrollments, cohortName: cohorts.name })
+    .from(enrollments)
+    .innerJoin(cohorts, eq(cohorts.id, enrollments.cohortId))
+    .orderBy(cohorts.name);
+  const byStudent = new Map<string, { enrollment: Enrollment; cohortName: string }[]>();
+  for (const row of enrollmentRows) {
+    const list = byStudent.get(row.enrollment.studentId) ?? [];
+    list.push(row);
+    byStudent.set(row.enrollment.studentId, list);
+  }
+  const enrollmentTone = (status: Enrollment["status"]) =>
+    status === "active" ? "done" : status === "requested" ? "new" : "locked";
 
   const th: React.CSSProperties = {
     textAlign: "left",
@@ -88,14 +97,14 @@ export default async function AdminStudents({
               <tr>
                 <th style={th}>Name</th>
                 <th style={th}>Username</th>
-                <th style={th}>Cohort</th>
+                <th style={th}>Courses</th>
                 <th style={th}>Status</th>
                 <th style={th}>Last seen</th>
                 <th style={th}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {students.map(({ user, cohortName, lastSeen }) => (
+              {students.map(({ user, lastSeen }) => (
                 <tr key={user.id}>
                   <td style={{ ...td, fontWeight: 500 }}>
                     {user.name}
@@ -104,7 +113,22 @@ export default async function AdminStudents({
                     </span>
                   </td>
                   <td style={td}>{user.username}</td>
-                  <td style={td}>{cohortName ?? "—"}</td>
+                  <td style={td}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {(byStudent.get(user.id) ?? []).map(({ enrollment, cohortName }) => (
+                        <div
+                          key={enrollment.id}
+                          style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}
+                        >
+                          <span style={{ fontWeight: 500 }}>{cohortName}</span>
+                          <Badge tone={enrollmentTone(enrollment.status)}>{enrollment.status}</Badge>
+                        </div>
+                      ))}
+                      {(byStudent.get(user.id) ?? []).length === 0 && (
+                        <span style={{ color: "var(--text-tertiary)" }}>No courses</span>
+                      )}
+                    </div>
+                  </td>
                   <td style={td}>
                     {user.active ? (
                       <Badge tone="done" icon="check">

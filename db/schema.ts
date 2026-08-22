@@ -1,5 +1,6 @@
 import {
   boolean,
+  index,
   integer,
   pgEnum,
   pgTable,
@@ -9,7 +10,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-// Six domain tables per SPEC §6, plus the sessions table auth needs.
+// Six domain tables per SPEC §6, plus the sessions table auth needs, plus the
+// Phase 2 tables from SPEC §15.3 (enrollments, messages, settings).
 
 export const roleEnum = pgEnum("role", ["admin", "student"]);
 export const levelEnum = pgEnum("level", ["HL", "SL"]);
@@ -24,6 +26,14 @@ export const eventTypeEnum = pgEnum("event_type", [
   "download",
   "view",
 ]);
+// requested → (approve) active ⇄ paused → ended. Decline deletes the row.
+export const enrollmentStatusEnum = pgEnum("enrollment_status", [
+  "requested",
+  "active",
+  "paused",
+  "ended",
+]);
+export const messageSenderEnum = pgEnum("message_sender", ["student", "tutor"]);
 
 export const cohorts = pgTable("cohorts", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -31,6 +41,9 @@ export const cohorts = pgTable("cohorts", {
   subject: text("subject").notNull(),
   level: levelEnum("level").notNull(),
   examYear: integer("exam_year").notNull(),
+  // Catalog fields (SPEC §15.3): listed cohorts appear on /app/courses.
+  blurb: text("blurb"),
+  isListed: boolean("is_listed").notNull().default(false),
 });
 
 export const users = pgTable("users", {
@@ -46,7 +59,8 @@ export const users = pgTable("users", {
   lockedUntil: timestamp("locked_until", { withTimezone: true }),
   // Contact + PDF-stamping field only — plays no role in authentication.
   email: text("email").notNull().unique(),
-  cohortId: uuid("cohort_id").references(() => cohorts.id),
+  // Cohort membership lives in `enrollments` (SPEC §15.3); `active` stays the
+  // global master switch — Lever 1, Rule 3.
   active: boolean("active").notNull().default(true),
   // Stamped on sign-in and refreshed on activity (lib/auth) — sessions are
   // deleted on sign-out, so "last seen" cannot live on the sessions table.
@@ -67,6 +81,8 @@ export const modules = pgTable(
     title: text("title").notNull(),
     description: text("description"),
     releaseDate: timestamp("release_date", { withTimezone: true }).notNull(),
+    // Soft deadline (SPEC §15.1): shows a due date + overdue badge, never blocks.
+    dueDate: timestamp("due_date", { withTimezone: true }),
   },
   // One module per week per cohort — duplicate week numbers would make the
   // week ordering (and the tutor's mental model) ambiguous.
@@ -119,6 +135,51 @@ export const events = pgTable("events", {
     .defaultNow(),
 });
 
+// One row per student × cohort (SPEC §15.3). Backfilled from users.cohort_id
+// by migration 0005; the status drives Rule 1 (lib/gating.ts).
+export const enrollments = pgTable(
+  "enrollments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    cohortId: uuid("cohort_id")
+      .notNull()
+      .references(() => cohorts.id),
+    status: enrollmentStatusEnum("status").notNull().default("requested"),
+    requestedAt: timestamp("requested_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+  },
+  (t) => [uniqueIndex("enrollments_student_cohort_unique").on(t.studentId, t.cohortId)],
+);
+
+// One thread per student — not per course (SPEC §15.3). Used from M7.
+export const messages = pgTable(
+  "messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    sender: messageSenderEnum("sender").notNull(),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    readAt: timestamp("read_at", { withTimezone: true }),
+  },
+  (t) => [index("messages_student_created_idx").on(t.studentId, t.createdAt)],
+);
+
+// Key/value admin settings: booking_url, clinic_text (SPEC §15.3). Used from M8.
+export const settings = pgTable("settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+});
+
 export const sessions = pgTable("sessions", {
   token: text("token").primaryKey(),
   userId: uuid("user_id")
@@ -135,3 +196,6 @@ export type Cohort = typeof cohorts.$inferSelect;
 export type Module = typeof modules.$inferSelect;
 export type Material = typeof materials.$inferSelect;
 export type Submission = typeof submissions.$inferSelect;
+export type Enrollment = typeof enrollments.$inferSelect;
+export type EnrollmentStatus = Enrollment["status"];
+export type Message = typeof messages.$inferSelect;
