@@ -293,7 +293,11 @@ Verify (walked 2026-08-22 in Chrome at 390px and 1280px against the seeded dev D
 - [x] only admins reach the inbox (a student is redirected from `/admin/messages` and from another student's thread URL)
 - [x] a globally paused student still sees only the Rule 3 screen, messages included
 
-**M8 — Sessions + account password change + admin submission viewer + settings.** Verify: old password stops working after change; admin opens a real uploaded submission; booking button opens the Google page.
+**M8 — Sessions + account password change + admin submission viewer + settings.** Verify (walked 2026-08-22 in Chrome at 390px and 1280px; rules in `lib/account.test.ts`, `lib/settings*.test.ts`, `lib/submissions.test.ts`):
+- [x] old password stops working after change (and the new one works; the student's other device is signed out — §15.7 #11)
+- [x] admin opens a real uploaded submission (PNG + note) from the progress matrix; students and anonymous requests get 404 on the file route
+- [x] booking button opens the Google page in a new tab; an invalid `booking_url` is rejected server-side
+- [x] a globally paused student still sees only the Rule 3 screen on `/app/sessions` and `/app/account`
 
 **M9 — Restyle** to Dimitra's palette using `design/lumen-dashboard-mockup.html` as the reference: blue nav/links/selected, indigo headings + hero, orange only for the one motivational CTA (ink text on orange), jade fills with Forest `#1e7a4a` for green text, cream page, white cards, **no yellow anywhere**. While restyling: fix the duplicated header (nav mounted in two nested layouts) and replace the icon font with inline SVGs. Update DESIGN.md tokens. Verify at 390px and desktop.
 
