@@ -179,6 +179,10 @@ h1 "Courses" heading 700 → section label "My courses" (body-sm 700) → one wh
 ### `/app/assignments` — what I owe (Phase 2, M6)
 h1 "Assignments" → "To do": ListRows (`edit_note` at subject color, label "Week N — {title}", meta "{course} · Due …" or "No due date", trailing alert Badge "Overdue" when past due with no submission) ordered by due date → "Completed": ListRows (`check_circle`, meta "Sent {day}", done Badge, no chevron). Mobile stacks the sections; desktop uses the 1.6fr/1fr grid. The course name appears in metas only when the student has more than one active enrollment — a single-course student sees the V1 layout unchanged.
 
+### `/app/messages` — one thread with Dimitra (Phase 2, M7)
+h1 "Messages" heading 700 + caption subline "Your thread with Dimitra" → **MessageBubbles**: an `<ol>` of bubbles, gap 10; the viewer's own = `--action-primary` bg + inverse text, right-aligned; the other side = white card (card border + `--shadow-card`), left-aligned; max-width 85%, 12×16 pad, radius cards, body text 1.5, `pre-wrap`; caption meta under each bubble "You · Mon 17 Aug · 14:05" / "Dimitra · …" (`formatDateTime`, tutor timezone) → empty state Card with body-sm "No messages yet — ask Dimitra anything about your modules." → **MessageComposer** in a 16px Card: labelled TextArea recipe (min-height 88, `maxLength` 4000), inline error (body-sm `#c4320a`), md primary Button "Send" + caption counter "0 / 4000". Polling: `AutoRefresh` (router.refresh every 15s while visible). 720px max on desktop; 20px gutters at 390px.
+**Nav dot:** the Messages link carries an 8px `--action-primary` disc (6px left margin) when the student has unread tutor messages; hidden while on `/app/messages`. Admin nav shows "Messages (n)".
+
 ### Paused state (Rule 3) — full-screen, replaces everything under `/app`
 No mockup; compose: page-cream screen, centered column (24px pad): md Wordmark → locked-style LockPanel (cream, dashed border, `lock`) with title "Your access is paused", body "Message Dimitra to continue — your account and progress are safe." No nav, no content. Copy stays friendly per SPEC §5.
 
@@ -202,7 +206,7 @@ Wordmark sm + "Admin" label; zero custom design effort (SPEC §12). Tables, form
 - **TabBar** 4-tab bottom nav (home/library_books/event/monitoring) — single student destination in V1.
 - **Multi-class switcher** + Math AA SL content — one cohort per student (SPEC §6).
 - **Per-lesson done tracking** (LessonRow done state, ModuleCard "x of y done" bar) — V1 completion is submission-per-module.
-- **"Message Dimitra"** buttons — messaging is a non-goal (SPEC §3).
+- **"Message Dimitra"** buttons — the mocked buttons; messaging itself exists since Phase 2 M7 (`/app/messages`, §6).
 - **DeskNav page links** as mocked (Home/Modules/Clinics/Progress/About) — Phase 2 builds its own set (Home/Courses/Assignments/…, see §5 DeskNav); the mocked Clinics/About links stay parked.
 - Design-only content strings (Nikos, Week 6 buffers copy, clinic dates) — placeholder narrative, not product copy.
 
@@ -219,7 +223,7 @@ Wordmark sm + "Admin" label; zero custom design effort (SPEC §12). Tables, form
 | 7 | Welcome = email + invite-code + "Sign in" | `/login` email→magic-link; `/invite/[token]` §7 | SPEC mechanics, Welcome skin; no code field |
 | 8 | Per-lesson done states, "2 of 5 done" progress | Completion = submission exists; events write-only §6 | Parked; binary module completion |
 | 9 | Submit sheet lacks "mark attempted" | Submission = file OR note OR "attempted" §6 | Add ghost "Just mark as attempted" |
-| 10 | "Message Dimitra" buttons | In-app messaging non-goal §3 | Parked |
+| 10 | "Message Dimitra" buttons | In-app messaging non-goal §3 | Parked in V1. **Phase 2 (SPEC §15):** a single thread per student ships as `/app/messages` (recipe in §6); the mocked buttons themselves stay unbuilt |
 | 11 | No landing, no paused, no admin mockups | Landing + admin required §7; paused state required §5 Rule 3 | Composed from tokens (§6 above); admin = shadcn |
 | 12 | Wordmark "lumen." + "by Dimitra Anglou" | Name is an open question §14, non-blocking until M5 | Keep working title |
 | 13 | Locked teaser labeled "Week 7" only | Rule 1 §5: teasers show **title** + "Unlocks {date}" | SPEC wins: label "Week N — {title}" |

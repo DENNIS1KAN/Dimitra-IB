@@ -286,7 +286,12 @@ Verify (walked 2026-08-22 in Chrome at 390px and 1280px against the seeded dev D
 - [x] overdue badge appears after due date and clears on submit
 - [x] every pre-migration student still sees exactly what they saw before
 
-**M7 — Messages.** Verify: both directions work; unread clears on open; student A can never read student B's thread (test the authz, not just the UI — including a direct POST with a forged student id); only admins reach the inbox; a globally paused student still sees only the Rule 3 screen, messages included.
+**M7 — Messages.** Verify (walked 2026-08-22 in Chrome at 390px and 1280px; authz in `lib/messages.test.ts`):
+- [x] both directions work
+- [x] unread clears on open (student); replying clears it for the tutor
+- [x] student A can never read student B's thread — tested in `lib/messages.test.ts`, including a direct POST with a forged student id, a student calling the admin paths, and a paused actor
+- [x] only admins reach the inbox (a student is redirected from `/admin/messages` and from another student's thread URL)
+- [x] a globally paused student still sees only the Rule 3 screen, messages included
 
 **M8 — Sessions + account password change + admin submission viewer + settings.** Verify: old password stops working after change; admin opens a real uploaded submission; booking button opens the Google page.
 

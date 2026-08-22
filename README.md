@@ -82,7 +82,7 @@ the video step the player shows a friendly "still processing" note.
 | `npm run db:generate` | generate a migration from `db/schema.ts` |
 | `npm run db:migrate` | apply migrations |
 | `npm run db:seed` | reset + seed demo data (writes placeholder PDFs to `./storage`) — stop `npm run dev` first (the embedded DB is single-process; a second opener is refused); a non-empty `DATABASE_URL` database additionally requires `npm run db:seed -- --force` |
-| `npm test` | vitest — gating rules, soft deadlines, timezone math, the enrollments backfill migration, DB-backed query tests (in-memory PGlite), Bunny token math, stamping, auth |
+| `npm test` | vitest — gating rules, soft deadlines, hero tie-break, timezone math, the enrollments backfill migration, DB-backed query + messages-authorization tests (in-memory PGlite), Bunny token math, stamping, auth |
 | `npm run typecheck` / `lint` | TypeScript strict / ESLint |
 
 ## How it hangs together
@@ -107,11 +107,16 @@ the video step the player shows a friendly "still processing" note.
   {email}" stamped on each page (pdf-lib).
 - `app/app/*` — student screens (mobile-first, 390px-checked, per DESIGN.md):
   `/app` dashboard (due dates, overdue badges), `/app/courses` (my courses +
-  catalog with "Ask to join"), `/app/assignments` (what I owe), module pages.
+  catalog with "Ask to join"), `/app/assignments` (what I owe),
+  `/app/messages` (one thread with Dimitra, polling refresh), module pages.
+- `lib/messages.ts` — the only reader/writer of `messages`; every function
+  takes the acting user and derives the thread from it (a forged student id
+  in a POST is ignored — tested), so student A can never read or write B's
+  thread. Body rule: trimmed, non-empty, ≤ 4000 characters.
 - `app/admin/*` — students (create/pause/reset password, per-course
   enrollments), join-request queue, courses (blurb + catalog listing),
-  modules (create/edit/upload/reorder, due dates), progress matrix.
-  Function over beauty.
+  modules (create/edit/upload/reorder, due dates), progress matrix,
+  messages inbox (all threads, unread counts, reply). Function over beauty.
 - `events` table is **write-only** in V1 (views, downloads, video progress
   every 30s) — parent digests and clinic briefs build on it later.
 

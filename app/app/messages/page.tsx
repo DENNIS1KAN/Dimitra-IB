@@ -10,6 +10,10 @@ import { sendMessage } from "../actions";
 // Opening it marks her messages read; the thread is always the actor's own.
 export default async function MessagesPage() {
   const user = await requireStudent();
+  // Rule 3: the /app layout renders the full-screen paused state instead of
+  // children, but Next renders page segments in parallel — so a paused
+  // student must not touch the thread here either.
+  if (!user.active) return null;
   await markThreadReadForStudent(user);
   const thread = await studentThread(user);
 
