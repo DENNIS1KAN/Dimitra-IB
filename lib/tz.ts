@@ -82,3 +82,28 @@ export function mostRecentMondayAt(
     ? at(todayUtc - (daysSinceMonday + 7) * DAY_MS)
     : candidate;
 }
+
+/**
+ * SPEC §15.3: the admin due-date default is "the Sunday 23:59 after release"
+ * — the first Sunday 23:59 strictly after the release wall-clock time. Pure
+ * string → string on datetime-local values, so the browser form can compute
+ * it without knowing the timezone; `defaultDueDate` below converts instants.
+ */
+export function defaultDueLocal(releaseLocal: string): string {
+  const m = releaseLocal.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (!m) return "";
+  const [, y, mo, d] = m.map(Number);
+  const dayUtc = Date.UTC(y, mo - 1, d);
+  const daysToSunday = (7 - new Date(dayUtc).getUTCDay()) % 7; // Sunday = 0
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const stamp = (ms: number) => {
+    const t = new Date(ms);
+    return `${t.getUTCFullYear()}-${pad(t.getUTCMonth() + 1)}-${pad(t.getUTCDate())}T23:59`;
+  };
+  const candidate = stamp(dayUtc + daysToSunday * DAY_MS);
+  return candidate > releaseLocal ? candidate : stamp(dayUtc + (daysToSunday + 7) * DAY_MS);
+}
+
+export function defaultDueDate(release: Date, timeZone: string = APP_TIMEZONE): Date {
+  return parseLocalInTz(defaultDueLocal(toLocalInputValue(release, timeZone)), timeZone);
+}
