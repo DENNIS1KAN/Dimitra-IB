@@ -40,6 +40,9 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   cohortId: uuid("cohort_id").references(() => cohorts.id),
   active: boolean("active").notNull().default(true),
+  // Stamped on sign-in and refreshed on activity (lib/auth) — sessions are
+  // deleted on sign-out, so "last seen" cannot live on the sessions table.
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

@@ -52,7 +52,13 @@ export async function runSeed(db: Db) {
   });
   const [nikos] = await db
     .insert(users)
-    .values({ role: "student", name: "Nikos Karras", email: "nikos@example.com", cohortId: chem.id })
+    .values({
+      role: "student",
+      name: "Nikos Karras",
+      email: "nikos@example.com",
+      cohortId: chem.id,
+      lastSeenAt: new Date(monday - 5 * DAY), // matches his week-5 submission
+    })
     .returning();
   await db.insert(users).values([
     { role: "student", name: "Eleni Vasil", email: "eleni@example.com", cohortId: chem.id },

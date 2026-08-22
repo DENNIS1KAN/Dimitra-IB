@@ -41,10 +41,18 @@ export async function createStudentAndInvite(formData: FormData) {
   const [existing] = await db.select().from(users).where(eq(users.email, email));
   if (existing) redirect("/admin?error=email-taken");
 
-  const [student] = await db
-    .insert(users)
-    .values({ role: "student", name, email, cohortId })
-    .returning();
+  let student: { id: string };
+  try {
+    [student] = await db
+      .insert(users)
+      .values({ role: "student", name, email, cohortId })
+      .returning();
+  } catch (err) {
+    // The check above is a friendly fast path; the unique index is the truth.
+    // A double-submit race lands here instead of on the generic error page.
+    if (isUniqueViolation(err)) redirect("/admin?error=email-taken");
+    throw err;
+  }
   const link = await createMagicLink(student.id, "invite");
   await deliverMagicLink(email, link);
   revalidatePath("/admin");
@@ -112,7 +120,17 @@ export async function createModule(formData: FormData) {
       .returning();
   } catch (err) {
     if (isUniqueViolation(err)) {
-      redirect("/admin/modules?error=week-taken");
+      // Week-taken is only detectable server-side — carry the typed values
+      // back so the redirect doesn't wipe the form.
+      const carry = new URLSearchParams({
+        error: "week-taken",
+        cohortId,
+        weekNumber: String(weekNumber),
+        title,
+        description: (description ?? "").slice(0, 1500),
+        releaseDate: String(formData.get("releaseDate") ?? ""),
+      });
+      redirect(`/admin/modules?${carry.toString()}`);
     }
     throw err;
   }
@@ -137,7 +155,14 @@ export async function updateModule(formData: FormData) {
       .where(eq(modules.id, id));
   } catch (err) {
     if (isUniqueViolation(err)) {
-      redirect(`/admin/modules/${id}?error=week-taken`);
+      const carry = new URLSearchParams({
+        error: "week-taken",
+        weekNumber: String(weekNumber),
+        title,
+        description: (description ?? "").slice(0, 1500),
+        releaseDate: String(formData.get("releaseDate") ?? ""),
+      });
+      redirect(`/admin/modules/${id}?${carry.toString()}`);
     }
     throw err;
   }

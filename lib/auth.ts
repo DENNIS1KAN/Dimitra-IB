@@ -112,6 +112,7 @@ export async function createSession(userId: string) {
   const raw = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
   await db.insert(sessions).values({ token: hash(raw), userId, expiresAt });
+  await db.update(users).set({ lastSeenAt: new Date() }).where(eq(users.id, userId));
   const jar = await cookies();
   jar.set(SESSION_COOKIE, raw, {
     httpOnly: true,
@@ -139,7 +140,18 @@ export async function getSessionUser(): Promise<User | null> {
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
     .where(and(eq(sessions.token, hash(raw)), gt(sessions.expiresAt, new Date())));
-  return row?.user ?? null;
+  const user = row?.user ?? null;
+  // Refresh "last seen" when it's gone stale — throttled so this isn't a
+  // write per request, and best-effort so it can never fail a page load.
+  if (user && Date.now() - (user.lastSeenAt?.getTime() ?? 0) > 15 * 60 * 1000) {
+    user.lastSeenAt = new Date();
+    await db
+      .update(users)
+      .set({ lastSeenAt: user.lastSeenAt })
+      .where(eq(users.id, user.id))
+      .catch(() => {});
+  }
+  return user;
 }
 
 export { SESSION_COOKIE };

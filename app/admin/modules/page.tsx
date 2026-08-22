@@ -13,10 +13,18 @@ import { createModule } from "../actions";
 export default async function AdminModules({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    // Carried back by createModule on week-taken so the form isn't wiped.
+    cohortId?: string;
+    weekNumber?: string;
+    title?: string;
+    description?: string;
+    releaseDate?: string;
+  }>;
 }) {
   await requireAdmin();
-  const { error } = await searchParams;
+  const { error, ...carried } = await searchParams;
   const allCohorts = await db.select().from(cohorts).orderBy(cohorts.name);
   const allModules = await db.select().from(modules).orderBy(asc(modules.weekNumber));
   // Server component renders per-request; "now" is stable within the render.
@@ -99,7 +107,7 @@ export default async function AdminModules({
         <form action={createModule} style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 520 }}>
           <label className="lmn-field">
             <span className="lmn-field-label">Cohort</span>
-            <select className="lmn-input" name="cohortId" required defaultValue="">
+            <select className="lmn-input" name="cohortId" required defaultValue={carried.cohortId ?? ""}>
               <option value="" disabled>
                 Pick a cohort
               </option>
@@ -111,20 +119,36 @@ export default async function AdminModules({
             </select>
           </label>
           <div style={{ display: "flex", gap: 10 }}>
-            <Input label="Week number" name="weekNumber" type="number" min={1} required style={{ width: 140 }} />
+            <Input
+              label="Week number"
+              name="weekNumber"
+              type="number"
+              min={1}
+              required
+              defaultValue={carried.weekNumber ?? ""}
+              style={{ width: 140 }}
+            />
             <Input
               label="Release date & time"
               name="releaseDate"
               type="datetime-local"
               required
+              defaultValue={carried.releaseDate ?? ""}
               style={{ flex: 1 }}
             />
           </div>
-          <Input label="Title" name="title" required placeholder="Buffers & titration curves" />
+          <Input
+            label="Title"
+            name="title"
+            required
+            defaultValue={carried.title ?? ""}
+            placeholder="Buffers & titration curves"
+          />
           <TextArea
             label="Description (shows as your weekly note to students)"
             name="description"
             rows={3}
+            defaultValue={carried.description ?? ""}
             placeholder="A couple of sentences in your voice — what to focus on, what to bring to the clinic."
           />
           <Button variant="primary" size="sm" type="submit">

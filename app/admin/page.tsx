@@ -1,6 +1,6 @@
-import { desc, eq, max, sql } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { cohorts, sessions, users } from "@/db/schema";
+import { cohorts, users } from "@/db/schema";
 import { Badge, Button, Card } from "@/components/lumen/core";
 import { Input } from "@/components/lumen/forms";
 import { requireAdmin } from "@/lib/admin";
@@ -18,18 +18,18 @@ export default async function AdminStudents({
   const { ok, error, link } = await searchParams;
 
   const allCohorts = await db.select().from(cohorts).orderBy(cohorts.name);
+  // users.lastSeenAt survives sign-out (sessions rows don't) and tracks
+  // activity, not just sign-ins.
   const students = await db
     .select({
       user: users,
       cohortName: cohorts.name,
-      lastSeen: max(sessions.createdAt),
+      lastSeen: users.lastSeenAt,
     })
     .from(users)
     .leftJoin(cohorts, eq(cohorts.id, users.cohortId))
-    .leftJoin(sessions, eq(sessions.userId, users.id))
     .where(eq(users.role, "student"))
-    .groupBy(users.id, cohorts.name)
-    .orderBy(desc(sql`max(${sessions.createdAt})`));
+    .orderBy(desc(users.lastSeenAt));
 
   const th: React.CSSProperties = {
     textAlign: "left",

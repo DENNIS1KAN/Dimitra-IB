@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { cohorts, materials, modules } from "@/db/schema";
 import { Badge, Button, Card, Icon } from "@/components/lumen/core";
 import { Input, TextArea } from "@/components/lumen/forms";
+import { ConfirmSubmit } from "@/components/admin/confirm-submit";
 import { UploadDropzone } from "@/components/admin/upload-dropzone";
 import { requireAdmin } from "@/lib/admin";
 import { toLocalInputValue } from "@/lib/tz";
@@ -24,12 +25,20 @@ export default async function AdminModuleEdit({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ ok?: string; error?: string }>;
+  searchParams: Promise<{
+    ok?: string;
+    error?: string;
+    // Carried back by updateModule on week-taken so edits aren't lost.
+    weekNumber?: string;
+    title?: string;
+    description?: string;
+    releaseDate?: string;
+  }>;
 }) {
   await requireAdmin();
   const { id } = await params;
   if (!isUuid(id)) notFound();
-  const { ok, error } = await searchParams;
+  const { ok, error, ...carried } = await searchParams;
 
   const [module] = await db.select().from(modules).where(eq(modules.id, id));
   if (!module) notFound();
@@ -88,7 +97,7 @@ export default async function AdminModuleEdit({
               type="number"
               min={1}
               required
-              defaultValue={module.weekNumber}
+              defaultValue={carried.weekNumber ?? module.weekNumber}
               style={{ width: 140 }}
             />
             <Input
@@ -96,16 +105,16 @@ export default async function AdminModuleEdit({
               name="releaseDate"
               type="datetime-local"
               required
-              defaultValue={local}
+              defaultValue={carried.releaseDate ?? local}
               style={{ flex: 1 }}
             />
           </div>
-          <Input label="Title" name="title" required defaultValue={module.title} />
+          <Input label="Title" name="title" required defaultValue={carried.title ?? module.title} />
           <TextArea
             label="Description (shows as your weekly note to students)"
             name="description"
             rows={3}
-            defaultValue={module.description ?? ""}
+            defaultValue={carried.description ?? module.description ?? ""}
           />
           <Button variant="primary" size="sm" type="submit">
             Save changes
@@ -162,9 +171,11 @@ export default async function AdminModuleEdit({
                 </form>
                 <form action={deleteMaterial}>
                   <input type="hidden" name="id" value={m.id} />
-                  <Button variant="ghost" size="sm" type="submit">
+                  <ConfirmSubmit
+                    message={`Delete "${m.title}"? The uploaded file and its viewing history go with it — there is no undo.`}
+                  >
                     Delete
-                  </Button>
+                  </ConfirmSubmit>
                 </form>
               </div>
             </div>
