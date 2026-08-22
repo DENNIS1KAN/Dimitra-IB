@@ -7,8 +7,9 @@ through one active/paused toggle per student plus per-module release dates.
 
 - **SPEC.md** — authoritative for scope and behavior (the three gating rules
   in §5 are the entire business logic).
-- **DESIGN.md** — authoritative for visuals (tokens + component recipes
-  extracted from the approved mockups in `design/`).
+- **DESIGN.md** — authoritative for visuals (Dimitra's palette, tokens and
+  component recipes; `design/lumen-dashboard-mockup.html` is the reference).
+- **LAUNCH.md** — what stands between HEAD and real students, split by owner.
 - **CLAUDE.md** — standing working rules for AI-assisted development.
 
 ## Quick start — only Node.js needed
@@ -59,19 +60,20 @@ The embedded database is dev-only — production requires `DATABASE_URL`
 
 A fourth, listed course (Mathematics AA SL 2027, no modules yet) sits in the catalog so "Ask to join" can be tried.
 
-Optional extras:
+Optional extra:
 
 ```bash
 # real 5s WebM clips for the seeded videos (needs a Chromium binary):
 node scripts/make-seed-videos.mjs /path/to/chromium
-
-# licensed Apercu Pro fonts + original mockup export (gitignored — this repo
-# is public; see design/README.md):
-node scripts/extract-design-assets.mjs /path/to/Lumen_UI_Mockups_standalone.html
 ```
 
-Without the font step the app renders on its system fallback stack; without
-the video step the player shows a friendly "still processing" note.
+Without it the player shows a friendly "still processing" note. Type is
+Plus Jakarta Sans via a stylesheet link (system fallback offline); icons are
+inline SVGs — there are no font or icon files to install.
+
+> Keep the checkout **outside iCloud-synced folders** (Desktop/Documents with
+> "Optimize Mac Storage"): evicted `node_modules` and `pgdata-lite` files stall
+> the toolchain for minutes per read.
 
 ## Scripts
 
@@ -163,6 +165,7 @@ the video step the player shows a friendly "still processing" note.
 
 ```
 SPEC.md  DESIGN.md  CLAUDE.md      # the three sources of truth
+LAUNCH.md  PROJECT_REPORT.md       # launch checklist · full technical report
 design/                            # approved mockup sources (see design/README.md)
 db/                                # schema, migrations, seed
 lib/                               # gating, auth, storage, video, stamping

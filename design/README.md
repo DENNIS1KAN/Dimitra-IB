@@ -1,5 +1,11 @@
 # design/ — approved UI sources
 
+> **Phase 2 (M9):** `lumen-dashboard-mockup.html` is the authoritative visual
+> reference — Dimitra's palette, Plus Jakarta Sans, inline SVG icons. The
+> `extracted/` sources below belong to the superseded Phase 1 direction
+> (Apercu Pro, Material Symbols, sunbeam yellow) and are kept for the
+> deferred component recipes and the secondary tokens; see DESIGN.md §10.
+
 The visual source of truth for Lumen. `extracted/` holds the text sources
 pulled from the approved mockup export:
 
