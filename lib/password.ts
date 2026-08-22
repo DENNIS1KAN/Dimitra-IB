@@ -4,12 +4,24 @@ import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 
 const KEY_LEN = 64;
 
+/** Enforced server-side in every action that sets a password. */
+export const MIN_PASSWORD_LENGTH = 8;
+export const isAcceptablePassword = (password: string): boolean =>
+  password.length >= MIN_PASSWORD_LENGTH;
+
 /** `scrypt:{salt}:{hash}` with a per-user random salt. */
 export function hashPassword(password: string): string {
   const salt = randomBytes(16).toString("hex");
   const hash = scryptSync(password, salt, KEY_LEN).toString("hex");
   return `scrypt:${salt}:${hash}`;
 }
+
+/**
+ * A real scrypt hash that no password verifies against, for login attempts
+ * on unknown usernames: the full scrypt compare still runs, so response
+ * timing cannot reveal whether a username exists.
+ */
+export const DUMMY_HASH = hashPassword("dummy-timing-equalizer-not-a-real-account");
 
 /** Timing-safe verify; unparseable stored values (e.g. "locked") never match. */
 export function verifyPassword(password: string, stored: string): boolean {

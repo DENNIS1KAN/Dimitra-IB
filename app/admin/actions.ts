@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { cohorts, materials, modules, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin";
-import { hashPassword } from "@/lib/password";
+import { hashPassword, isAcceptablePassword } from "@/lib/password";
 import { storage } from "@/lib/storage";
 import { isUniqueViolation } from "@/lib/db-errors";
 import { parseLocalInTz } from "@/lib/tz";
@@ -43,7 +43,7 @@ export async function createStudent(formData: FormData) {
   const password = String(formData.get("password") ?? "");
   const cohortId = String(formData.get("cohortId") ?? "");
   if (!username || !email || !cohortId) redirect("/admin?error=student");
-  if (password.length < 8) redirect("/admin?error=password-short");
+  if (!isAcceptablePassword(password)) redirect("/admin?error=password-short");
 
   try {
     await db.insert(users).values({
@@ -68,7 +68,7 @@ export async function resetStudentPassword(formData: FormData) {
   await requireAdmin();
   const studentId = String(formData.get("studentId") ?? "");
   const password = String(formData.get("password") ?? "");
-  if (password.length < 8) redirect("/admin?error=password-short");
+  if (!isAcceptablePassword(password)) redirect("/admin?error=password-short");
   const [student] = await db
     .select()
     .from(users)

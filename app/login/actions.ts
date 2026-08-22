@@ -6,12 +6,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { createSession } from "@/lib/auth";
 import { isLockedOut, nextLockoutState } from "@/lib/lockout";
-import { hashPassword, verifyPassword } from "@/lib/password";
-
-// Verified against a real hash even when the username is unknown (or the
-// account is locked), so the response takes the same time either way — no
-// username enumeration.
-const DUMMY_HASH = hashPassword("dummy-timing-equalizer");
+import { DUMMY_HASH, verifyPassword } from "@/lib/password";
 
 export async function signIn(formData: FormData) {
   const username = String(formData.get("username") ?? "")
