@@ -7,6 +7,7 @@ import { enrollments } from "@/db/schema";
 import { IconButton, Wordmark } from "@/components/lumen/core";
 import { getSessionUser } from "@/lib/auth";
 import { signOut } from "@/lib/auth-actions";
+import { unreadForTutor } from "@/lib/messages";
 
 // Admin shell — function over beauty (SPEC §12). Students get redirected
 // to /app; logged-out users to /login.
@@ -20,12 +21,14 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     .select({ pending: sql<number>`count(*)::int` })
     .from(enrollments)
     .where(eq(enrollments.status, "requested"));
+  const unread = await unreadForTutor();
   const nav = [
     { href: "/admin", label: "Students" },
     { href: "/admin/requests", label: pending > 0 ? `Requests (${pending})` : "Requests" },
     { href: "/admin/courses", label: "Courses" },
     { href: "/admin/modules", label: "Modules" },
     { href: "/admin/progress", label: "Progress" },
+    { href: "/admin/messages", label: unread > 0 ? `Messages (${unread})` : "Messages" },
   ];
 
   return (

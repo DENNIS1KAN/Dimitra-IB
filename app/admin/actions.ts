@@ -9,8 +9,10 @@ import { requireAdmin } from "@/lib/admin";
 import { hashPassword, isAcceptablePassword } from "@/lib/password";
 import { storage } from "@/lib/storage";
 import { isUniqueViolation } from "@/lib/db-errors";
+import { postTutorReply } from "@/lib/messages";
 import { parseLocalInTz } from "@/lib/tz";
 import { isUuid } from "@/lib/validate";
+import type { ComposerState } from "@/components/messages/composer";
 
 // ---------------------------------------------------------------------------
 // Cohorts
@@ -323,4 +325,20 @@ export async function deleteMaterial(formData: FormData) {
     revalidatePath(`/admin/modules/${mat.moduleId}`);
     redirect(`/admin/modules/${mat.moduleId}`);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Messages (SPEC §15.5) — the tutor's reply; replying marks the thread read.
+
+export async function replyToStudent(
+  studentId: string,
+  _prev: ComposerState,
+  formData: FormData,
+): Promise<ComposerState> {
+  const user = await requireAdmin();
+  const result = await postTutorReply(user, studentId, formData);
+  if (!result.ok) return result;
+  revalidatePath(`/admin/messages/${studentId}`);
+  revalidatePath("/admin/messages");
+  return { ok: true, at: Date.now() };
 }
