@@ -130,7 +130,7 @@ Login (magic link) → open this week's module → watch → download → attemp
 Defaults below; equivalents you prefer are fine — **keep the shape** (boring monolith, Postgres, presigned uploads, signed playback, EU regions).
 
 - **App:** Next.js (App Router) + TypeScript, single repo, no microservices.
-- **DB:** Postgres + Drizzle ORM + migrations. Local via Docker in dev.
+- **DB:** Postgres + Drizzle ORM + migrations. Local via Docker in dev. *Recorded substitution (per this section's preamble): with `DATABASE_URL` unset, dev falls back to embedded Postgres (PGlite, `./pgdata-lite`) so a fresh clone needs no Docker; the Docker flow keeps working via `.env`.*
 - **UI:** Tailwind + shadcn/ui.
 - **Auth:** magic links (Auth.js email provider or hand-rolled signed tokens). **Dev mode: links print to the server console** — no email service needed until Milestone 3. Prod: Resend.
 - **Video:** Bunny Stream, one library with **token authentication ON**. Admin uploads go browser → Bunny directly (upload URL created server-side); playback via embed/HLS with expiring signed tokens tied to a logged-in session.

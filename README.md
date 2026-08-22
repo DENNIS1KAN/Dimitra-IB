@@ -42,8 +42,12 @@ npm run db:seed
 npm run dev
 ```
 
+With `DATABASE_URL` set, `npm run dev` leaves your database alone —
+migrating and seeding stay explicit commands (`db:migrate` / `db:seed`;
+reseeding a non-empty database needs `npm run db:seed -- --force`).
+
 The embedded database is dev-only — production requires `DATABASE_URL`
-(the app refuses to start on PGlite in production).
+(the app refuses to use PGlite in production).
 </details>
 
 | Account | Email | State |
@@ -75,7 +79,7 @@ the video step the player shows a friendly "still processing" note.
 | `npm run build` / `start` | production build / serve |
 | `npm run db:generate` | generate a migration from `db/schema.ts` |
 | `npm run db:migrate` | apply migrations |
-| `npm run db:seed` | reset + seed demo data (writes placeholder PDFs to `./storage`) |
+| `npm run db:seed` | reset + seed demo data (writes placeholder PDFs to `./storage`) — stop `npm run dev` first (the embedded DB is single-process; a second opener is refused); a non-empty `DATABASE_URL` database additionally requires `npm run db:seed -- --force` |
 | `npm test` | vitest — the §5 gating rules + Bunny token math |
 | `npm run typecheck` / `lint` | TypeScript strict / ESLint |
 

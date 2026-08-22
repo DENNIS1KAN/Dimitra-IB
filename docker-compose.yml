@@ -1,4 +1,6 @@
-# Local Postgres for dev (SPEC §9). `docker compose up -d` then `npm run db:migrate`.
+# Optional real Postgres for dev (SPEC §9) — without a .env the app uses
+# embedded PGlite instead. To use this: `docker compose up -d`, then
+# `cp .env.example .env` (sets DATABASE_URL), then `npm run db:migrate`.
 services:
   db:
     image: postgres:16
