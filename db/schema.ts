@@ -40,6 +40,10 @@ export const users = pgTable("users", {
   // Login identity: username + scrypt password hash (lib/password.ts).
   username: text("username").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
+  // Brute-force lockout (lib/lockout.ts): 10 failures → 15-minute lock.
+  // Stored in the DB so it survives restarts and works across processes.
+  failedLogins: integer("failed_logins").notNull().default(0),
+  lockedUntil: timestamp("locked_until", { withTimezone: true }),
   // Contact + PDF-stamping field only — plays no role in authentication.
   email: text("email").notNull().unique(),
   cohortId: uuid("cohort_id").references(() => cohorts.id),
