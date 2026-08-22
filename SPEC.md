@@ -1,6 +1,6 @@
 # Lumen — V1 Build Specification
 
-**Status:** Ready to build · **Working title:** Lumen · **Last updated:** 2026-08-21
+**Status:** V1 built (M1–M5) · Phase 2 in progress (M6–M9, see §15) · **Working title:** Lumen · **Last updated:** 2026-08-22
 
 This document is the source of truth for V1 scope. Anything not listed in the Goals or Milestones is out of scope until this spec changes. When in doubt, build less.
 
@@ -33,8 +33,8 @@ The tutor's income is capped by 1:1 hours, and most of each hour is spent re-exp
 Explicitly not building these, so scope stays tight:
 
 - **Payments / subscriptions / invoices** — PayPal happens offline; the active flag is the billing system.
-- **In-app messaging** — she already has these students on WhatsApp; caps and inbox UI come later.
-- **Session booking** — a Calendly link covers it.
+- **In-app messaging** — she already has these students on WhatsApp; caps and inbox UI come later. *Amended (Phase 2, §15): one plain thread per student is in scope (M7); caps enforcement stays out.*
+- **Session booking** — a Calendly link covers it. *Amended (Phase 2, §15): the app links out to Dimitra's Google Calendar appointment-schedule page (M8); still no booking logic or Calendar API.*
 - **Parent accounts or digests** — parents look over shoulders in V1; digest emails are a fast-follow (see §13).
 - **Analytics dashboards / auto-briefs** — V1 only *captures* events (see §6); no reporting UI yet.
 - **Multi-tutor / multi-tenant** — one tutor, hardcoded assumptions are fine.
@@ -71,17 +71,19 @@ Explicitly not building these, so scope stays tight:
 
 These three rules are the entire business logic of V1. Resist adding cases.
 
+*Amended (Phase 2, §15.2): from M6, Rule 1 is enrollment-based — a student may be enrolled in several cohorts, each enrollment can be paused independently, and join requests exist. Rules 2 and 3 are unchanged.*
+
 ---
 
 ## 6. Data model
 
 Postgres. Six domain tables plus whatever the auth library needs.
 
-**users** — `id`, `role` (`admin` | `student`), `name`, `email` (unique), `cohort_id` (nullable for admins), `active` (bool, default true), `created_at`
+**users** — `id`, `role` (`admin` | `student`), `name`, `email` (unique), `cohort_id` (nullable for admins), `active` (bool, default true), `created_at` *(Phase 2: `cohort_id` is replaced by the `enrollments` table — §15.3)*
 
-**cohorts** — `id`, `name` (e.g. "Chemistry HL 2027"), `subject`, `level` (`HL` | `SL`), `exam_year`
+**cohorts** — `id`, `name` (e.g. "Chemistry HL 2027"), `subject`, `level` (`HL` | `SL`), `exam_year` *(Phase 2: + `blurb`, `is_listed` — §15.3)*
 
-**modules** — `id`, `cohort_id`, `week_number` (int), `title`, `description` (short), `release_date` (timestamptz)
+**modules** — `id`, `cohort_id`, `week_number` (int), `title`, `description` (short), `release_date` (timestamptz) *(Phase 2: + `due_date`, nullable — §15.3)*
 
 **materials** — `id`, `module_id`, `type` (`video` | `slides` | `exercises` | `solutions`), `title`, `storage_key` (Bunny video ID or storage path), `sort_order`
 
@@ -100,11 +102,11 @@ Postgres. Six domain tables plus whatever the auth library needs.
 - `/login` — email field → magic link. No passwords anywhere. *Recorded substitution (owner decision, 2026-08-22): username + password sign-in; accounts and passwords are created/reset by the tutor in `/admin`. The invite-link flow is retired.*
 - `/invite/[token]` — new student sets their name, lands in `/app`.
 
-**Student** (mobile-first — assume a phone)
+**Student** (mobile-first — assume a phone) *— Phase 2 adds `/app/courses`, `/app/assignments`, `/app/messages`, `/app/sessions`, `/app/account` and a student nav; see §15.4.*
 - `/app` — modules grouped by week: completed (check), open, locked teaser with unlock date. Progress bar: completed ÷ released.
 - `/app/modules/[id]` — videos (embedded player), slides (inline view + download), exercises (download), submit box (file and/or note and/or "mark attempted"), solutions section (locked until submission per Rule 2).
 
-**Admin** (function over beauty — she is the only viewer)
+**Admin** (function over beauty — she is the only viewer) *— Phase 2 additions in §15.5.*
 - `/admin` — students table: name, cohort, active toggle, last seen, invite-new-student.
 - `/admin/modules` — list by cohort + new module.
 - `/admin/modules/[id]` — edit title/description/release date; upload materials (drag-and-drop); reorder.
@@ -143,7 +145,7 @@ Defaults below; equivalents you prefer are fine — **keep the shape** (boring m
 
 ## 10. Build milestones
 
-One milestone per session. Verify each checklist before starting the next. Milestones 1–2 require **zero external accounts**.
+One milestone per session. Verify each checklist before starting the next. Milestones 1–2 require **zero external accounts**. *M1–M5 are built; Phase 2 milestones M6–M9 are specified in §15.6.*
 
 ### M1 — Skeleton & gating
 Schema + migrations; seed script (1 admin, 1 cohort, 3 students — one paused, 4 modules — 2 released / 2 future, placeholder materials, 1 pre-seeded submission); magic-link auth with console delivery; role middleware; student module list + module page implementing Rules 1–3 off seed data.
@@ -210,7 +212,7 @@ Landing page; PDF name-stamping on download; empty/locked/error states with frie
 
 ## 13. Parking lot (P2 — design so these stay possible; build none now)
 
-Parent monthly digest email (built from `events` + `submissions`) · clinic auto-briefs (most-missed questions per cohort per week) · in-app messaging with per-plan caps · 1:1 booking · per-student video watermarking · payments/subscriptions · multi-tutor tenancy.
+Parent monthly digest email (built from `events` + `submissions`) · clinic auto-briefs (most-missed questions per cohort per week) · in-app messaging with per-plan caps *(Phase 2 builds the thread without caps — §15)* · 1:1 booking *(Phase 2 links out — §15)* · per-student video watermarking · payments/subscriptions · multi-tutor tenancy.
 
 ---
 
@@ -220,3 +222,87 @@ Parent monthly digest email (built from `events` + `submissions`) · clinic auto
 - **Vendor account ownership** — Bunny/Resend/domain should live under the tutor's accounts for continuity; developer gets access. *Owner: both. Non-blocking until M3.*
 - **Slides inline viewer vs download-only** — default: inline browser view + stamped download; confirm she's happy exercises are download-only. *Owner: tutor. Non-blocking.*
 - **Greek copy for parents on the landing page** — default English-only in V1. *Owner: tutor. Non-blocking.*
+
+---
+
+## 15. Phase 2 amendments (owner-directed, 2026-08-22)
+
+The owner amended this spec for Phase 2. Everything below **overrides** the earlier sections where they disagree; the earlier text is kept so the history stays readable, with *Amended* pointers at each affected spot. Username + password auth (§7/§9 substitutions) stays exactly as is. Conflicts found while applying the amendments are listed in §15.7 — flagged, not silently resolved.
+
+### 15.1 Decisions (locked by the owner)
+
+- **Enrolment:** students browse a course catalog and **"Ask to join"**; Dimitra approves (payment stays offline-first). No self-checkout.
+- **Deadlines are SOFT:** a due date shows on modules and an *overdue* badge appears when missed; **submission is never blocked**.
+- **Sessions:** Google Meet, scheduled through Dimitra's Google Calendar appointment-schedule booking page. The app links out; **no Calendar API integration** in this phase.
+
+### 15.2 Gating update (Rule 1 rewritten; Rules 2 and 3 unchanged)
+
+**Rule 1 — Module visibility (enrollment-based).** A module is **open** iff the student has an **active enrollment** in the module's cohort AND `module.release_date <= now` AND `users.active == true`. Future modules in enrolled (active) cohorts render as **locked teasers**. Everything else — no enrollment, a *requested*, *paused* or *ended* enrollment, another cohort — is **invisible** (404 on direct URL, never rendered, never served).
+
+**Paused enrollment.** A paused *enrollment* hides that course's modules and shows "paused — talk to Dimitra" on the course card; the student's other courses keep working.
+
+**Rule 3 is unchanged:** `users.active` stays the global master switch — `false` still shows the full-screen paused state on every `/app` route, regardless of enrollments.
+
+**Soft deadline (presentation rule, not a gate):** a released module is *overdue* iff `due_date` is set, `now > due_date`, and the student has no submission for it. Submitting clears the badge. Nothing is ever blocked by a due date.
+
+`lib/gating.ts` remains the single tested home of these rules.
+
+### 15.3 Schema deltas (one migration, carefully backfilled)
+
+- **enrollments** — `id`, `student_id`, `cohort_id`, `status` (`requested` | `active` | `paused` | `ended`), `requested_at`, `decided_at`; unique (`student_id`, `cohort_id`). **Backfill:** one *active* enrollment from every existing `users.cohort_id`, then **drop that column**. `users.active` stays as the global master switch (Rule 3 screen unchanged).
+- **cohorts** += `blurb` (text), `is_listed` (bool, default false) — catalog fields.
+- **modules** += `due_date` (timestamptz, nullable). The admin form defaults it to the **Sunday 23:59 after release**, tutor timezone.
+- **messages** — `id`, `student_id`, `sender` (`student` | `tutor`), `body`, `created_at`, `read_at`. **One thread per student** — not per course.
+- **settings** — key/value: `booking_url`, `clinic_text` — editable in admin.
+
+### 15.4 Student pages (all mobile-first, 390px first)
+
+- **`/app` dashboard** — as before, plus: due date on the hero card, overdue badges on rows, unread-messages dot in the nav. With several active enrollments the list spans all of them (rows name their course); with a single enrollment the page is exactly what a pre-migration student saw.
+- **`/app/courses`** — *my courses* (active / paused states) + *catalog* of `is_listed` courses with **"Ask to join"** → request created, button becomes **"Requested"**.
+- **`/app/assignments`** — every open module across enrollments with its due date; overdue badge; completed section below. This is the "what do I owe" page.
+- **`/app/messages`** — single thread with Dimitra: composer, sent/received bubbles, unread marking. Simple polling refresh; no websockets.
+- **`/app/sessions`** — next clinic (`settings.clinic_text`) + **"Book a 1:1 on Google Meet"** button opening `settings.booking_url` in a new tab.
+- **`/app/account`** — change own password (current + new, min 8, same scrypt path).
+
+A student nav (Home · Courses · Assignments · Messages · Sessions · Account, added as the milestones land) is mounted **once**, in the `/app` layout.
+
+### 15.5 Admin additions
+
+- **Requests queue** — pending join requests; **approve** (→ active enrollment) / **decline**.
+- **Courses** — edit `blurb` + `is_listed` per cohort (cohort creation moves here).
+- **Students** — per-student enrollments with pause / resume / end, and "add to course"; the global active toggle stays.
+- **Modules** — `due_date` field (defaulting per §15.3).
+- **`/admin/messages`** — all threads, unread counts, reply.
+- **Progress matrix** — clicking a submitted cell opens that student's submission (file + note) — admin-only read path; students still can never read submissions back.
+- **Settings page** — `booking_url`, `clinic_text`.
+
+### 15.6 Milestones (one per session; verified, then pushed to origin)
+
+**M6 — Enrollments + catalog + deadlines.** Migration, gating rewrite + tests, courses page, request/approve, assignments page.
+Verify:
+- [ ] a two-course student sees both
+- [ ] a requested course shows no modules
+- [ ] pausing one enrollment hides only that course
+- [ ] overdue badge appears after due date and clears on submit
+- [ ] every pre-migration student still sees exactly what they saw before
+
+**M7 — Messages.** Verify: both directions work; unread clears on open; student A can never read student B's thread (test the authz, not just the UI).
+
+**M8 — Sessions + account password change + admin submission viewer + settings.** Verify: old password stops working after change; admin opens a real uploaded submission; booking button opens the Google page.
+
+**M9 — Restyle** to Dimitra's palette using `design/lumen-dashboard-mockup.html` as the reference: blue nav/links/selected, indigo headings + hero, orange only for the one motivational CTA (ink text on orange), jade fills with Forest `#1e7a4a` for green text, cream page, white cards, **no yellow anywhere**. While restyling: fix the duplicated header (nav mounted in two nested layouts) and replace the icon font with inline SVGs. Update DESIGN.md tokens. Verify at 390px and desktop.
+
+**Still out of scope:** payments, parent accounts, message-cap enforcement, Calendar API sync, email notifications, auto-briefs, multi-tutor.
+
+### 15.7 Conflicts flagged while applying the amendments
+
+| # | Earlier text | Amendment | Status |
+|---|---|---|---|
+| 1 | §3: in-app messaging is a non-goal; DESIGN.md §9 #10 parks "Message Dimitra" | M7 builds one thread per student (no caps) | Owner decision — §3 annotated; DESIGN.md §9 #10 to be updated in M7 |
+| 2 | §3: session booking = Calendly link; DESIGN.md §8 parks the Clinics screen | M8 `/app/sessions` = clinic text + link-out button (not the parked Clinics/SessionCard screen) | Owner decision — the simpler page; SessionCard stays parked |
+| 3 | §6 / DESIGN.md §9 #6: exactly one cohort per student, no class switcher | Enrollments allow several cohorts per student | Owner decision — `/app` aggregates across active enrollments; no class switcher is built |
+| 4 | §5: "three rules … resist adding cases" | Rule 1 gains enrollment status + paused-enrollment state; soft deadline added | Owner decision — recorded as a rewrite of Rule 1 plus one presentation rule, still in one tested module |
+| 5 | §7: `/admin` students table has a *cohort* column and the create form picks one cohort | Students can hold several enrollments | Create form keeps one cohort (→ active enrollment); more enrollments are added per row |
+| 6 | DESIGN.md §8: TabBar and DeskNav page links deferred (single student destination) | Six student pages need a nav | Nav links built from the DeskNav link recipe, mounted once in the `/app` layout; restyled in M9 |
+| 7 | §15.3 lists the `status` values but not what *decline* does | — | Assumption: decline **deletes** the request row (the student may ask again); `ended` is an admin-set state for students who left a course |
+| 8 | Default due date "Sunday 23:59 after release" | — | Assumption: the first Sunday 23:59 (tutor timezone) strictly after the release instant |
