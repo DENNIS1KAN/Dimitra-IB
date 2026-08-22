@@ -7,6 +7,7 @@ import { Input, TextArea } from "@/components/lumen/forms";
 import { UploadDropzone } from "@/components/admin/upload-dropzone";
 import { requireAdmin } from "@/lib/admin";
 import { toLocalInputValue } from "@/lib/tz";
+import { isUuid } from "@/lib/validate";
 import { deleteMaterial, moveMaterial, renameMaterial, updateModule } from "../../actions";
 
 const TYPE_ICONS: Record<string, string> = {
@@ -27,6 +28,7 @@ export default async function AdminModuleEdit({
 }) {
   await requireAdmin();
   const { id } = await params;
+  if (!isUuid(id)) notFound();
   const { ok, error } = await searchParams;
 
   const [module] = await db.select().from(modules).where(eq(modules.id, id));

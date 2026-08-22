@@ -12,6 +12,7 @@ import {
 } from "@/db/schema";
 import { compareByRecency, pickCurrent } from "./current";
 import { isModuleComplete, moduleState, type ModuleState } from "./gating";
+import { isUuid } from "./validate";
 
 export type ModuleListEntry = {
   module: Module;
@@ -133,6 +134,7 @@ export async function studentModuleDetail(
   moduleId: string,
   student: User,
 ): Promise<StudentModuleDetail | null> {
+  if (!isUuid(moduleId)) return null; // malformed id → 404, not a 22P02 500
   const now = new Date();
   const [module] = await db.select().from(modules).where(eq(modules.id, moduleId));
   if (!module) return null;

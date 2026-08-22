@@ -303,6 +303,16 @@ export function Button({
     ...style,
   };
   if (href && !disabled) {
+    // Route-handler hrefs must be plain <a>: next/link viewport-prefetches
+    // and RSC-fetches its href in production, which executes /api handlers
+    // (stamping PDFs, logging phantom download events) without a real click.
+    if (href.startsWith("/api/")) {
+      return (
+        <a href={href} className={`lmn-btn lmn-btn-${variant}`} style={css}>
+          {children}
+        </a>
+      );
+    }
     return (
       <Link href={href} className={`lmn-btn lmn-btn-${variant}`} style={css}>
         {children}
@@ -354,6 +364,15 @@ export function IconButton({
     </span>
   );
   if (href) {
+    // Same as Button: /api/ hrefs stay plain <a> so prefetch/RSC fetches
+    // never execute the route handler.
+    if (href.startsWith("/api/")) {
+      return (
+        <a href={href} className={`lmn-iconbtn lmn-iconbtn-${variant}`} aria-label={label} style={css}>
+          {glyph}
+        </a>
+      );
+    }
     return (
       <Link
         href={href}

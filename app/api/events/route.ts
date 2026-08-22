@@ -5,6 +5,7 @@ import { materials, modules } from "@/db/schema";
 import { getSessionUser } from "@/lib/auth";
 import { moduleState } from "@/lib/gating";
 import { logMaterialEvent } from "@/lib/material-access";
+import { isUuid } from "@/lib/validate";
 
 // Video progress capture (SPEC §10 M4: every 30s). Write-only in V1.
 export async function POST(request: NextRequest) {
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
   } | null;
   const materialId = body?.materialId ?? "";
   const value = Math.max(0, Math.floor(Number(body?.value ?? 0)));
-  if (!materialId || !Number.isFinite(value)) {
+  if (!isUuid(materialId) || !Number.isFinite(value)) {
     return NextResponse.json({ error: "bad request" }, { status: 400 });
   }
 

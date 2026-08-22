@@ -1,6 +1,6 @@
 // NOTE: no "server-only" here — the seed script imports this from plain Node.
 import { createHash } from "node:crypto";
-import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { mkdir, open, readFile, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 // File storage behind one interface (SPEC §9): dev writes to ./storage,
@@ -12,6 +12,10 @@ export interface FileStorage {
   put(key: string, data: Buffer, contentType?: string): Promise<void>;
   /** Read bytes back (used for inline viewing and PDF stamping). */
   get(key: string): Promise<Buffer>;
+  /** Object size in bytes (video range requests need it without a full read). */
+  size(key: string): Promise<number>;
+  /** Read just [start, end] (inclusive) — a video seek must not buffer the whole file. */
+  getRange(key: string, start: number, end: number): Promise<Buffer>;
   /** Remove a stored object (account deletion = user row + their files). */
   delete(key: string): Promise<void>;
 }
@@ -32,6 +36,19 @@ class LocalStorage implements FileStorage {
   }
   async get(key: string) {
     return readFile(safe(key));
+  }
+  async size(key: string) {
+    return (await stat(safe(key))).size;
+  }
+  async getRange(key: string, start: number, end: number) {
+    const fd = await open(safe(key), "r");
+    try {
+      const length = end - start + 1;
+      const { buffer, bytesRead } = await fd.read(Buffer.alloc(length), 0, length, start);
+      return bytesRead === length ? buffer : buffer.subarray(0, bytesRead);
+    } finally {
+      await fd.close();
+    }
   }
   async delete(key: string) {
     await unlink(safe(key)).catch(() => {});
@@ -63,6 +80,21 @@ class BunnyStorage implements FileStorage {
     const res = await fetch(`${this.base}/${key}`, { headers: this.headers() });
     if (!res.ok) throw new Error(`bunny get failed: ${res.status}`);
     return Buffer.from(await res.arrayBuffer());
+  }
+  async size(key: string) {
+    const res = await fetch(`${this.base}/${key}`, { method: "HEAD", headers: this.headers() });
+    const length = Number(res.headers.get("content-length"));
+    if (!res.ok || !Number.isFinite(length)) throw new Error(`bunny head failed: ${res.status}`);
+    return length;
+  }
+  async getRange(key: string, start: number, end: number) {
+    const res = await fetch(`${this.base}/${key}`, {
+      headers: { ...this.headers(), Range: `bytes=${start}-${end}` },
+    });
+    if (!res.ok) throw new Error(`bunny range get failed: ${res.status}`);
+    const body = Buffer.from(await res.arrayBuffer());
+    // 206 = the requested slice; 200 = Range ignored, slice it ourselves.
+    return res.status === 206 ? body : body.subarray(start, end + 1);
   }
   async delete(key: string) {
     await fetch(`${this.base}/${key}`, { method: "DELETE", headers: this.headers() });

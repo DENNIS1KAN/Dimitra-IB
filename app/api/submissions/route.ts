@@ -8,6 +8,7 @@ import { isUniqueViolation } from "@/lib/db-errors";
 import { moduleState } from "@/lib/gating";
 import { hasSubmissionFor } from "@/lib/material-access";
 import { storage } from "@/lib/storage";
+import { isUuid } from "@/lib/validate";
 
 const FILE_EXTS = new Set([".jpg", ".jpeg", ".png", ".heic", ".webp", ".pdf"]);
 const MAX_BYTES = 25 * 1024 * 1024;
@@ -25,6 +26,9 @@ export async function POST(request: NextRequest) {
   const note = String(form.get("note") ?? "").trim() || null;
   const file = form.get("file");
 
+  if (!isUuid(moduleId)) {
+    return NextResponse.json({ error: "module not found" }, { status: 404 });
+  }
   const [module] = await db.select().from(modules).where(eq(modules.id, moduleId));
   if (!module || moduleState(module, user, new Date()) !== "open") {
     return NextResponse.json({ error: "module not found" }, { status: 404 });

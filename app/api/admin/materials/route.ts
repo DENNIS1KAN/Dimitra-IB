@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { materials, modules } from "@/db/schema";
 import { getSessionUser } from "@/lib/auth";
 import { storage, storageKeyFor } from "@/lib/storage";
+import { isUuid } from "@/lib/validate";
 
 const ALLOWED = new Set(["video", "slides", "exercises", "solutions"]);
 const EXTENSIONS: Record<string, string[]> = {
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
   const type = String(form.get("type") ?? "");
   const file = form.get("file");
 
-  if (!ALLOWED.has(type) || !(file instanceof File) || !moduleId) {
+  if (!ALLOWED.has(type) || !(file instanceof File) || !isUuid(moduleId)) {
     return NextResponse.json({ error: "missing module, type, or file" }, { status: 400 });
   }
   const [module] = await db.select().from(modules).where(eq(modules.id, moduleId));
