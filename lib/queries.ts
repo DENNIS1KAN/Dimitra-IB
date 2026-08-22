@@ -131,12 +131,14 @@ export async function studentModuleList(student: User): Promise<StudentModuleLis
   const future = entries
     .filter((e) => e.state === "locked-teaser")
     .sort((a, b) => a.module.releaseDate.getTime() - b.module.releaseDate.getTime());
-  // Hero = "this week" per the shared lib/current rule (most recent release).
-  const currentModule = pickCurrent(released.map((e) => e.module));
+  // Hero = "this week" per the shared lib/current rule (most recent release,
+  // then nearest due date, then course title — SPEC §15.7 #9).
+  const releasable = (e: ModuleListEntry) => ({ ...e.module, courseTitle: e.cohort.name });
+  const currentModule = pickCurrent(released.map(releasable));
   const current = released.find((e) => e.module.id === currentModule?.id) ?? null;
   const olderReleased = released
     .filter((e) => e.module.id !== currentModule?.id)
-    .sort((a, b) => compareByRecency(a.module, b.module)); // newest first below the hero
+    .sort((a, b) => compareByRecency(releasable(a), releasable(b))); // newest first below the hero
 
   return {
     ...empty,
@@ -188,7 +190,9 @@ export async function studentModuleDetail(
     .select()
     .from(modules)
     .where(eq(modules.cohortId, module.cohortId));
-  const releasedSiblings = siblings.filter((m) => m.releaseDate.getTime() <= now.getTime());
+  const releasedSiblings = siblings
+    .filter((m) => m.releaseDate.getTime() <= now.getTime())
+    .map((m) => ({ ...m, courseTitle: cohort.name }));
   // Same rule as the /app hero — the list and this badge can never disagree.
   const isCurrent = pickCurrent(releasedSiblings)?.id === module.id;
 
@@ -289,7 +293,13 @@ export async function studentAssignments(student: User): Promise<StudentAssignme
   const dueOrder = (a: Assignment, b: Assignment) => {
     const ad = a.module.dueDate?.getTime() ?? Number.POSITIVE_INFINITY;
     const bd = b.module.dueDate?.getTime() ?? Number.POSITIVE_INFINITY;
-    return ad - bd || compareByRecency(a.module, b.module);
+    return (
+      ad - bd ||
+      compareByRecency(
+        { ...a.module, courseTitle: a.cohort.name },
+        { ...b.module, courseTitle: b.cohort.name },
+      )
+    );
   };
   return {
     open: all.filter((a) => !a.submittedAt).sort(dueOrder),

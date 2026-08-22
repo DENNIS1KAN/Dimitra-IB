@@ -92,6 +92,13 @@ describe("studentModuleList — Rule 1 over enrollments", () => {
     expect(list.activeCohorts).toHaveLength(2);
   });
 
+  it("hero tie-break: same-day releases → the nearest due date wins (SPEC §15.7 #9)", async () => {
+    // W6 (HL) and SL W6 were released the same instant; W6 is due a day sooner.
+    const list = await q.studentModuleList(eleni);
+    expect(list.current?.module.title).toBe("W6");
+    expect(list.olderReleased.map((e) => e.module.title)).toEqual(["SL W6", "W5"]);
+  });
+
   it("pausing one enrollment hides only that course", async () => {
     const { enrollments } = schema;
     const { and, eq } = await import("drizzle-orm");
