@@ -190,14 +190,22 @@ export async function createModule(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim() || null;
   // datetime-local means the TUTOR's wall clock, not the server's (UTC).
   const releaseDate = parseLocalInTz(String(formData.get("releaseDate") ?? ""));
-  if (!cohortId || !title || !weekNumber || Number.isNaN(releaseDate.getTime())) {
+  const dueRaw = String(formData.get("dueDate") ?? "").trim();
+  const dueDate = dueRaw ? parseLocalInTz(dueRaw) : null; // soft deadline, optional
+  if (
+    !cohortId ||
+    !title ||
+    !weekNumber ||
+    Number.isNaN(releaseDate.getTime()) ||
+    (dueDate && Number.isNaN(dueDate.getTime()))
+  ) {
     redirect("/admin/modules?error=module");
   }
   let created: { id: string };
   try {
     [created] = await db
       .insert(modules)
-      .values({ cohortId, weekNumber, title, description, releaseDate })
+      .values({ cohortId, weekNumber, title, description, releaseDate, dueDate })
       .returning();
   } catch (err) {
     if (isUniqueViolation(err)) {
@@ -210,6 +218,7 @@ export async function createModule(formData: FormData) {
         title,
         description: (description ?? "").slice(0, 1500),
         releaseDate: String(formData.get("releaseDate") ?? ""),
+        dueDate: dueRaw,
       });
       redirect(`/admin/modules?${carry.toString()}`);
     }
@@ -226,13 +235,21 @@ export async function updateModule(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim() || null;
   const releaseDate = parseLocalInTz(String(formData.get("releaseDate") ?? ""));
-  if (!id || !title || !weekNumber || Number.isNaN(releaseDate.getTime())) {
+  const dueRaw = String(formData.get("dueDate") ?? "").trim();
+  const dueDate = dueRaw ? parseLocalInTz(dueRaw) : null;
+  if (
+    !id ||
+    !title ||
+    !weekNumber ||
+    Number.isNaN(releaseDate.getTime()) ||
+    (dueDate && Number.isNaN(dueDate.getTime()))
+  ) {
     redirect(`/admin/modules/${id}?error=save`);
   }
   try {
     await db
       .update(modules)
-      .set({ weekNumber, title, description, releaseDate })
+      .set({ weekNumber, title, description, releaseDate, dueDate })
       .where(eq(modules.id, id));
   } catch (err) {
     if (isUniqueViolation(err)) {
@@ -242,6 +259,7 @@ export async function updateModule(formData: FormData) {
         title,
         description: (description ?? "").slice(0, 1500),
         releaseDate: String(formData.get("releaseDate") ?? ""),
+        dueDate: dueRaw,
       });
       redirect(`/admin/modules/${id}?${carry.toString()}`);
     }

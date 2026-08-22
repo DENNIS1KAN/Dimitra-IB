@@ -3,8 +3,8 @@ import { asc } from "drizzle-orm";
 import { db } from "@/db";
 import { cohorts, modules } from "@/db/schema";
 import { Badge, Button, Card } from "@/components/lumen/core";
-import { Input } from "@/components/lumen/forms";
-import { TextArea } from "@/components/lumen/forms";
+import { Input, TextArea } from "@/components/lumen/forms";
+import { ReleaseDueFields } from "@/components/admin/release-due-fields";
 import { requireAdmin } from "@/lib/admin";
 import { formatDay } from "@/lib/format";
 import { createModule } from "../actions";
@@ -21,6 +21,7 @@ export default async function AdminModules({
     title?: string;
     description?: string;
     releaseDate?: string;
+    dueDate?: string;
   }>;
 }) {
   await requireAdmin();
@@ -88,6 +89,11 @@ export default async function AdminModules({
                       Releases {formatDay(m.releaseDate)}
                     </Badge>
                   )}
+                  {m.dueDate && (
+                    <Badge tone="neutral" icon="flag">
+                      Due {formatDay(m.dueDate)}
+                    </Badge>
+                  )}
                 </Link>
               ))}
               {list.length === 0 && (
@@ -118,25 +124,16 @@ export default async function AdminModules({
               ))}
             </select>
           </label>
-          <div style={{ display: "flex", gap: 10 }}>
-            <Input
-              label="Week number"
-              name="weekNumber"
-              type="number"
-              min={1}
-              required
-              defaultValue={carried.weekNumber ?? ""}
-              style={{ width: 140 }}
-            />
-            <Input
-              label="Release date & time"
-              name="releaseDate"
-              type="datetime-local"
-              required
-              defaultValue={carried.releaseDate ?? ""}
-              style={{ flex: 1 }}
-            />
-          </div>
+          <Input
+            label="Week number"
+            name="weekNumber"
+            type="number"
+            min={1}
+            required
+            defaultValue={carried.weekNumber ?? ""}
+            style={{ width: 140 }}
+          />
+          <ReleaseDueFields release={carried.releaseDate ?? ""} due={carried.dueDate ?? ""} />
           <Input
             label="Title"
             name="title"

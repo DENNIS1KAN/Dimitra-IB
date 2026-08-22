@@ -5,6 +5,7 @@ import { cohorts, materials, modules } from "@/db/schema";
 import { Badge, Button, Card, Icon } from "@/components/lumen/core";
 import { Input, TextArea } from "@/components/lumen/forms";
 import { ConfirmSubmit } from "@/components/admin/confirm-submit";
+import { ReleaseDueFields } from "@/components/admin/release-due-fields";
 import { UploadDropzone } from "@/components/admin/upload-dropzone";
 import { requireAdmin } from "@/lib/admin";
 import { toLocalInputValue } from "@/lib/tz";
@@ -33,6 +34,7 @@ export default async function AdminModuleEdit({
     title?: string;
     description?: string;
     releaseDate?: string;
+    dueDate?: string;
   }>;
 }) {
   await requireAdmin();
@@ -51,6 +53,7 @@ export default async function AdminModuleEdit({
 
   // datetime-local shows the TUTOR's wall clock (lib/tz), not the server's.
   const local = toLocalInputValue(module.releaseDate);
+  const dueLocal = module.dueDate ? toLocalInputValue(module.dueDate) : "";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -90,25 +93,16 @@ export default async function AdminModuleEdit({
         </h2>
         <form action={updateModule} style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 520 }}>
           <input type="hidden" name="id" value={module.id} />
-          <div style={{ display: "flex", gap: 10 }}>
-            <Input
-              label="Week number"
-              name="weekNumber"
-              type="number"
-              min={1}
-              required
-              defaultValue={carried.weekNumber ?? module.weekNumber}
-              style={{ width: 140 }}
-            />
-            <Input
-              label="Release date & time"
-              name="releaseDate"
-              type="datetime-local"
-              required
-              defaultValue={carried.releaseDate ?? local}
-              style={{ flex: 1 }}
-            />
-          </div>
+          <Input
+            label="Week number"
+            name="weekNumber"
+            type="number"
+            min={1}
+            required
+            defaultValue={carried.weekNumber ?? module.weekNumber}
+            style={{ width: 140 }}
+          />
+          <ReleaseDueFields release={carried.releaseDate ?? local} due={carried.dueDate ?? dueLocal} />
           <Input label="Title" name="title" required defaultValue={carried.title ?? module.title} />
           <TextArea
             label="Description (shows as your weekly note to students)"
