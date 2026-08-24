@@ -200,6 +200,13 @@ h1,h2,h3,h4{color:var(--text-heading-color)}
 .rts-bar-mono{display:inline}
 @media (min-width:640px){.rts-bar-full{display:inline}.rts-bar-mono{display:none}}
 
+/* Week editor columns (SPEC §15.7 #23): slots left, checklist right; stacked under 880px */
+.rts-cols{display:grid;grid-template-columns:1fr;gap:18px}
+@media (min-width:880px){.rts-cols{grid-template-columns:1.5fr 1fr}}
+
+/* Students drawer (SPEC §15.7 #23): side sheet, a full-screen sheet under 640px */
+.rts-drawer{width:min(480px,100%)}
+
 /* Chip (mockup .chip) */
 .lmn-chip{display:inline-block;font-size:13px;font-weight:var(--font-weight-bold);letter-spacing:-0.1px;background:var(--surface-tint-blue);color:var(--action-primary);padding:5px 12px;border-radius:var(--radius-pills)}
 

@@ -6,6 +6,7 @@ import type { CSSProperties, ReactNode } from "react";
 
 const GLYPHS: Record<string, ReactNode> = {
   check: <path d="M20 6 9 17l-5-5" />,
+  close: <path d="M18 6 6 18M6 6l12 12" />,
   check_circle: (
     <>
       <circle cx="12" cy="12" r="10" />

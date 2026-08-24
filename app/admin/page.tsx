@@ -1,315 +1,255 @@
-import { desc, eq } from "drizzle-orm";
-import { db } from "@/db";
-import { cohorts, enrollments, modules, submissions, users, type Enrollment } from "@/db/schema";
-import { Badge, Button, Card, ProgressBar } from "@/components/rts/core";
-import { Input } from "@/components/rts/forms";
+import Link from "next/link";
+import { Badge, Button } from "@/components/rts/core";
+import { adminHome } from "@/lib/admin-queries";
 import { requireAdmin } from "@/lib/admin";
 import { formatDay } from "@/lib/format";
-import {
-  addEnrollment,
-  createStudent,
-  resetStudentPassword,
-  setEnrollmentStatus,
-  toggleStudentActive,
-} from "./actions";
+import { nudgeLine } from "@/lib/content";
+import { approveRequest, declineRequest } from "./actions";
 
-// /admin, the students table: name, cohort, active toggle, last seen, account
-// creation + password resets (SPEC §7). Plain and fast; no design effort (§12).
-export default async function AdminStudents({
-  searchParams,
-}: {
-  searchParams: Promise<{ ok?: string; error?: string }>;
-}) {
+// /admin, the home (SPEC §15.7 #23): the "Needs you" strip, rendered only
+// when something truly needs her, then one card per course. Two clicks to
+// anywhere: open the course, open the week.
+export default async function AdminHome() {
   await requireAdmin();
-  const { ok, error } = await searchParams;
+  const { courses, needs } = await adminHome();
 
-  const allCohorts = await db.select().from(cohorts).orderBy(cohorts.name);
-  // users.lastSeenAt survives sign-out (sessions rows don't) and tracks
-  // activity, not just sign-ins.
-  const students = await db
-    .select({ user: users, lastSeen: users.lastSeenAt })
-    .from(users)
-    .where(eq(users.role, "student"))
-    .orderBy(desc(users.lastSeenAt));
-  // Course standing per student (SPEC §15.3): one enrollment row per cohort.
-  const enrollmentRows = await db
-    .select({ enrollment: enrollments, cohortName: cohorts.name })
-    .from(enrollments)
-    .innerJoin(cohorts, eq(cohorts.id, enrollments.cohortId))
-    .orderBy(cohorts.name);
-  const byStudent = new Map<string, { enrollment: Enrollment; cohortName: string }[]>();
-  for (const row of enrollmentRows) {
-    const list = byStudent.get(row.enrollment.studentId) ?? [];
-    list.push(row);
-    byStudent.set(row.enrollment.studentId, list);
+  const strip: React.ReactNode[] = [];
+
+  for (const { enrollment, student, cohort } of needs.requests) {
+    strip.push(
+      <AttentionRow
+        key={`req-${enrollment.id}`}
+        title={`${student.name} asked to join ${cohort.name}`}
+        body={`Requested ${formatDay(enrollment.requestedAt)}. Approve once the PayPal is in.`}
+        actions={
+          <>
+            <form action={approveRequest}>
+              <input type="hidden" name="enrollmentId" value={enrollment.id} />
+              <input type="hidden" name="back" value="/admin" />
+              <Button variant="primary" size="sm" type="submit">
+                Approve
+              </Button>
+            </form>
+            <form action={declineRequest}>
+              <input type="hidden" name="enrollmentId" value={enrollment.id} />
+              <input type="hidden" name="back" value="/admin" />
+              <button type="submit" style={softAction}>
+                Decline
+              </button>
+            </form>
+          </>
+        }
+      />,
+    );
   }
-  const enrollmentTone = (status: Enrollment["status"]) =>
-    status === "active" ? "done" : status === "requested" ? "new" : "locked";
 
-  // Progress at a glance (SPEC §15.7 #17): submitted x of y released, per
-  // student per course. Tiny tenant; load once and count in memory.
-  // eslint-disable-next-line react-hooks/purity
-  const now = Date.now();
-  const allModules = await db.select().from(modules);
-  const allSubs = await db.select({ studentId: submissions.studentId, moduleId: submissions.moduleId }).from(submissions);
-  const subSet = new Set(allSubs.map((s) => `${s.studentId}:${s.moduleId}`));
-  const releasedByCohort = new Map<string, string[]>();
-  for (const m of allModules) {
-    if (m.releaseDate.getTime() > now) continue;
-    releasedByCohort.set(m.cohortId, [...(releasedByCohort.get(m.cohortId) ?? []), m.id]);
+  if (needs.unread > 0) {
+    strip.push(
+      <AttentionRow
+        key="unread"
+        title={
+          needs.unread === 1 ? "1 unread message from a student" : `${needs.unread} unread messages from students`
+        }
+        body="Reply from Messages; opening a thread marks it read."
+        actions={
+          <Link href="/admin/messages" style={blueAction}>
+            Open messages
+          </Link>
+        }
+      />,
+    );
   }
-  const completion = (studentId: string, cohortId: string) => {
-    const released = releasedByCohort.get(cohortId) ?? [];
-    return {
-      done: released.filter((id) => subSet.has(`${studentId}:${id}`)).length,
-      released: released.length,
-    };
-  };
 
-  const th: React.CSSProperties = {
-    textAlign: "left",
-    fontSize: "var(--text-caption)",
-    fontWeight: 700,
-    textTransform: "uppercase",
-    letterSpacing: ".03em",
-    color: "var(--text-tertiary)",
-    padding: "8px 12px",
-  };
-  const td: React.CSSProperties = {
-    padding: "10px 12px",
-    fontSize: "var(--text-body-sm)",
-    borderTop: "1px solid var(--border-card)",
-    verticalAlign: "middle",
-  };
+  for (const cohort of needs.emptyListed) {
+    strip.push(
+      <AttentionRow
+        key={`empty-${cohort.id}`}
+        title={`${cohort.name} is listed with no modules`}
+        body="Students can see it in the catalog. Add week 1 to get started."
+        actions={
+          <Link href={`/admin/courses/${cohort.id}`} style={blueAction}>
+            Open course
+          </Link>
+        }
+      />,
+    );
+  }
+
+  for (const { module, cohort, missing } of needs.nudges) {
+    strip.push(
+      <AttentionRow
+        key={`nudge-${module.id}`}
+        title={nudgeLine(module.weekNumber, cohort.name, missing)}
+        body={`Releases ${formatDay(module.releaseDate)} at 09:00. ${
+          missing.length === 1 ? "One file to go." : `${missing.length} files to go.`
+        }`}
+        actions={
+          <Link href={`/admin/courses/${cohort.id}/weeks/${module.id}`} style={blueAction}>
+            Open week {module.weekNumber}
+          </Link>
+        }
+      />,
+    );
+  }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+      {strip.length > 0 && <div>{strip}</div>}
+
       <h1
         style={{
-          margin: 0,
+          margin: strip.length > 0 ? "6px 0 0" : 0,
           fontSize: "var(--text-heading-sm)",
-          fontWeight: 700,
+          fontWeight: 800,
           letterSpacing: "var(--tracking-heading-sm)",
         }}
       >
-        Students
+        Courses
       </h1>
 
-      {(ok === "created" || ok === "password-set") && (
-        <Card padding="16px" style={{ borderColor: "var(--action-primary)" }}>
-          <p style={{ margin: 0, fontSize: "var(--text-body-sm)", fontWeight: 700 }}>
-            {ok === "created"
-              ? "Student created. Share the username and password with them."
-              : "Password updated. Share the new password with the student."}
-          </p>
-        </Card>
-      )}
-      {error && (
-        <Card padding="16px" style={{ borderColor: "#c4320a" }}>
-          <p style={{ margin: 0, fontSize: "var(--text-body-sm)", color: "#c4320a" }}>
-            {error === "taken"
-              ? "That username or email already has an account."
-              : error === "password-short"
-                ? "Passwords need at least 8 characters."
-                : "Something was missing. Check the form and try again."}
-          </p>
-        </Card>
-      )}
-
-      <Card padding="0">
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={th}>Name</th>
-                <th style={th}>Username</th>
-                <th style={th}>Courses</th>
-                <th style={th}>Status</th>
-                <th style={th}>Last seen</th>
-                <th style={th}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {students.map(({ user, lastSeen }) => (
-                <tr key={user.id}>
-                  <td style={{ ...td, fontWeight: 500 }}>
-                    {user.name}
-                    <span style={{ display: "block", fontWeight: 400, color: "var(--text-tertiary)" }}>
-                      {user.email}
-                    </span>
-                  </td>
-                  <td style={td}>{user.username}</td>
-                  <td style={td}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                      {(byStudent.get(user.id) ?? []).map(({ enrollment, cohortName }) => (
-                        <div
-                          key={enrollment.id}
-                          style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}
-                        >
-                          <span style={{ fontWeight: 500 }}>{cohortName}</span>
-                          <Badge tone={enrollmentTone(enrollment.status)}>{enrollment.status}</Badge>
-                          {(enrollment.status === "active" || enrollment.status === "paused") &&
-                            (() => {
-                              const c = completion(user.id, enrollment.cohortId);
-                              return (
-                                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                                  <span
-                                    style={{
-                                      fontSize: "var(--text-caption)",
-                                      color: "var(--text-tertiary)",
-                                      whiteSpace: "nowrap",
-                                    }}
-                                  >
-                                    {c.done} of {c.released}
-                                  </span>
-                                  <ProgressBar value={c.done} total={c.released || 1} style={{ width: 72 }} />
-                                </span>
-                              );
-                            })()}
-                          {enrollment.status !== "requested" && (
-                            <form action={setEnrollmentStatus} style={{ display: "inline-flex", gap: 2 }}>
-                              <input type="hidden" name="enrollmentId" value={enrollment.id} />
-                              {enrollment.status === "active" ? (
-                                <Button variant="ghost" size="sm" type="submit" name="status" value="paused">
-                                  Pause
-                                </Button>
-                              ) : (
-                                <Button variant="ghost" size="sm" type="submit" name="status" value="active">
-                                  Resume
-                                </Button>
-                              )}
-                              {enrollment.status !== "ended" && (
-                                <Button variant="ghost" size="sm" type="submit" name="status" value="ended">
-                                  End
-                                </Button>
-                              )}
-                            </form>
-                          )}
-                        </div>
-                      ))}
-                      {(byStudent.get(user.id) ?? []).length === 0 && (
-                        <span style={{ color: "var(--text-tertiary)" }}>No courses</span>
-                      )}
-                      <form action={addEnrollment} style={{ display: "flex", gap: 6 }}>
-                        <input type="hidden" name="studentId" value={user.id} />
-                        <select
-                          className="lmn-input"
-                          name="cohortId"
-                          required
-                          defaultValue=""
-                          aria-label={`Add ${user.name} to a course`}
-                          style={{ padding: "6px 10px", fontSize: "var(--text-body-sm)", width: 190 }}
-                        >
-                          <option value="" disabled>
-                            Add to course…
-                          </option>
-                          {allCohorts.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.name}
-                            </option>
-                          ))}
-                        </select>
-                        <Button variant="ghost" size="sm" type="submit">
-                          Add
-                        </Button>
-                      </form>
-                    </div>
-                  </td>
-                  <td style={td}>
-                    {user.active ? (
-                      <Badge tone="done" icon="check">
-                        Active
-                      </Badge>
-                    ) : (
-                      <Badge tone="locked" icon="pause">
-                        Paused
-                      </Badge>
-                    )}
-                  </td>
-                  <td style={td}>{lastSeen ? formatDay(lastSeen) : "never"}</td>
-                  <td style={td}>
-                    {/* Stacked on purpose (SPEC §15.7 #17): side by side these
-                        overflowed and truncated "Set password". */}
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
-                      <form action={toggleStudentActive}>
-                        <input type="hidden" name="studentId" value={user.id} />
-                        <Button variant="secondary" size="sm" type="submit">
-                          {user.active ? "Pause" : "Unpause"}
-                        </Button>
-                      </form>
-                      <form action={resetStudentPassword} style={{ display: "flex", gap: 6 }}>
-                        <input type="hidden" name="studentId" value={user.id} />
-                        <input
-                          className="lmn-input"
-                          type="password"
-                          name="password"
-                          required
-                          minLength={8}
-                          placeholder="new password"
-                          autoComplete="new-password"
-                          style={{ padding: "6px 10px", fontSize: "var(--text-body-sm)", width: 130 }}
-                        />
-                        <Button variant="ghost" size="sm" type="submit">
-                          Set password
-                        </Button>
-                      </form>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {students.length === 0 && (
-                <tr>
-                  <td style={{ ...td, color: "var(--text-tertiary)" }} colSpan={6}>
-                    No students yet. Create the first account below.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-
-      <div style={{ maxWidth: 480 }}>
-        <Card padding="20px">
-          <h2 style={{ margin: "0 0 12px", fontSize: "var(--text-body)", fontWeight: 700 }}>
-            Create a student account
-          </h2>
-          <form
-            action={createStudent}
-            style={{ display: "flex", flexDirection: "column", gap: 10 }}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+          gap: 13,
+        }}
+      >
+        {courses.map(({ cohort, activeCount, requestedCount, moduleCount, lastReleased, nextRelease }) => (
+          <div
+            key={cohort.id}
+            style={{
+              background: "var(--surface-card)",
+              border: "1px solid var(--border-card)",
+              borderRadius: "var(--radius-cards)",
+              padding: 17,
+              display: "flex",
+              flexDirection: "column",
+              gap: 9,
+            }}
           >
-            <Input label="Name" name="name" placeholder="First and last name" />
-            <Input label="Username" name="username" required placeholder="e.g. nikos" autoComplete="off" />
-            <Input
-              label="Password"
-              name="password"
-              type="password"
-              required
-              minLength={8}
-              placeholder="at least 8 characters"
-              autoComplete="new-password"
-            />
-            <Input label="Email (contact only)" name="email" type="email" required placeholder="student@school.gr" />
-            <label className="lmn-field">
-              <span className="lmn-field-label">First course (an active enrollment)</span>
-              <select className="lmn-input" name="cohortId" required defaultValue="">
-                <option value="" disabled>
-                  Pick a cohort
-                </option>
-                {allCohorts.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <Button variant="primary" size="sm" type="submit">
-              Create account
-            </Button>
-          </form>
-        </Card>
+            <h2
+              style={{
+                margin: 0,
+                fontSize: 16,
+                fontWeight: 800,
+                letterSpacing: "-0.3px",
+                color: "var(--text-heading-color)",
+              }}
+            >
+              {cohort.name}
+            </h2>
+            <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+              <Badge tone={activeCount > 0 ? "done" : "neutral"}>{activeCount} active</Badge>
+              {requestedCount > 0 && (
+                <Badge tone="new">
+                  {requestedCount} request{requestedCount === 1 ? "" : "s"}
+                </Badge>
+              )}
+              {cohort.isListed && <Badge tone="neutral">Listed</Badge>}
+            </div>
+            <p style={{ margin: 0, fontSize: "var(--text-caption)", color: "var(--text-tertiary)", lineHeight: 1.55 }}>
+              {moduleCount === 0 ? (
+                <>No modules yet. Add week 1 to get started.</>
+              ) : (
+                <>
+                  {lastReleased ? (
+                    <>
+                      W{lastReleased.module.weekNumber} out {formatDay(lastReleased.module.releaseDate)} ·{" "}
+                      {lastReleased.submitted} of {activeCount} submitted
+                    </>
+                  ) : (
+                    <>Nothing released yet.</>
+                  )}
+                  {nextRelease && (
+                    <>
+                      <br />
+                      Next: W{nextRelease.weekNumber} on {formatDay(nextRelease.releaseDate)}
+                    </>
+                  )}
+                </>
+              )}
+            </p>
+            <Link
+              href={`/admin/courses/${cohort.id}`}
+              style={{ marginTop: "auto", fontWeight: 700, fontSize: 13.5 }}
+            >
+              Open course
+            </Link>
+          </div>
+        ))}
 
+        <Link
+          href="/admin/courses/new"
+          style={{
+            border: "1.5px dashed var(--border-divider)",
+            borderRadius: "var(--radius-cards)",
+            padding: 17,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: 120,
+            fontWeight: 700,
+            fontSize: 14,
+            color: "var(--action-primary)",
+          }}
+        >
+          New course
+        </Link>
       </div>
+    </div>
+  );
+}
+
+const softAction: React.CSSProperties = {
+  border: 0,
+  background: "none",
+  padding: 0,
+  font: "inherit",
+  fontSize: 13,
+  fontWeight: 500,
+  color: "var(--text-tertiary)",
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+};
+
+const blueAction: React.CSSProperties = {
+  fontSize: 13,
+  fontWeight: 700,
+  whiteSpace: "nowrap",
+};
+
+// One "Needs you" row: the orange left-bar style from the mockup.
+function AttentionRow({
+  title,
+  body,
+  actions,
+}: {
+  title: string;
+  body: string;
+  actions: React.ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        borderLeft: "3px solid var(--action-cta)",
+        borderTop: "1px solid var(--border-card)",
+        borderRight: "1px solid var(--border-card)",
+        borderBottom: "1px solid var(--border-card)",
+        borderRadius: "0 12px 12px 0",
+        background: "var(--surface-card)",
+        padding: "12px 15px",
+        marginBottom: 9,
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+        flexWrap: "wrap",
+      }}
+    >
+      <div style={{ flex: 1, minWidth: 220 }}>
+        <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--text-strong)" }}>{title}</h3>
+        <p style={{ margin: 0, fontSize: 12.5, color: "var(--text-tertiary)" }}>{body}</p>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>{actions}</div>
     </div>
   );
 }
