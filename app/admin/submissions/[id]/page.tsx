@@ -24,8 +24,11 @@ export default async function AdminSubmissionPage({ params }: { params: Promise<
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 860 }}>
       <div>
-        <Link href="/admin/progress" style={{ fontSize: "var(--text-body-sm)", fontWeight: 500 }}>
-          ← Progress
+        <Link
+          href={`/admin/courses/${cohort.id}?tab=progress`}
+          style={{ fontSize: "var(--text-body-sm)", fontWeight: 500 }}
+        >
+          ← {cohort.name} progress
         </Link>
         <h1
           style={{

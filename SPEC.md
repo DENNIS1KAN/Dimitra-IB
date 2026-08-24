@@ -319,16 +319,16 @@ Verify (walked 2026-08-24 in headless Chrome against the freshly seeded dev DB �
 
 **M11 — Admin rebuild** (directive of 2026-08-24; decisions in §15.7 #23. Authoritative mockup: `design/admin-blend-final.html`. IA and UI reorganization only: no schema changes, no gating changes, existing server actions reused; retired routes redirect. Plan: `docs/superpowers/plans/2026-08-24-m11-m12-ia-rebuild.md`).
 Verify:
-- [ ] create a week from inside Chemistry HL and it lands in the right cohort
-- [ ] fill all four slots in dev and watch the checklist flip to ready
-- [ ] the missing-content nudge appears for an incomplete near-release week and disappears when completed
-- [ ] approve the pending SL request from the strip, and confirm the same control in the drawer
-- [ ] set a password from the drawer
-- [ ] the three retired routes redirect
-- [ ] nav shows exactly five items
-- [ ] em-dash grep zero
-- [ ] walk at 390 and 1280
-- [ ] tests, typecheck, lint, build green
+- [x] create a week from inside Chemistry HL and it lands in the right cohort
+- [x] fill all four slots in dev and watch the checklist flip to ready
+- [x] the missing-content nudge appears for an incomplete near-release week and disappears when completed
+- [x] approve the pending SL request from the strip, and confirm the same control in the drawer
+- [x] set a password from the drawer
+- [x] the three retired routes redirect
+- [x] nav shows exactly five items
+- [x] em-dash grep zero
+- [x] walk at 390 and 1280
+- [x] tests, typecheck, lint, build green
 
 **M12 — Student rebuild** (directive of 2026-08-24; decisions in §15.7 #24. Authoritative mockup: `design/student-direction-2-course-hub.html`. Starts only after M11 is pushed).
 Verify:

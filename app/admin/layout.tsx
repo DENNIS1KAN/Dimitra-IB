@@ -1,36 +1,25 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import { eq, sql } from "drizzle-orm";
-import { db } from "@/db";
-import { enrollments } from "@/db/schema";
 import { Avatar, IconButton, Wordmark } from "@/components/rts/core";
 import { getSessionUser } from "@/lib/auth";
 import { signOut } from "@/lib/auth-actions";
 import { initials } from "@/lib/format";
 import { unreadForTutor } from "@/lib/messages";
 
-// Admin shell, function over beauty (SPEC §12). Students get redirected
-// to /app; logged-out users to /login.
+// Admin shell (SPEC §15.7 #23): exactly five items, Courses is the home.
+// Students get redirected to /app; logged-out users to /login.
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
   if (user.role !== "admin") redirect("/app");
 
-  // Pending join requests surface in the nav so they can't be missed.
-  const [{ pending }] = await db
-    .select({ pending: sql<number>`count(*)::int` })
-    .from(enrollments)
-    .where(eq(enrollments.status, "requested"));
   const unread = await unreadForTutor();
   const nav = [
-    { href: "/admin", label: "Students" },
-    { href: "/admin/requests", label: pending > 0 ? `Requests (${pending})` : "Requests" },
-    { href: "/admin/courses", label: "Courses" },
-    { href: "/admin/modules", label: "Modules" },
-    { href: "/admin/progress", label: "Progress" },
+    { href: "/admin", label: "Courses" },
+    { href: "/admin/students", label: "Students" },
+    { href: "/admin/messages", label: unread > 0 ? `Messages · ${unread}` : "Messages" },
     { href: "/admin/calendar", label: "Calendar" },
-    { href: "/admin/messages", label: unread > 0 ? `Messages (${unread})` : "Messages" },
     { href: "/admin/settings", label: "Settings" },
   ];
 
