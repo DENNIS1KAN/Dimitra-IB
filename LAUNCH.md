@@ -15,7 +15,7 @@ There is no media vendor. Uploads land on the server's own disk under `storage/`
 - [ ] **Size the disk for the whole course.** A 24-week course of short videos is roughly **15 to 30 GB**. Provision with headroom for a second course and for re-recordings, and set an alert before the volume fills: an upload that runs out of disk fails at the worst moment, the Friday before a Monday release.
 - [ ] Run the M3 checks on the production box: upload a real MP4 in admin, it plays for a signed-in student; the same `/api/materials/{id}` URL signed out is a **401**, and as another cohort's student a **404**.
 
-**Deploy (EU)**
+**Deploy (EU)** — the step-by-step runbook is [DEPLOY.md](DEPLOY.md); these are the decisions behind it.
 - [ ] Host in the EU (Hetzner VPS, or Vercel + Neon EU); `DATABASE_URL` to managed Postgres; `AUTH_SECRET` (long random), `APP_URL`, `APP_TIMEZONE=Europe/Athens`. If the host has an ephemeral filesystem, `storage/` needs a real mounted volume, not the container's disk.
 - [ ] **Backups cover two things, not one: Postgres AND `storage/`.** The database holds who, when and what was submitted; `storage/` holds every video, PDF and submitted photo. Either one alone restores to a broken platform. Nightly `pg_dump` (README "Production notes") plus a nightly copy of `storage/` off the box.
 - [ ] **Restore rehearsal, both halves.** Restore the dump into a scratch database, restore `storage/` beside it, sign in against it, then open a module and actually play a video and download a stamped PDF. A database that restores while the files do not is the failure this rehearsal exists to catch.

@@ -160,6 +160,12 @@ inline SVGs — there are no font or icon files to install.
 
 ## Production notes
 
+**The runbook is [DEPLOY.md](DEPLOY.md)**: server prep, DNS, first deploy, the
+update procedure, the backup cron line and the restore rehearsal. The
+machinery it drives lives in `Dockerfile`, `docker-compose.prod.yml`,
+`Caddyfile` and `scripts/{backup,restore,create-admin,migrate,check-env}`.
+What follows is the why behind it.
+
 - **Region:** deploy EU-only (Hetzner VPS, or Vercel + Neon EU). Students
   are mostly minors: the app stores name, email, cohort — nothing else.
 - **Env:** see `.env.example`; set `AUTH_SECRET`, `APP_URL`, `DATABASE_URL`,
@@ -171,14 +177,14 @@ inline SVGs — there are no font or icon files to install.
   roughly **15 to 30 GB**, so size the volume for the course and keep
   headroom. On a host with an ephemeral filesystem, mount a real volume.
 - **Backups cover Postgres AND `storage/`.** Either alone restores to a
-  broken platform. Nightly
-  `pg_dump "$DATABASE_URL" | gzip > rts-$(date +%F).sql.gz`, plus a nightly
-  copy of `storage/` off the box.
-  **Restore:** `gunzip -c rts-DATE.sql.gz | psql "$DATABASE_URL"`, restore
-  `storage/` beside it, then sign in and actually play a video and download a
-  stamped PDF. A database that restores while the files do not is exactly
-  what the rehearsal is for. Dimitra's own drive stays the archive of record
-  for her recordings; the platform is delivery.
+  broken platform, so `scripts/backup.sh` puts both in one nightly archive
+  (`backups/rts-YYYYMMDD.tar.gz`, newest 14 kept) and `scripts/restore.sh`
+  puts both back, into a separate compose project by default so a rehearsal
+  cannot touch the live site. The rehearsal is only complete once the
+  restored instance plays a video and serves a stamped PDF: a database that
+  restores while the files do not is exactly what it exists to catch.
+  Dimitra's own drive stays the archive of record for her recordings; the
+  platform is delivery.
 - **Account deletion:** delete the user row (cascades to submissions,
   sessions, events) and remove `storage/submissions/{userId}/`.
 
