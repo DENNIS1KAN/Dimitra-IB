@@ -104,6 +104,12 @@ export const materials = pgTable(
     title: text("title").notNull(),
     storageKey: text("storage_key"),
     externalUrl: text("external_url"),
+    // Video length in whole seconds, reported once by the player on
+    // loadedmetadata (SPEC §15.7 #27). Null until a video has been opened,
+    // and always null for the other three types. It is a property of the
+    // file, not of a student, so one report serves everyone: it is what
+    // makes "done" and "N minutes left" honest instead of guessed.
+    durationSeconds: integer("duration_seconds"),
     sortOrder: integer("sort_order").notNull().default(0),
   },
   // A row with neither is a step that shows a student nothing; a row with both

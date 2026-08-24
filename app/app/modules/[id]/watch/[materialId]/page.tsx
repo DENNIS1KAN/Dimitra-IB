@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { VideoPlayer } from "@/components/app/video-player";
 import { BackLink } from "@/components/rts/learning";
@@ -12,13 +13,17 @@ import { videoEmbed } from "@/lib/video";
 // provider supports one, otherwise as an "Open video" step.
 export default async function WatchPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string; materialId: string }>;
+  /** `restart=1` is the Rewatch link: start from zero, keep the saved second. */
+  searchParams: Promise<{ restart?: string }>;
 }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
   const { id, materialId } = await params;
+  const { restart } = await searchParams;
   const detail = await studentModuleDetail(id, user);
   if (!detail) notFound();
   const material = detail.materials.find((m) => m.id === materialId && m.type === "video");
@@ -33,6 +38,10 @@ export default async function WatchPage({
   // A stored video has no externalUrl; narrowing here keeps both branches honest.
   const externalUrl = material.externalUrl;
   const link = externalUrl ? videoEmbed(externalUrl) : null;
+  // Resume at the highest position this student reached (SPEC §15.7 #27).
+  // Rewatch passes restart=1, which starts from zero without erasing it.
+  const saved = detail.signals.get(material.id)?.progress ?? 0;
+  const startAt = restart === "1" ? 0 : saved;
 
   return (
     <main style={{ maxWidth: 720, margin: "0 auto" }}>
@@ -68,7 +77,11 @@ export default async function WatchPage({
                 allowFullScreen
               />
             ) : (
-              <VideoPlayer src={`/api/materials/${material.id}`} materialId={material.id} />
+              <VideoPlayer
+                src={`/api/materials/${material.id}`}
+                materialId={material.id}
+                startAt={startAt}
+              />
             )}
           </div>
         )}
@@ -98,13 +111,32 @@ export default async function WatchPage({
               color: "var(--text-tertiary)",
             }}
           >
-            If the video doesn&rsquo;t play yet, it may still be processing. Check
-            back in a few minutes.
+            {startAt > 0 ? (
+              <>
+                Picking up at {clockOf(startAt)}.{" "}
+                <Link href={`/app/modules/${id}/watch/${material.id}?restart=1`}>
+                  Start from the beginning
+                </Link>
+                .
+              </>
+            ) : (
+              <>
+                If the video doesn&rsquo;t play yet, it may still be processing. Check
+                back in a few minutes.
+              </>
+            )}
           </p>
         )}
       </div>
     </main>
   );
+}
+
+/** Seconds as "6:07" — the label on the player's own scrubber. */
+function clockOf(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const rest = Math.floor(seconds % 60);
+  return `${m}:${String(rest).padStart(2, "0")}`;
 }
 
 /** A host we cannot frame: offer the honest thing, a button to the video. */

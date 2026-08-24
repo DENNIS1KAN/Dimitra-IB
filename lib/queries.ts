@@ -1,8 +1,9 @@
 import "server-only";
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   cohorts,
+  events,
   materials,
   modules,
   submissions,
@@ -16,7 +17,75 @@ import { loadStudentAccess, type StudentAccess } from "./access";
 import { compareByRecency, pickCurrent } from "./current";
 import { isNewRelease } from "./format";
 import { isModuleComplete, moduleState, type ModuleState } from "./gating";
+import { planWeek, resumeCard, type ResumeCard, type WeekPlan } from "./steps";
 import { isUuid } from "./validate";
+
+/**
+ * What the events table knows about one student and a set of materials
+ * (SPEC §15.7 #27). `progress` is the highest saved video position, which is
+ * where a Resume lands; `viewed` and `downloaded` are the existence of the
+ * other two event types. Aggregated in SQL so a term of watching does not
+ * come back row by row.
+ */
+export type MaterialSignals = { progress: number; viewed: boolean; downloaded: boolean };
+
+export async function materialSignals(
+  studentId: string,
+  materialIds: string[],
+): Promise<Map<string, MaterialSignals>> {
+  const map = new Map<string, MaterialSignals>();
+  if (materialIds.length === 0) return map;
+  const rows = await db
+    .select({
+      materialId: events.materialId,
+      type: events.type,
+      top: sql<number>`coalesce(max(${events.value}), 0)::int`,
+    })
+    .from(events)
+    .where(and(eq(events.studentId, studentId), inArray(events.materialId, materialIds)))
+    .groupBy(events.materialId, events.type);
+  for (const r of rows) {
+    const cur = map.get(r.materialId) ?? { progress: 0, viewed: false, downloaded: false };
+    if (r.type === "video_progress") cur.progress = Math.max(cur.progress, r.top);
+    if (r.type === "view") cur.viewed = true;
+    if (r.type === "download") cur.downloaded = true;
+    map.set(r.materialId, cur);
+  }
+  return map;
+}
+
+const NO_SIGNALS: MaterialSignals = { progress: 0, viewed: false, downloaded: false };
+
+/** Materials + this student's events for one week, as lib/steps wants them. */
+export function weekInputFrom(
+  module: Module,
+  mats: Material[],
+  signals: Map<string, MaterialSignals>,
+  hasSubmission: boolean,
+) {
+  const exercises = mats.find((m) => m.type === "exercises") ?? null;
+  return {
+    moduleId: module.id,
+    weekNumber: module.weekNumber,
+    videos: mats
+      .filter((m) => m.type === "video")
+      .map((m) => {
+        const s = signals.get(m.id) ?? NO_SIGNALS;
+        return {
+          id: m.id,
+          title: m.title,
+          isLink: !!m.externalUrl,
+          durationSeconds: m.durationSeconds,
+          progressSeconds: s.progress,
+          viewed: s.viewed,
+        };
+      }),
+    exercisesId: exercises?.id ?? null,
+    exercisesDownloaded: exercises ? (signals.get(exercises.id) ?? NO_SIGNALS).downloaded : false,
+    solutionsId: mats.find((m) => m.type === "solutions")?.id ?? null,
+    hasSubmission,
+  };
+}
 
 export type ModuleListEntry = {
   module: Module;
@@ -155,6 +224,10 @@ export type StudentModuleDetail = {
   materials: Material[];
   hasSubmission: boolean;
   isCurrent: boolean;
+  /** The week as a numbered path (SPEC §15.7 #27). */
+  plan: WeekPlan;
+  /** Per-material events, so the watch page knows where to resume. */
+  signals: Map<string, MaterialSignals>;
 };
 
 /**
@@ -194,12 +267,19 @@ export async function studentModuleDetail(
   // Same rule as the /app hero — the list and this badge can never disagree.
   const isCurrent = pickCurrent(releasedSiblings)?.id === module.id;
 
+  const signals = await materialSignals(
+    student.id,
+    mats.map((m) => m.id),
+  );
+
   return {
     module,
     cohort,
     materials: mats,
     hasSubmission: !!sub,
     isCurrent,
+    plan: planWeek(weekInputFrom(module, mats, signals, !!sub)),
+    signals,
   };
 }
 
@@ -322,9 +402,11 @@ export type CourseWeekRow = {
   module: Module;
   released: boolean;
   hasSubmission: boolean;
-  /** This course's current week: the row with the single orange Continue. */
+  /** This course's current week (kept for the rail's ordering cues). */
   isCurrent: boolean;
   materialCounts: Record<string, number>;
+  /** Released weeks only: how far along the path this student is. */
+  plan: WeekPlan | null;
 };
 export type StudentCourseDetail = {
   cohort: Cohort;
@@ -332,6 +414,8 @@ export type StudentCourseDetail = {
   rows: CourseWeekRow[];
   /** The weekly note of the latest released week, for the top card. */
   note: { text: string; date: Date } | null;
+  /** The page's first card, and its single orange CTA (SPEC §15.7 #27). */
+  resume: ResumeCard | null;
   completedCount: number;
   releasedCount: number;
 };
@@ -366,7 +450,7 @@ export async function studentCourseDetail(
   );
   const mats = mods.length
     ? await db
-        .select({ moduleId: materials.moduleId, type: materials.type })
+        .select()
         .from(materials)
         .where(
           inArray(
@@ -374,6 +458,7 @@ export async function studentCourseDetail(
             mods.map((m) => m.id),
           ),
         )
+        .orderBy(asc(materials.sortOrder), asc(materials.id))
     : [];
   const countsByModule = new Map<string, Record<string, number>>();
   for (const m of mats) {
@@ -383,19 +468,38 @@ export async function studentCourseDetail(
   }
 
   const released = mods.filter((m) => m.releaseDate.getTime() <= now.getTime());
+  const releasedIds = new Set(released.map((m) => m.id));
+  // Only released weeks can have been watched, so only they need signals.
+  const signals = await materialSignals(
+    student.id,
+    mats.filter((m) => releasedIds.has(m.moduleId)).map((m) => m.id),
+  );
   const cur = pickCurrent(released.map((m) => ({ ...m, courseTitle: cohort.name })));
   const rows: CourseWeekRow[] = mods.map((module) => ({
     module,
-    released: module.releaseDate.getTime() <= now.getTime(),
+    released: releasedIds.has(module.id),
     hasSubmission: subs.has(module.id),
     isCurrent: module.id === (cur?.id ?? null),
     materialCounts: countsByModule.get(module.id) ?? {},
+    plan: releasedIds.has(module.id)
+      ? planWeek(
+          weekInputFrom(
+            module,
+            mats.filter((m) => m.moduleId === module.id),
+            signals,
+            subs.has(module.id),
+          ),
+        )
+      : null,
   }));
 
   return {
     cohort,
     rows,
     note: cur?.description ? { text: cur.description, date: cur.releaseDate } : null,
+    // Ascending week order: where the student left off is the first
+    // released week still carrying a step.
+    resume: resumeCard(rows.filter((r) => r.plan).map((r) => r.plan!)),
     completedCount: released.filter((m) => subs.has(m.id)).length,
     releasedCount: released.length,
   };
