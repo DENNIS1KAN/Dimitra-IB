@@ -1,4 +1,4 @@
-// Lumen learning components: recipes from DESIGN.md §5 (Phase 2 palette).
+// Road to Success learning components: recipes from DESIGN.md §5 (Phase 2 palette).
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import { Avatar, Badge, Button, Icon } from "./core";

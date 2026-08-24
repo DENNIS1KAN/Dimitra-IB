@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Badge, Card } from "@/components/lumen/core";
+import { Badge, Card } from "@/components/rts/core";
 import { requireAdmin } from "@/lib/admin";
 import { formatDateTime } from "@/lib/format";
 import { adminThreads } from "@/lib/messages";

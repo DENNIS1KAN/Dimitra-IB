@@ -1,5 +1,5 @@
-import { Badge, Card } from "@/components/lumen/core";
-import { ListRow } from "@/components/lumen/learning";
+import { Badge, Card } from "@/components/rts/core";
+import { ListRow } from "@/components/rts/learning";
 import { formatDay } from "@/lib/format";
 import { studentAssignments, type Assignment } from "@/lib/queries";
 import { requireStudent } from "@/lib/student";

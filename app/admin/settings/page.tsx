@@ -1,5 +1,5 @@
 import { SettingsForm } from "@/components/admin/settings-form";
-import { Card } from "@/components/lumen/core";
+import { Card } from "@/components/rts/core";
 import { requireAdmin } from "@/lib/admin";
 import { getSettings } from "@/lib/settings";
 import { saveSettings } from "../actions";

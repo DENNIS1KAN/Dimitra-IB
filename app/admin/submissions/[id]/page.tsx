@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Badge, Button, Card } from "@/components/lumen/core";
+import { Badge, Button, Card } from "@/components/rts/core";
 import { requireAdmin } from "@/lib/admin";
 import { contentTypeFor } from "@/lib/content-type";
 import { formatDateTime } from "@/lib/format";

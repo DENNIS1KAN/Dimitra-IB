@@ -2,8 +2,8 @@
 
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Button } from "@/components/lumen/core";
-import { Input, TextArea } from "@/components/lumen/forms";
+import { Button } from "@/components/rts/core";
+import { Input, TextArea } from "@/components/rts/forms";
 import { CLINIC_DAYS, MAX_CLINIC_TEXT } from "@/lib/settings-rules";
 
 export type SettingsFormState =

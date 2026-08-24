@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon } from "@/components/lumen/core";
+import { Icon } from "@/components/rts/core";
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";

@@ -1,4 +1,4 @@
-import { Card } from "@/components/lumen/core";
+import { Card } from "@/components/rts/core";
 import { AutoRefresh } from "@/components/messages/auto-refresh";
 import { MessageBubbles } from "@/components/messages/bubbles";
 import { MessageComposer } from "@/components/messages/composer";

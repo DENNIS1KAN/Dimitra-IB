@@ -2,7 +2,7 @@ import Link from "next/link";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { cohorts, enrollments, modules, submissions, users } from "@/db/schema";
-import { Card, Icon } from "@/components/lumen/core";
+import { Card, Icon } from "@/components/rts/core";
 import { requireAdmin } from "@/lib/admin";
 import { formatDay } from "@/lib/format";
 

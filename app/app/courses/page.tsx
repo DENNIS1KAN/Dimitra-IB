@@ -1,4 +1,4 @@
-import { Badge, Button, Card, ProgressBar } from "@/components/lumen/core";
+import { Badge, Button, Card, ProgressBar } from "@/components/rts/core";
 import { studentCourses, type CatalogCourse, type MyCourse } from "@/lib/queries";
 import { requireStudent } from "@/lib/student";
 import { requestToJoin } from "../actions";

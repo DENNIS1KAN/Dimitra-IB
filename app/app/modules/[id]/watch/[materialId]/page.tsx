@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { VideoPlayer } from "@/components/app/video-player";
-import { BackLink } from "@/components/lumen/learning";
+import { BackLink } from "@/components/rts/learning";
 import { getSessionUser } from "@/lib/auth";
 import { logMaterialEvent } from "@/lib/material-access";
 import { studentModuleDetail } from "@/lib/queries";

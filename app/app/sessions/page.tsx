@@ -1,4 +1,4 @@
-import { Button, Card } from "@/components/lumen/core";
+import { Button, Card } from "@/components/rts/core";
 import { getSettings } from "@/lib/settings";
 import { requireStudent } from "@/lib/student";
 

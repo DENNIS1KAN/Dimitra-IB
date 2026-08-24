@@ -1,79 +1,109 @@
-// Lumen design-system primitives: recipes from DESIGN.md §5 (Phase 2
-// palette). Every colour is a token from app/globals.css.
+// Road to Success design-system primitives: recipes from DESIGN.md §5.
+// Every colour is a token from app/globals.css.
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
+import { BRAND_BYLINE, BRAND_MONOGRAM, BRAND_NAME } from "@/lib/brand";
 import { Icon } from "./icon";
 
 export { Icon };
 
 // --- Wordmark --------------------------------------------------------------
 
-const wordmarkSizes = {
-  sm: { fs: 22, ls: -0.66, by: 11, dot: 7 },
-  md: { fs: 28, ls: -0.84, by: 13, dot: 9 },
-  lg: { fs: 44, ls: -1.32, by: 16, dot: 13 },
-  xl: { fs: 88, ls: -2.64, by: 20, dot: 24 },
-};
+// The orange dot terminal, sized in em so it follows the mark's font size
+// (design/road-to-success-mockup.html; SPEC §15.7 #22).
+function Dot({ scale }: { scale: number }) {
+  return (
+    <span
+      aria-hidden="true"
+      style={{
+        display: "inline-block",
+        width: `${scale}em`,
+        height: `${scale}em`,
+        borderRadius: "50%",
+        background: "var(--accent-brand)",
+        marginLeft: "0.09em",
+        transform: "translateY(-0.04em)",
+      }}
+    />
+  );
+}
 
-/** "lumen" + the orange brand dot; `inverse` for the blue nav / indigo hero. */
+/**
+ * The one place the product name renders (SPEC §15.7 #20/#22).
+ * `full` = landing and documents · `bar` = app navs (the RTS monogram under
+ * 640px, via the rts-bar-* classes) · `mono` = "RTS" plus the dot.
+ * Internals are em-based, so a `style.fontSize` override rescales the mark.
+ */
 export function Wordmark({
-  size = "md",
+  variant = "full",
   byline = false,
   inverse = false,
   style,
 }: {
-  size?: keyof typeof wordmarkSizes;
+  variant?: "full" | "bar" | "mono";
+  /** full only: "by Anglou Dimitra" under the mark. */
   byline?: boolean;
   inverse?: boolean;
   style?: CSSProperties;
 }) {
-  const s = wordmarkSizes[size];
+  const color = inverse ? "var(--text-inverse)" : "var(--text-strong)";
+  const base: CSSProperties = {
+    fontFamily: "var(--font-sans)",
+    fontWeight: 800,
+    lineHeight: 1,
+    whiteSpace: "nowrap",
+    color,
+  };
+  if (variant === "bar") {
+    return (
+      <span style={{ ...base, fontSize: 17, letterSpacing: "-0.018em", ...style }}>
+        <span className="rts-bar-full">
+          {BRAND_NAME}
+          <Dot scale={0.41} />
+        </span>
+        <span className="rts-bar-mono">
+          {BRAND_MONOGRAM}
+          <Dot scale={0.41} />
+        </span>
+      </span>
+    );
+  }
+  if (variant === "mono") {
+    return (
+      <span style={{ ...base, fontSize: 17, letterSpacing: "-0.02em", ...style }}>
+        {BRAND_MONOGRAM}
+        <Dot scale={0.41} />
+      </span>
+    );
+  }
   return (
     <span
       style={{
+        ...base,
         display: "inline-flex",
         flexDirection: "column",
-        alignItems: byline ? "flex-start" : "center",
-        fontFamily: "var(--font-sans)",
-        lineHeight: 1,
+        alignItems: "center",
+        fontSize: "clamp(42px, 7.5vw, 76px)",
+        letterSpacing: "-0.035em",
+        lineHeight: 1.02,
         ...style,
       }}
     >
-      <span
-        style={{
-          display: "inline-flex",
-          alignItems: "baseline",
-          gap: Math.round(s.dot * 0.5),
-          fontWeight: 800,
-          fontSize: s.fs,
-          letterSpacing: s.ls,
-          color: inverse ? "var(--text-inverse)" : "var(--text-strong)",
-        }}
-      >
-        lumen
-        <span
-          aria-hidden="true"
-          style={{
-            display: "inline-block",
-            width: s.dot,
-            height: s.dot,
-            borderRadius: "50%",
-            background: "var(--accent-brand)",
-            transform: "translateY(-1px)",
-          }}
-        />
+      <span>
+        {BRAND_NAME}
+        <Dot scale={0.17} />
       </span>
       {byline && (
         <span
           style={{
+            fontSize: "clamp(15px, 0.26em, 20px)",
             fontWeight: 500,
-            fontSize: s.by,
-            letterSpacing: "-0.02em",
-            color: inverse ? "rgba(255,255,255,.75)" : "var(--text-tertiary)",
-            marginTop: Math.round(s.by * 0.55),
+            letterSpacing: "-0.01em",
+            marginTop: "0.7em",
+            color: inverse ? "rgba(255,255,255,.72)" : "var(--text-tertiary)",
           }}
         >
-          by Dimitra Anglou
+          {BRAND_BYLINE}
         </span>
       )}
     </span>

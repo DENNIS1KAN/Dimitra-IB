@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { Avatar, Button, Card, Icon, Wordmark } from "@/components/lumen/core";
+import { Avatar, Button, Card, Icon, Wordmark } from "@/components/rts/core";
+import { BRAND_NAME, TUTOR_NAME, brandFooterLine } from "@/lib/brand";
+import { initials } from "@/lib/format";
 
 export const metadata: Metadata = {
-  title: "Lumen: private IB tutoring with Dimitra Anglou",
-  description:
-    "Weekly pre-recorded IB Chemistry modules, gated practice with worked solutions, and live clinics. A private program by Dimitra Anglou, access by invitation.",
+  title: `${BRAND_NAME}: private IB tutoring with ${TUTOR_NAME}`,
+  description: `Weekly pre-recorded IB Chemistry modules, gated practice with worked solutions, and live clinics. A private program by ${TUTOR_NAME}, access by invitation.`,
 };
 
 const steps = [
@@ -48,11 +49,35 @@ export default function Landing() {
     <main style={{ display: "flex", flexDirection: "column", minHeight: "100dvh" }}>
       {/* Hero: indigo owns it (DESIGN.md §6) */}
       <section className="lmn-hero" style={{ padding: "64px 0 56px" }}>
+        {/* The road motif: a subtle dotted path with the short jade segment
+            already travelled (design/road-to-success-mockup.html). */}
+        <svg
+          className="lmn-hero-road"
+          viewBox="0 0 1000 520"
+          preserveAspectRatio="xMidYMax slice"
+          aria-hidden="true"
+        >
+          <path
+            d="M -40 560 C 240 470, 200 330, 460 300 S 830 250, 1010 130"
+            fill="none"
+            stroke="rgba(255,255,255,0.14)"
+            strokeWidth="2.5"
+            strokeDasharray="1 12"
+            strokeLinecap="round"
+          />
+          <path
+            d="M -40 560 C 150 500, 190 430, 268 386"
+            fill="none"
+            stroke="rgba(0,168,107,0.65)"
+            strokeWidth="3.5"
+            strokeLinecap="round"
+          />
+        </svg>
         <div
           className="lmn-wrap"
-          style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 20 }}
+          style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 20 }}
         >
-          <Wordmark size="xl" byline inverse style={{ alignItems: "center" }} />
+          <Wordmark variant="full" byline inverse />
           <p
             style={{
               margin: 0,
@@ -169,7 +194,7 @@ export default function Landing() {
       <section style={{ background: "var(--surface-card)", borderTop: "1px solid var(--border-card)", borderBottom: "1px solid var(--border-card)", padding: "48px 24px" }}>
         <div style={{ maxWidth: 860, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 24, flexWrap: "wrap" }}>
-            <Avatar size="xl" initials="DA" />
+            <Avatar size="xl" initials={initials(TUTOR_NAME)} />
             <div>
               <h2
                 style={{
@@ -179,7 +204,7 @@ export default function Landing() {
                   letterSpacing: "var(--tracking-heading)",
                 }}
               >
-                Dimitra Anglou
+                {TUTOR_NAME}
               </h2>
               <p
                 style={{
@@ -275,7 +300,7 @@ export default function Landing() {
               lineHeight: 1.5,
             }}
           >
-            Lumen is a private platform for Dimitra&rsquo;s own students. If
+            {BRAND_NAME} is a private platform for Dimitra&rsquo;s own students. If
             you&rsquo;d like to talk about joining a cohort, get in touch and
             she&rsquo;ll take it from there.
           </p>
@@ -297,7 +322,15 @@ export default function Landing() {
           flexWrap: "wrap",
         }}
       >
-        <Wordmark size="sm" />
+        <span
+          style={{
+            fontSize: "var(--text-caption)",
+            letterSpacing: "var(--tracking-caption)",
+            color: "var(--text-tertiary)",
+          }}
+        >
+          {brandFooterLine()}
+        </span>
         <span
           style={{
             fontSize: "var(--text-caption)",

@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Button } from "@/components/lumen/core";
+import { Button } from "@/components/rts/core";
 import { MAX_MESSAGE_LENGTH } from "@/lib/messages-rules";
 
 // Shared composer for the student thread and the tutor's reply. The server

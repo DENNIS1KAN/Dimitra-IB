@@ -1,9 +1,9 @@
-import { Button, Wordmark } from "@/components/lumen/core";
+import { Button, Wordmark } from "@/components/rts/core";
 
 export default function NotFound() {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-6 p-6 text-center">
-      <Wordmark size="md" />
+      <Wordmark variant="full" style={{ fontSize: 28 }} />
       <div>
         <h1
           style={{

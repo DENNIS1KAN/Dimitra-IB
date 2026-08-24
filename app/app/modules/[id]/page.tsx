@@ -1,8 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { SubmitPanel } from "@/components/app/submit-sheet";
 import { SubmissionToastListener } from "@/components/app/submission-toast";
-import { Badge, IconButton } from "@/components/lumen/core";
-import { BackLink, LessonRow, LockPanel } from "@/components/lumen/learning";
+import { Badge, IconButton } from "@/components/rts/core";
+import { BackLink, LessonRow, LockPanel } from "@/components/rts/learning";
 import { getSessionUser } from "@/lib/auth";
 import { isNewRelease } from "@/lib/format";
 import { studentModuleDetail } from "@/lib/queries";

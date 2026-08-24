@@ -1,4 +1,4 @@
-// Lumen form fields: exact recipes from DESIGN.md §5.
+// Road to Success form fields: exact recipes from DESIGN.md §5.
 import type { CSSProperties, InputHTMLAttributes, TextareaHTMLAttributes } from "react";
 
 export function Input({

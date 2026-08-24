@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { enrollments } from "@/db/schema";
-import { Avatar, IconButton, Wordmark } from "@/components/lumen/core";
+import { Avatar, IconButton, Wordmark } from "@/components/rts/core";
 import { getSessionUser } from "@/lib/auth";
 import { signOut } from "@/lib/auth-actions";
 import { initials } from "@/lib/format";
@@ -39,7 +39,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       <header className="lmn-nav">
         <div className="lmn-nav-wrap">
           <Link href="/admin" style={{ display: "inline-flex", textDecoration: "none" }}>
-            <Wordmark size="sm" inverse />
+            <Wordmark variant="bar" inverse />
           </Link>
           <span className="lmn-nav-label">Admin</span>
           <nav aria-label="Admin" className="lmn-nav-links" style={{ flex: 1 }}>

@@ -2,8 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { StudentNav } from "@/components/app/student-nav";
-import { Avatar, IconButton, Wordmark } from "@/components/lumen/core";
-import { LockPanel } from "@/components/lumen/learning";
+import { Avatar, IconButton, Wordmark } from "@/components/rts/core";
+import { LockPanel } from "@/components/rts/learning";
 import { getSessionUser } from "@/lib/auth";
 import { signOut } from "@/lib/auth-actions";
 import { initials } from "@/lib/format";
@@ -22,7 +22,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         className="flex min-h-dvh flex-col items-center justify-center gap-8"
         style={{ padding: "24px" }}
       >
-        <Wordmark size="md" />
+        <Wordmark variant="full" style={{ fontSize: 28 }} />
         <LockPanel
           locked
           title="Your access is paused"
@@ -47,7 +47,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       <header className="lmn-nav">
         <div className="lmn-nav-wrap">
           <Link href="/app" style={{ display: "inline-flex", textDecoration: "none", flex: 1 }}>
-            <Wordmark size="sm" inverse />
+            <Wordmark variant="bar" inverse />
           </Link>
           <StudentNav unread={unread} />
           {/* Identity is the initials chip alone (SPEC §15.7 #14). */}

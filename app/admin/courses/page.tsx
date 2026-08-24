@@ -1,8 +1,8 @@
 import { asc } from "drizzle-orm";
 import { db } from "@/db";
 import { cohorts, enrollments, type Enrollment } from "@/db/schema";
-import { Badge, Button, Card } from "@/components/lumen/core";
-import { Input, TextArea } from "@/components/lumen/forms";
+import { Badge, Button, Card } from "@/components/rts/core";
+import { Input, TextArea } from "@/components/rts/forms";
 import { requireAdmin } from "@/lib/admin";
 import { createCohort, updateCohort } from "../actions";
 

@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import { BRAND_NAME, TUTOR_NAME } from "@/lib/brand";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Lumen: private IB tutoring with Dimitra Anglou",
-  description:
-    "Weekly modules, gated practice, and clinics for Dimitra Anglou's IB Chemistry students. Access by invitation.",
+  title: `${BRAND_NAME}: private IB tutoring with ${TUTOR_NAME}`,
+  description: `Weekly modules, gated practice, and clinics for ${TUTOR_NAME}'s IB Chemistry students. Access by invitation.`,
 };
 
 export const viewport: Viewport = {

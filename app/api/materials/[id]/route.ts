@@ -96,7 +96,7 @@ export async function GET(
     );
   }
 
-  // Stamped download for PDFs (SPEC §9): "Prepared for {name} · {email}".
+  // Stamped download for PDFs (SPEC §9): the brand stamp line from lib/stamp.
   if (wantsDownload && ext === ".pdf" && user.role !== "admin") {
     const { stampPdf } = await import("@/lib/stamp");
     data = await stampPdf(data, user);

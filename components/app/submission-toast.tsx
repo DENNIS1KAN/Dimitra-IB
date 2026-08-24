@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Toast } from "@/components/lumen/learning";
+import { Toast } from "@/components/rts/learning";
 
-const FLAG = "lumen-attempt-sent";
-const EVENT = "lumen:attempt-sent";
+const FLAG = "rts-attempt-sent";
+const EVENT = "rts:attempt-sent";
 
 export function markAttemptSent() {
   try {

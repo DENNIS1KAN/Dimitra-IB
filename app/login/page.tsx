@@ -1,12 +1,13 @@
 import { redirect } from "next/navigation";
-import { Button, Wordmark } from "@/components/lumen/core";
-import { Input } from "@/components/lumen/forms";
+import { Button, Wordmark } from "@/components/rts/core";
+import { Input } from "@/components/rts/forms";
+import { TUTOR_NAME } from "@/lib/brand";
 import { getSessionUser } from "@/lib/auth";
 import { signIn } from "./actions";
 
-// Welcome skin (DESIGN.md §6): centered xl wordmark + tagline, bottom-anchored
-// form, 24px side padding. Username + password; Dimitra hands out the
-// credentials herself.
+// Welcome skin (DESIGN.md §6): centered full wordmark + tagline,
+// bottom-anchored form, 24px side padding. Username + password; Dimitra
+// hands out the credentials herself.
 export default async function LoginPage({
   searchParams,
 }: {
@@ -22,7 +23,8 @@ export default async function LoginPage({
       style={{ padding: "0 24px 32px", maxWidth: 480, margin: "0 auto" }}
     >
       <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-        <Wordmark size="xl" style={{ alignItems: "center" }} />
+        {/* Capped under the hero clamp: the full mark must fit the 480px column. */}
+        <Wordmark variant="full" style={{ fontSize: "clamp(34px, 9vw, 44px)" }} />
         <p
           style={{
             margin: 0,
@@ -36,7 +38,7 @@ export default async function LoginPage({
         >
           Private IB tutoring
           <br />
-          with Dimitra Anglou
+          with {TUTOR_NAME}
         </p>
       </div>
 

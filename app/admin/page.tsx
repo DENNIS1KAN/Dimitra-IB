@@ -1,8 +1,8 @@
 import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { cohorts, enrollments, modules, submissions, users, type Enrollment } from "@/db/schema";
-import { Badge, Button, Card, ProgressBar } from "@/components/lumen/core";
-import { Input } from "@/components/lumen/forms";
+import { Badge, Button, Card, ProgressBar } from "@/components/rts/core";
+import { Input } from "@/components/rts/forms";
 import { requireAdmin } from "@/lib/admin";
 import { formatDay } from "@/lib/format";
 import {

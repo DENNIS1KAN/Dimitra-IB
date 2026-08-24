@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Button, Card, Icon, IconButton } from "@/components/lumen/core";
-import { ListRow } from "@/components/lumen/learning";
+import { Button, Card, Icon, IconButton } from "@/components/rts/core";
+import { ListRow } from "@/components/rts/learning";
 import type { CalendarEntry, CalendarMonth } from "@/lib/calendar";
 
 // Shared read-only calendar (SPEC §15.7 #18), one responsive layout: the

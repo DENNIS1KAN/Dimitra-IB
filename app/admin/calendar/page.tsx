@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { cohorts, modules } from "@/db/schema";
-import { CalendarView } from "@/components/lumen/calendar-view";
+import { CalendarView } from "@/components/rts/calendar-view";
 import { requireAdmin } from "@/lib/admin";
 import { buildCalendarMonth, type CalendarRelease } from "@/lib/calendar";
 import { getSettings } from "@/lib/settings";

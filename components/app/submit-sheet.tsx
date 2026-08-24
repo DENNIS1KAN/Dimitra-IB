@@ -2,9 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { Button, Icon } from "@/components/lumen/core";
-import { TextArea } from "@/components/lumen/forms";
-import { LockPanel } from "@/components/lumen/learning";
+import { Button, Icon } from "@/components/rts/core";
+import { TextArea } from "@/components/rts/forms";
+import { LockPanel } from "@/components/rts/learning";
 import { markAttemptSent } from "./submission-toast";
 
 // Submit box (SPEC §7): file and/or note and/or "mark attempted"; any of

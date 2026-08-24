@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Button, Card, Icon, ProgressBar } from "@/components/lumen/core";
-import { ModuleCard, NoteCard } from "@/components/lumen/learning";
+import { Button, Card, Icon, ProgressBar } from "@/components/rts/core";
+import { ModuleCard, NoteCard } from "@/components/rts/learning";
 import { getSessionUser } from "@/lib/auth";
 import { firstName, formatDay, formatUnlock, greeting, isNewRelease } from "@/lib/format";
+import { brandFooterLine } from "@/lib/brand";
 import { materialMeta, studentModuleList, type ModuleListEntry } from "@/lib/queries";
 import { getSettings } from "@/lib/settings";
 
-// /app, the dashboard, composed per design/lumen-dashboard-mockup.html:
+// /app, the dashboard, composed per the M9 dashboard mockup in design/:
 // indigo hero (greeting + progress) → note from Dimitra → "This week"
 // feature card with the ONE orange CTA → clinic strip → the term rail →
 // footer. One responsive layout. Same data, same rules as before (Rule 1
@@ -210,7 +211,7 @@ export default async function AppPage() {
 
       <footer className="lmn-footer">
         <div className="lmn-wrap">
-          <span>Lumen · IB {list.activeCohorts[0]?.subject ?? "Chemistry"} with Dimitra Anglou</span>
+          <span>{brandFooterLine(list.activeCohorts[0]?.subject ?? "Chemistry")}</span>
           <span>Access by invitation</span>
         </div>
       </footer>

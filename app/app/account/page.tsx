@@ -1,5 +1,5 @@
 import { PasswordForm } from "@/components/app/password-form";
-import { Card } from "@/components/lumen/core";
+import { Card } from "@/components/rts/core";
 import { requireStudent } from "@/lib/student";
 import { changePassword } from "../actions";
 

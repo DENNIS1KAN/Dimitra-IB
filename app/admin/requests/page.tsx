@@ -1,7 +1,7 @@
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { cohorts, enrollments, users } from "@/db/schema";
-import { Button, Card } from "@/components/lumen/core";
+import { Button, Card } from "@/components/rts/core";
 import { requireAdmin } from "@/lib/admin";
 import { formatDay } from "@/lib/format";
 import { approveRequest, declineRequest } from "../actions";
