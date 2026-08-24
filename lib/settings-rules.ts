@@ -29,3 +29,35 @@ export function validateClinicText(
   if (text.length > MAX_CLINIC_TEXT) return { ok: false, reason: "too-long" };
   return { ok: true, text };
 }
+
+// The calendars' weekly clinic marker (SPEC §15.7 #18): a weekday name (or
+// empty = no clinic) plus a 24-hour HH:mm time (or empty). Monday-first, so
+// the index doubles as the calendar grid's weekday index.
+export const CLINIC_DAYS = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+] as const;
+export type ClinicDay = (typeof CLINIC_DAYS)[number];
+
+export function validateClinicDay(
+  raw: unknown,
+): { ok: true; day: "" | ClinicDay } | { ok: false; reason: "invalid-day" } {
+  const value = typeof raw === "string" ? raw.trim().toLowerCase() : "";
+  if (!value) return { ok: true, day: "" };
+  if ((CLINIC_DAYS as readonly string[]).includes(value)) return { ok: true, day: value as ClinicDay };
+  return { ok: false, reason: "invalid-day" };
+}
+
+export function validateClinicTime(
+  raw: unknown,
+): { ok: true; time: string } | { ok: false; reason: "invalid-time" } {
+  const value = typeof raw === "string" ? raw.trim() : "";
+  if (!value) return { ok: true, time: "" };
+  if (/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) return { ok: true, time: value };
+  return { ok: false, reason: "invalid-time" };
+}
