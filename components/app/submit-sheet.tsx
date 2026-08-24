@@ -10,7 +10,14 @@ import { markAttemptSent } from "./submission-toast";
 // Submit box (SPEC §7): file and/or note and/or "mark attempted"; any of
 // the three counts. Bottom-sheet recipe from DESIGN.md §6; solutions unlock
 // instantly on success (Rule 2).
-export function SubmitPanel({ moduleId }: { moduleId: string }) {
+export function SubmitPanel({
+  moduleId,
+  variant = "panel",
+}: {
+  moduleId: string;
+  /** panel = the standalone lock panel · inline = just the step's action. */
+  variant?: "panel" | "inline";
+}) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
@@ -47,16 +54,24 @@ export function SubmitPanel({ moduleId }: { moduleId: string }) {
 
   return (
     <>
-      <LockPanel
-        locked
-        title="Submit your attempt to unlock solutions"
-        body="Upload a photo of your working. Marks don't matter here, honest attempts do."
-        action={
-          <Button variant="cta" onClick={() => setOpen(true)}>
-            Submit my attempt
-          </Button>
-        }
-      />
+      {variant === "inline" ? (
+        // The current step's own control (SPEC §15.7 #27): the box opens in
+        // place, so the path never sends the student somewhere else to submit.
+        <Button variant="cta" size="sm" onClick={() => setOpen(true)}>
+          Submit
+        </Button>
+      ) : (
+        <LockPanel
+          locked
+          title="Submit your attempt to unlock solutions"
+          body="Upload a photo of your working. Marks don't matter here, honest attempts do."
+          action={
+            <Button variant="cta" onClick={() => setOpen(true)}>
+              Submit my attempt
+            </Button>
+          }
+        />
+      )}
 
       {open && (
         <div

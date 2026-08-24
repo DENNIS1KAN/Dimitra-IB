@@ -273,6 +273,74 @@ a.lmn-cal-pill.is-release:hover{text-decoration:underline;color:var(--action-pri
 .lmn-cal-pill.is-clinic{background:var(--surface-page);border-left:3px solid var(--color-orange);color:var(--text-primary);border-radius:0 8px 8px 0}
 .lmn-cal-course{display:block;font-size:11.5px;font-weight:500;color:var(--text-tertiary);overflow:hidden;text-overflow:ellipsis}
 
+/* M13 (SPEC §15.7 #27, design/m13-course-experience-mockup.html) ---------- */
+
+/* Resume card: the first thing on a course page, and its one orange CTA */
+.lmn-resume{background:var(--surface-card);border-radius:18px;box-shadow:var(--shadow-card);padding:18px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+@media (min-width:641px){.lmn-resume{padding:20px 22px;gap:18px;flex-wrap:nowrap}}
+.lmn-resume-thumb{width:96px;height:60px;border-radius:12px;background:var(--surface-hero);flex:none;display:flex;align-items:center;justify-content:center}
+@media (min-width:641px){.lmn-resume-thumb{width:118px;height:74px}}
+.lmn-resume-play{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;color:var(--color-indigo)}
+.lmn-resume-tag{margin:0;font-size:10.5px;font-weight:var(--font-weight-heavy);letter-spacing:.07em;text-transform:uppercase;color:var(--action-primary)}
+.lmn-resume h2{margin:3px 0 2px;font-size:17px;font-weight:var(--font-weight-heavy);letter-spacing:-0.3px;color:var(--text-strong)}
+.lmn-resume-meta{margin:0;font-size:12.5px;color:var(--text-tertiary)}
+.lmn-resume-body{flex:1;min-width:0}
+@media (max-width:640px){.lmn-resume .lmn-btn{width:100%;justify-content:center}}
+
+/* Week page: the numbered path, with the materials column beside it */
+.lmn-week{display:grid;grid-template-columns:1fr;gap:18px}
+@media (min-width:881px){.lmn-week{grid-template-columns:1.45fr 1fr}}
+.lmn-step{background:var(--surface-card);border:1px solid var(--border-card);border-radius:12px;padding:12px 14px;margin-bottom:9px;display:flex;align-items:center;gap:12px;color:var(--text-primary);text-decoration:none}
+.lmn-step.is-current{border-color:var(--action-primary)}
+.lmn-step-num{width:26px;height:26px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:var(--font-weight-heavy);box-sizing:border-box}
+.lmn-step.is-done .lmn-step-num{background:var(--state-done);color:#fff}
+.lmn-step.is-current .lmn-step-num{background:#fff;border:3px solid var(--state-now);color:var(--action-primary)}
+.lmn-step.is-waiting .lmn-step-num,.lmn-step.is-locked .lmn-step-num{background:var(--surface-page);border:1px solid var(--border-card);color:var(--text-tertiary)}
+.lmn-step h3{margin:0;font-size:13.5px;font-weight:var(--font-weight-bold);color:var(--text-strong)}
+.lmn-step.is-locked h3,.lmn-step.is-waiting h3{color:var(--text-primary)}
+.lmn-step-meta{margin:2px 0 0;font-size:12px;color:var(--text-tertiary)}
+.lmn-step-link{font-size:13px;font-weight:var(--font-weight-bold);color:var(--action-primary);white-space:nowrap}
+.lmn-step-link.is-soft{color:var(--text-tertiary);font-weight:var(--font-weight-medium)}
+.lmn-side h2{margin:4px 0 8px;font-size:11.5px;font-weight:var(--font-weight-heavy);letter-spacing:.06em;text-transform:uppercase;color:var(--text-heading-color)}
+.lmn-side-card{background:var(--surface-card);border:1px solid var(--border-card);border-radius:12px;padding:12px 14px;margin-bottom:9px;display:flex;align-items:center;gap:11px;color:var(--text-primary);text-decoration:none}
+.lmn-side-card h3{margin:0;font-size:13.5px;font-weight:var(--font-weight-bold);color:var(--text-strong)}
+.lmn-side-card p{margin:2px 0 0;font-size:12px;color:var(--text-tertiary)}
+
+/* Admin: the per-week menu, its inline edit row and its delete confirm */
+.lmn-menu{position:relative}
+.lmn-menu>summary{list-style:none;cursor:pointer;color:var(--text-tertiary);font-weight:var(--font-weight-heavy);letter-spacing:2px;padding:0 4px;line-height:1;user-select:none}
+.lmn-menu>summary::-webkit-details-marker{display:none}
+.lmn-menu-pop{position:absolute;right:0;top:24px;background:var(--surface-card);border:1px solid var(--border-card);border-radius:12px;box-shadow:var(--shadow-float);padding:6px;min-width:186px;z-index:5;display:flex;flex-direction:column;gap:2px}
+.lmn-menu-pop a,.lmn-menu-pop button{display:block;width:100%;text-align:left;padding:8px 12px;border:0;background:none;border-radius:8px;font:inherit;font-size:13.5px;font-weight:600;color:var(--text-primary);text-decoration:none;cursor:pointer}
+.lmn-menu-pop a:hover,.lmn-menu-pop button:hover{background:var(--surface-page);text-decoration:none;color:var(--text-primary)}
+.lmn-menu-pop .is-danger{color:var(--state-alert)}
+.lmn-menu-pop .is-why{font-size:12px;font-weight:500;color:var(--text-tertiary);padding:8px 12px;cursor:default;white-space:normal}
+.lmn-editrow{background:var(--surface-card);border:1.5px solid var(--action-primary);border-radius:12px;padding:13px 15px;margin-bottom:12px}
+.lmn-confirm{background:var(--surface-card);border:1.5px solid var(--state-alert);border-radius:12px;padding:13px 15px;margin-bottom:12px;display:flex;gap:13px;align-items:center;flex-wrap:wrap}
+
+/* Admin progress: by student, expanding to week chips */
+.lmn-toggle{display:inline-flex;border:1px solid var(--border-card);border-radius:var(--radius-pills);overflow:hidden}
+.lmn-toggle a{font-size:12.5px;font-weight:var(--font-weight-bold);padding:6px 14px;color:var(--text-tertiary);text-decoration:none}
+.lmn-toggle a[aria-current="page"]{background:var(--action-primary);color:#fff}
+.lmn-stud{background:var(--surface-card);border:1px solid var(--border-card);border-radius:13px;margin-bottom:10px}
+.lmn-stud.is-paused{opacity:.62}
+.lmn-stud>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:13px;padding:13px 16px}
+.lmn-stud>summary::-webkit-details-marker{display:none}
+.lmn-stud h3{margin:0;font-size:14.5px;font-weight:var(--font-weight-bold);color:var(--text-strong)}
+.lmn-stud-sub{margin:0;font-size:12.5px;color:var(--text-tertiary)}
+.lmn-stud-chev{color:var(--text-tertiary);display:inline-flex;transition:transform .15s ease}
+.lmn-stud[open] .lmn-stud-chev{transform:rotate(90deg)}
+.lmn-chips{display:flex;gap:8px;flex-wrap:wrap;padding:0 16px 14px 16px}
+@media (min-width:641px){.lmn-chips{padding-left:63px}}
+.lmn-chip-week{font-size:12px;font-weight:600;padding:6px 11px;border-radius:9px;display:inline-flex;gap:6px;align-items:center;text-decoration:none}
+.lmn-chip-week.is-ok{background:var(--surface-tint-green);color:var(--text-success)}
+a.lmn-chip-week.is-ok:hover{text-decoration:underline;color:var(--text-success)}
+.lmn-chip-week.is-wait{background:var(--surface-page);color:var(--text-primary);border:1px solid var(--border-card)}
+.lmn-chip-week.is-na{color:var(--text-tertiary);border:1.5px dashed var(--border-card);background:transparent}
+.lmn-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--text-tertiary)}
+.lmn-legend span{display:inline-flex;align-items:center;gap:6px}
+.lmn-sw{width:12px;height:12px;border-radius:4px;display:inline-block}
+
 /* load sequence (mockup); respects reduced motion */
 @media (prefers-reduced-motion:no-preference){
   .lmn-rise{animation:lmn-rise .55s cubic-bezier(.2,.7,.2,1) both}

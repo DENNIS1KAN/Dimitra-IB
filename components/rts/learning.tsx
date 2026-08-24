@@ -281,6 +281,95 @@ export function ModuleCard({
   );
 }
 
+// --- ResumeCard (M13 screen 1: "Pick up where you left off") ---------------
+
+/**
+ * The first thing on a course page, and the view's single orange CTA
+ * (SPEC §15.7 #27). The card says where the student actually left off, so
+ * the copy is passed in from lib/steps rather than composed here.
+ */
+export function ResumeCard({
+  tag,
+  title,
+  meta,
+  cta,
+  href,
+  style,
+}: {
+  tag: string;
+  title: string;
+  meta: string;
+  cta: string;
+  href: string;
+  style?: CSSProperties;
+}) {
+  return (
+    <section className="lmn-resume lmn-rise" aria-label={tag} style={style}>
+      <span className="lmn-resume-thumb" aria-hidden="true">
+        <span className="lmn-resume-play">
+          <Icon name="play_circle" size={22} />
+        </span>
+      </span>
+      <div className="lmn-resume-body">
+        <p className="lmn-resume-tag">{tag}</p>
+        <h2>{title}</h2>
+        <p className="lmn-resume-meta">{meta}</p>
+      </div>
+      <Button variant="cta" href={href}>
+        {cta}
+        <Icon name="arrow_right" size={15} strokeWidth={2.6} />
+      </Button>
+    </section>
+  );
+}
+
+// --- StepRow (M13 screen 2: the numbered path) -----------------------------
+
+/**
+ * One row of the week's path. `action` is the current step's control (a
+ * link, or the submit box's trigger); `link` is the soft one a finished step
+ * keeps. Exactly one row on the page gets an action.
+ */
+export function StepRow({
+  state,
+  number,
+  title,
+  meta,
+  action,
+  link,
+}: {
+  state: "done" | "current" | "waiting" | "locked";
+  number: number;
+  title: string;
+  meta?: string;
+  action?: ReactNode;
+  link?: { label: string; href: string };
+}) {
+  return (
+    <div className={`lmn-step is-${state}`}>
+      <span className="lmn-step-num" aria-hidden="true">
+        {state === "done" ? (
+          <Icon name="check" size={12} strokeWidth={3.4} color="#fff" />
+        ) : state === "locked" ? (
+          <Icon name="lock" size={12} strokeWidth={2.4} />
+        ) : (
+          number
+        )}
+      </span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <h3>{title}</h3>
+        {meta && <p className="lmn-step-meta">{meta}</p>}
+      </div>
+      {action}
+      {!action && link && (
+        <a className="lmn-step-link is-soft" href={link.href}>
+          {link.label}
+        </a>
+      )}
+    </div>
+  );
+}
+
 // --- NoteCard (mockup .note, "Note from Dimitra") --------------------------
 
 export function NoteCard({

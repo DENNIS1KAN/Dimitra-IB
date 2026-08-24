@@ -132,7 +132,7 @@ export default async function WatchPage({
   );
 }
 
-/** Seconds as "6:07" — the label on the player's own scrubber. */
+/** Seconds as "6:07": the label on the player's own scrubber. */
 function clockOf(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const rest = Math.floor(seconds % 60);

@@ -504,12 +504,3 @@ export async function studentCourseDetail(
     releasedCount: released.length,
   };
 }
-
-/** "3 videos · slides · exercises" — counts derived from material rows. */
-export function materialMeta(counts: Record<string, number>): string {
-  const parts: string[] = [];
-  if (counts.video) parts.push(`${counts.video} video${counts.video === 1 ? "" : "s"}`);
-  if (counts.slides) parts.push("slides");
-  if (counts.exercises) parts.push("exercises");
-  return parts.join(" · ");
-}
