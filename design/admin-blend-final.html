@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin, the blend: built for Dimitra's Sunday</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--blue:#0061EF;--indigo:#3B197F;--orange:#F47D31;--jade:#00A86B;--forest:#1e7a4a;--mint:#e7f5ee;
+    --cream:#F9F4F2;--white:#fff;--ink:#131211;--graphite:#2d2c2b;--stone:#63605d;--linen:#e2ded9;
+    --blue-tint:#e8f0fe;--pill:999px;--shadow:0 1px 2px rgba(19,18,17,.05),0 8px 24px rgba(59,25,127,.07)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Plus Jakarta Sans',ui-sans-serif,system-ui,sans-serif;background:var(--cream);color:var(--graphite);
+    font-size:15px;line-height:1.5;letter-spacing:-0.15px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+  .intro{padding:40px 0 8px}
+  .intro h1{color:var(--indigo);font-size:26px;font-weight:800;letter-spacing:-0.6px}
+  .intro p{color:var(--stone);max-width:68ch;margin-top:6px}
+  .cap{padding:10px 4px 30px;font-size:12.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--stone)}
+  .demo{background:var(--white);border:1px solid var(--linen);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);margin:26px 0 6px}
+
+  .navbar{background:var(--blue);display:flex;align-items:center;gap:20px;padding:0 20px;height:54px;color:#fff}
+  .mark{font-size:15.5px;font-weight:800;letter-spacing:-0.3px;white-space:nowrap}
+  .mark i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--orange);margin-left:3px}
+  .mark small{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:rgba(255,255,255,.65);margin-left:10px}
+  .nl{display:flex;gap:4px;flex:1}
+  .nl span{font-size:13.5px;font-weight:500;color:rgba(255,255,255,.78);padding:7px 12px;border-radius:var(--pill)}
+  .nl .on{color:#fff;background:rgba(255,255,255,.16)}
+  .avc{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex:none}
+
+  .page{padding:24px 28px 28px}
+  .page h2{color:var(--indigo);font-size:21px;font-weight:800;letter-spacing:-0.5px;margin-bottom:14px}
+  .crumb{font-size:13px;color:var(--stone);margin-bottom:6px}
+  .crumb a{color:var(--blue);text-decoration:none;font-weight:500}
+
+  .att{border-left:3px solid var(--orange);border-top:1px solid var(--linen);border-right:1px solid var(--linen);
+    border-bottom:1px solid var(--linen);border-radius:0 12px 12px 0;padding:12px 15px;margin-bottom:9px;
+    display:flex;align-items:center;gap:14px}
+  .att h4{font-size:14px;font-weight:700;color:var(--ink)}
+  .att p{font-size:12.5px;color:var(--stone)}
+  .grow{flex:1;min-width:0}
+  .btn{background:var(--blue);color:#fff;font-weight:700;font-size:13.5px;border:0;border-radius:var(--pill);padding:8px 16px;cursor:pointer;white-space:nowrap}
+  .lnk{font-size:13px;font-weight:700;color:var(--blue);white-space:nowrap}
+  .lnk.soft{color:var(--stone);font-weight:500}
+
+  .cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:13px;margin-top:16px}
+  .ccard{border:1px solid var(--linen);border-radius:14px;padding:17px;display:flex;flex-direction:column;gap:9px}
+  .ccard h3{color:var(--indigo);font-size:16px;font-weight:800;letter-spacing:-0.3px}
+  .chip{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:var(--pill);white-space:nowrap}
+  .ch-g{background:var(--mint);color:var(--forest)} .ch-b{background:var(--blue-tint);color:var(--blue)} .ch-s{background:var(--cream);color:var(--stone)}
+  .row{display:flex;gap:7px;flex-wrap:wrap}
+  .meta{font-size:12.5px;color:var(--stone)}
+  .open{margin-top:auto;font-weight:700;font-size:13.5px;color:var(--blue)}
+
+  .tabs{display:flex;gap:2px;border-bottom:1px solid var(--linen);margin:14px 0 16px}
+  .tabs span{font-size:14px;font-weight:700;color:var(--stone);padding:8px 13px;border-bottom:2px solid transparent}
+  .tabs .on{color:var(--blue);border-color:var(--blue)}
+  .rail{position:relative;padding-left:28px}
+  .rail::before{content:"";position:absolute;left:8px;top:14px;bottom:14px;width:2px;
+    background:linear-gradient(var(--jade) 0 42%, var(--blue) 42% 52%, var(--linen) 52% 100%)}
+  .mrow{position:relative;border:1px solid var(--linen);border-radius:12px;padding:12px 15px;margin-bottom:9px;display:flex;align-items:center;gap:12px}
+  .mrow .node{position:absolute;left:-28px;top:50%;transform:translateY(-50%);width:18px;height:18px;border-radius:50%;background:var(--cream);display:flex;align-items:center;justify-content:center}
+  .nd{width:16px;height:16px;border-radius:50%}
+  .done .nd{background:var(--jade)} .next .nd{background:#fff;border:3px solid var(--blue)} .lock .nd{background:var(--linen)}
+  .mrow h4{font-size:14px;font-weight:700;color:var(--ink)}
+  .mrow .s{font-size:12.5px;color:var(--stone)} .mrow .s b{color:var(--forest);font-weight:700}
+  .warn{color:var(--orange);font-weight:700}
+  .when{font-size:12.5px;color:var(--stone);white-space:nowrap}
+  .composer{border:1.5px dashed var(--linen);border-radius:12px;padding:13px 15px;margin-top:10px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .composer b{font-size:13.5px;color:var(--indigo)}
+  .composer input{border:1px solid var(--linen);border-radius:9px;padding:8px 11px;font:inherit;font-size:13.5px}
+
+  /* week editor */
+  .cols{display:grid;grid-template-columns:1.5fr 1fr;gap:18px}
+  .slot{border:1px solid var(--linen);border-radius:14px;padding:15px 16px;margin-bottom:13px}
+  .slot>h3{font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--indigo);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .slot>h3 small{font-weight:500;text-transform:none;letter-spacing:0;color:var(--stone);font-size:12px}
+  .file{display:flex;align-items:center;gap:11px;border:1px solid var(--linen);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+  .file .h{color:var(--stone);letter-spacing:1px;cursor:grab}
+  .ok{width:20px;height:20px;border-radius:50%;background:var(--jade);color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
+  .proc{width:20px;height:20px;border-radius:50%;background:var(--cream);border:2px solid var(--stone);flex:none}
+  .file h5{font-size:13.5px;font-weight:700;color:var(--ink)}
+  .file .s{font-size:12px;color:var(--stone)}
+  .drop{border:1.5px dashed var(--linen);border-radius:10px;padding:16px;text-align:center;font-size:13px;color:var(--stone)}
+  .drop b{color:var(--blue);font-weight:700}
+  .locknote{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--stone);margin-top:9px}
+  .locknote svg{flex:none;color:var(--stone)}
+
+  .side .slot{padding:15px 16px}
+  .checkline{display:flex;align-items:center;gap:9px;font-size:13.5px;padding:5px 0}
+  .cdot{width:17px;height:17px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center}
+  .c-ok{background:var(--jade)} .c-no{background:var(--white);border:2px solid var(--linen)}
+  .checkline.missing{color:var(--ink);font-weight:700}
+  .ready{margin-top:10px;font-size:13px;background:var(--cream);border-radius:9px;padding:9px 11px;color:var(--graphite)}
+  .ready b{color:var(--ink)}
+  textarea{width:100%;border:1px solid var(--linen);border-radius:10px;padding:10px 12px;font:inherit;font-size:13.5px;min-height:84px;color:var(--ink)}
+  .hint{font-size:11.5px;color:var(--stone);margin-top:5px}
+  .wide{display:block;width:100%;text-align:center;margin-top:9px;background:var(--white);color:var(--blue);
+    border:1.5px solid var(--blue);border-radius:var(--pill);padding:9px 14px;font-weight:700;font-size:13.5px;text-decoration:none}
+  .saved{font-size:12.5px;color:var(--forest);font-weight:600;white-space:nowrap}
+  .head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .head h2{margin:0}
+  .head .sp{flex:1}
+  @media (max-width:880px){.cols{grid-template-columns:1fr}.nl span:nth-child(n+4){display:none}.wrap{padding:0 14px}}
+  footer{padding:26px 0 42px;font-size:12.5px;color:var(--stone)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="intro">
+    <h1>The admin, final blend</h1>
+    <p>Five nav items. Her whole week is two clicks deep: Courses, open the course, open the week. The week editor is built the way she thinks: four labeled slots for videos, slides, exercises, and solutions, and a checklist that says when Monday is safe.</p>
+  </div>
+
+  <div class="demo">
+    <div class="navbar">
+      <span class="mark">Road to Success<i></i><small>ADMIN</small></span>
+      <div class="nl"><span class="on">Courses</span><span>Students</span><span>Messages · 2</span><span>Calendar</span><span>Settings</span></div>
+      <span class="avc">AD</span>
+    </div>
+    <div class="page">
+      <div class="att">
+        <div class="grow"><h4>Nikos asked to join Chemistry SL 2027</h4><p>Requested Sat 22 Aug. Approve once the PayPal is in.</p></div>
+        <button class="btn">Approve</button><span class="lnk soft">Decline</span>
+      </div>
+      <div class="att">
+        <div class="grow"><h4>Week 7 of Chemistry HL is missing its solutions</h4><p>Releases Mon 31 Aug at 09:00. One file to go.</p></div>
+        <span class="lnk">Open week 7</span>
+      </div>
+      <h2 style="margin-top:18px">Courses</h2>
+      <div class="cgrid">
+        <div class="ccard">
+          <h3>Chemistry HL 2027</h3>
+          <div class="row"><span class="chip ch-g">3 active</span><span class="chip ch-s">Listed</span></div>
+          <p class="meta">W6 out Mon 24 Aug · 0 of 3 submitted<br>Next: W7 on Mon 31 Aug</p>
+          <span class="open">Open course</span>
+        </div>
+        <div class="ccard">
+          <h3>Chemistry SL 2027</h3>
+          <div class="row"><span class="chip ch-g">1 active</span><span class="chip ch-b">1 request</span></div>
+          <p class="meta">W6 out Mon 24 Aug · 0 of 1 submitted</p>
+          <span class="open">Open course</span>
+        </div>
+        <div class="ccard">
+          <h3>Mathematics AA SL 2027</h3>
+          <div class="row"><span class="chip ch-s">0 active</span><span class="chip ch-s">Listed</span></div>
+          <p class="meta">No modules yet. Add week 1 to get started.</p>
+          <span class="open">Open course</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="cap">Click 0 · Home. The strip only appears when something truly needs her; today it also caught the missing solutions before her students could.</p>
+
+  <div class="demo">
+    <div class="page">
+      <p class="crumb"><a href="#">Courses</a> / Chemistry HL 2027</p>
+      <div class="head"><h2>Chemistry HL 2027</h2><span class="chip ch-g">3 active</span><span class="chip ch-s">Listed</span></div>
+      <div class="tabs"><span class="on">Modules</span><span>Students</span><span>Progress</span><span>Details</span></div>
+      <div class="rail">
+        <div class="mrow done"><span class="node"><span class="nd"></span></span><div class="grow"><h4>W5 · Energetics: Born-Haber cycles</h4><p class="s">Complete · <b>1 of 3 submitted</b></p></div><span class="when">Released Mon 17 Aug</span><span class="lnk">Open</span></div>
+        <div class="mrow done"><span class="node"><span class="nd"></span></span><div class="grow"><h4>W6 · Buffers &amp; titration curves</h4><p class="s">Complete · <b>0 of 3 submitted</b></p></div><span class="when">Released Mon 24 Aug</span><span class="lnk">Open</span></div>
+        <div class="mrow next"><span class="node"><span class="nd"></span></span><div class="grow"><h4>W7 · Redox: half-equations &amp; cells</h4><p class="s"><span class="warn">Solutions missing</span> · releases Mon 31 Aug</p></div><span class="lnk">Open</span></div>
+        <div class="mrow lock"><span class="node"><span class="nd"></span></span><div class="grow"><h4>W8 · Organic: mechanisms I</h4><p class="s">Empty</p></div><span class="when">Releases Mon 7 Sept</span><span class="lnk">Open</span></div>
+      </div>
+      <div class="composer"><b>Add week 9</b><input value="9" size="2"><input placeholder="Title" size="24"><input placeholder="14/09/2026" size="10"><button class="btn">Create week</button><span class="meta">Unlocks at 09:00 Athens time</span></div>
+    </div>
+  </div>
+  <p class="cap">Click 1 · Inside the course. The rail shows at a glance which weeks are complete, and new weeks are created right here, no cohort dropdown.</p>
+
+  <div class="demo">
+    <div class="page">
+      <p class="crumb"><a href="#">Courses</a> / <a href="#">Chemistry HL 2027</a> / Week 7</p>
+      <div class="head">
+        <h2>W7 · Redox: half-equations &amp; cells</h2>
+        <span class="chip ch-s">Releases Mon 31 Aug, 09:00</span>
+        <span class="sp"></span>
+        <span class="saved">Saved just now</span>
+      </div>
+      <div class="cols" style="margin-top:14px">
+        <div>
+          <div class="slot">
+            <h3>Videos <small>10 to 15 minutes each works best</small></h3>
+            <div class="file"><span class="h">⋮⋮</span><span class="ok"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><div class="grow"><h5>1 · Half-equations basics</h5><p class="s">12:40 · ready</p></div><span class="lnk soft">Remove</span></div>
+            <div class="file"><span class="h">⋮⋮</span><span class="proc"></span><div class="grow"><h5>2 · Electrochemical cells</h5><p class="s">Processing. You can leave this page, it finishes on its own.</p></div><span class="lnk soft">Remove</span></div>
+            <div class="drop">Drag MP4s here or <b>browse</b></div>
+          </div>
+          <div class="slot">
+            <h3>Slides</h3>
+            <div class="file"><span class="ok"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><div class="grow"><h5>W7 slides.pdf</h5><p class="s">2.1 MB</p></div><span class="lnk">Replace</span></div>
+          </div>
+          <div class="slot">
+            <h3>Exercises</h3>
+            <div class="file"><span class="ok"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><div class="grow"><h5>W7 exercises.pdf</h5><p class="s">1.4 MB</p></div><span class="lnk">Replace</span></div>
+          </div>
+          <div class="slot">
+            <h3>Solutions</h3>
+            <div class="drop">Drag the solutions PDF here or <b>browse</b></div>
+            <p class="locknote"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Students see these only after they submit their attempt.</p>
+          </div>
+        </div>
+        <div class="side">
+          <div class="slot">
+            <h3>Ready for Monday?</h3>
+            <div class="checkline"><span class="cdot c-ok"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>Videos · 2</div>
+            <div class="checkline"><span class="cdot c-ok"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>Slides</div>
+            <div class="checkline"><span class="cdot c-ok"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>Exercises</div>
+            <div class="checkline missing"><span class="cdot c-no"></span>Solutions</div>
+            <div class="checkline"><span class="cdot c-ok"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>Release date set</div>
+            <p class="ready"><b>One item left.</b> Add the solutions and week 7 is ready to release itself.</p>
+          </div>
+          <div class="slot">
+            <h3>Weekly note <small>shows on the student home</small></h3>
+            <textarea>Half-equations look scary until you balance three of them. Do the first exercise before the videos feel finished, then bring cell diagrams on Thursday.</textarea>
+            <p class="hint">A couple of sentences in your voice: what to focus on, what to bring to the clinic.</p>
+          </div>
+          <a class="wide" href="#">Preview as a student</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="cap">Click 2 · The week editor, where she lives on Sundays. Four slots that match how she already thinks, uploads that survive her closing the laptop, and one honest checklist.</p>
+
+  <footer>Final admin proposal · Students page keeps the direction C drawer exactly as approved</footer>
+</div>
+</body>
+</html>
