@@ -4,7 +4,7 @@ import { SubmissionToastListener } from "@/components/app/submission-toast";
 import { Badge, IconButton } from "@/components/lumen/core";
 import { BackLink, LessonRow, LockPanel } from "@/components/lumen/learning";
 import { getSessionUser } from "@/lib/auth";
-import { formatDue, isNewRelease } from "@/lib/format";
+import { isNewRelease } from "@/lib/format";
 import { studentModuleDetail } from "@/lib/queries";
 
 // /app/modules/[id] — module detail (DESIGN.md §6). Rule 1 makes foreign or
@@ -17,7 +17,7 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
   const detail = await studentModuleDetail(id, user);
   if (!detail) notFound();
 
-  const { module, cohort, materials, hasSubmission, overdue, isCurrent } = detail;
+  const { module, cohort, materials, hasSubmission, isCurrent } = detail;
   const solutions = materials.filter((m) => m.type === "solutions");
   const lessons = materials.filter((m) => m.type !== "solutions");
 
@@ -114,25 +114,7 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
               Attempt sent
             </Badge>
           )}
-          {overdue && (
-            <Badge tone="alert" icon="schedule">
-              Overdue
-            </Badge>
-          )}
         </div>
-        {module.dueDate && !hasSubmission && (
-          <p
-            style={{
-              margin: "-4px 0 8px",
-              fontSize: "var(--text-caption)",
-              fontWeight: 500,
-              letterSpacing: "var(--tracking-caption)",
-              color: "var(--text-tertiary)",
-            }}
-          >
-            {formatDue(module.dueDate)} — a soft deadline; you can still submit after it.
-          </p>
-        )}
 
         {lessons.map(rowFor)}
 

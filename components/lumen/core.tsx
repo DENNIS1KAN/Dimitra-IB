@@ -159,11 +159,6 @@ const badgeTones: Record<string, CSSProperties> = {
     color: "var(--text-inverse)",
     border: "1px solid transparent",
   },
-  alert: {
-    background: "rgba(196,50,10,.08)",
-    color: "var(--state-alert)",
-    border: "1px solid transparent",
-  },
 };
 
 export function Badge({

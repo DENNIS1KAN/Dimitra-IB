@@ -1,12 +1,12 @@
 import { Badge, Card } from "@/components/lumen/core";
 import { ListRow } from "@/components/lumen/learning";
-import { formatDay, formatDue } from "@/lib/format";
+import { formatDay } from "@/lib/format";
 import { studentAssignments, type Assignment } from "@/lib/queries";
 import { requireStudent } from "@/lib/student";
 import { subjectColor } from "@/lib/subject";
 
-// /app/assignments — "what do I owe": every open module across active
-// enrollments with its due date, overdue badged; completed below (SPEC §15.4).
+// /app/assignments: released modules not yet submitted, newest release
+// first; completed below (SPEC §15.7 #16).
 export default async function AssignmentsPage() {
   const user = await requireStudent();
   const { open, completed } = await studentAssignments(user);
@@ -32,9 +32,8 @@ export default async function AssignmentsPage() {
       key={a.module.id}
       icon="edit_note"
       iconColor={subjectColor(a.cohort.subject)}
-      label={`Week ${a.module.weekNumber} — ${a.module.title}`}
-      meta={meta(multi ? a.cohort.name : null, a.module.dueDate ? formatDue(a.module.dueDate) : "No due date")}
-      trailing={a.overdue ? <Badge tone="alert">Overdue</Badge> : undefined}
+      label={`Week ${a.module.weekNumber}: ${a.module.title}`}
+      meta={meta(multi ? a.cohort.name : null, `Released ${formatDay(a.module.releaseDate)}`)}
       href={`/app/modules/${a.module.id}`}
     />
   );
@@ -44,7 +43,7 @@ export default async function AssignmentsPage() {
       key={a.module.id}
       icon="check_circle"
       iconColor={subjectColor(a.cohort.subject)}
-      label={`Week ${a.module.weekNumber} — ${a.module.title}`}
+      label={`Week ${a.module.weekNumber}: ${a.module.title}`}
       meta={meta(multi ? a.cohort.name : null, a.submittedAt ? `Sent ${formatDay(a.submittedAt)}` : null)}
       trailing={
         <Badge tone="done" icon="check">
@@ -83,7 +82,7 @@ export default async function AssignmentsPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.6fr_1fr] lg:items-start">
           <section style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {sectionLabel("To do")}
-            {open.length > 0 ? open.map(openRow) : empty("Nothing due — enjoy the breather.")}
+            {open.length > 0 ? open.map(openRow) : empty("Nothing waiting. Enjoy the breather.")}
           </section>
           <section style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {sectionLabel("Completed")}

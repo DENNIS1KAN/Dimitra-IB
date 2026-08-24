@@ -237,9 +237,7 @@ export function ModuleCard({
   week,
   title,
   meta,
-  due,
   isNew = false,
-  badges,
   cta = "Continue",
   href,
   style,
@@ -248,11 +246,7 @@ export function ModuleCard({
   week: string;
   title: string;
   meta?: string;
-  /** Soft-deadline line under the meta, e.g. "Due Sun 30 Aug 23:59" (SPEC §15.1). */
-  due?: string;
   isNew?: boolean;
-  /** Extra badges after the chip (e.g. Overdue). */
-  badges?: ReactNode;
   cta?: string;
   href: string;
   style?: CSSProperties;
@@ -263,32 +257,18 @@ export function ModuleCard({
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
           <span className="lmn-chip">{week}</span>
           {isNew && <Badge tone="new">New</Badge>}
-          {badges}
         </div>
         <h2>{title}</h2>
         {meta && (
           <p
             style={{
-              margin: due ? "0 0 4px" : "0 0 16px",
+              margin: "0 0 16px",
               fontSize: "14.5px",
               letterSpacing: "var(--tracking-body-sm)",
               color: "var(--text-tertiary)",
             }}
           >
             {meta}
-          </p>
-        )}
-        {due && (
-          <p
-            style={{
-              margin: "0 0 16px",
-              fontSize: "var(--text-caption)",
-              fontWeight: 600,
-              letterSpacing: "var(--tracking-caption)",
-              color: "var(--text-tertiary)",
-            }}
-          >
-            {due}
           </p>
         )}
       </div>

@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Badge, Button, Card, Icon, ProgressBar } from "@/components/lumen/core";
+import { Button, Card, Icon, ProgressBar } from "@/components/lumen/core";
 import { ModuleCard, NoteCard } from "@/components/lumen/learning";
 import { getSessionUser } from "@/lib/auth";
-import { firstName, formatDay, formatDue, formatUnlock, greeting, isNewRelease } from "@/lib/format";
+import { firstName, formatDay, formatUnlock, greeting, isNewRelease } from "@/lib/format";
 import { materialMeta, studentModuleList, type ModuleListEntry } from "@/lib/queries";
 import { getSettings } from "@/lib/settings";
 
@@ -11,7 +11,7 @@ import { getSettings } from "@/lib/settings";
 // indigo hero (greeting + progress) → note from Dimitra → "This week"
 // feature card with the ONE orange CTA → clinic strip → the term rail →
 // footer. One responsive layout. Same data, same rules as before (Rule 1
-// decides every row; SPEC §15.4 for due dates / overdue / course names).
+// decides every row; SPEC §15.4 for course names).
 export default async function AppPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
@@ -49,16 +49,8 @@ export default async function AppPage() {
     <ModuleCard
       week={meta(course(hero), "This week")}
       isNew={isNewRelease(hero.module.releaseDate)}
-      badges={
-        hero.overdue ? (
-          <Badge tone="alert" icon="schedule">
-            Overdue
-          </Badge>
-        ) : undefined
-      }
       title={`Week ${hero.module.weekNumber} · ${hero.module.title}`}
       meta={materialMeta(hero.materialCounts)}
-      due={hero.module.dueDate && !hero.complete ? formatDue(hero.module.dueDate) : undefined}
       cta={hero.complete ? "Review module" : "Start module"}
       href={`/app/modules/${hero.module.id}`}
       style={{ marginTop: noteCard ? 26 : -52 }}
@@ -127,7 +119,7 @@ export default async function AppPage() {
         </p>
       ) : (
         <p className="lmn-rail-sub">
-          {meta(course(entry), "In progress · submit your attempt to unlock solutions", module.dueDate ? formatDue(module.dueDate) : null)}
+          {meta(course(entry), "In progress · submit your attempt to unlock solutions")}
         </p>
       );
     return (
@@ -137,7 +129,6 @@ export default async function AppPage() {
           {title}
           {sub}
         </div>
-        {entry.overdue && <Badge tone="alert">Overdue</Badge>}
         <span className="lmn-rail-go">{kind === "done" ? "Review" : "Continue"}</span>
       </Link>
     );

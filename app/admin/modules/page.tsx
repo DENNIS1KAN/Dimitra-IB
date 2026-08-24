@@ -4,7 +4,6 @@ import { db } from "@/db";
 import { cohorts, modules } from "@/db/schema";
 import { Badge, Button, Card } from "@/components/lumen/core";
 import { Input, TextArea } from "@/components/lumen/forms";
-import { ReleaseDueFields } from "@/components/admin/release-due-fields";
 import { requireAdmin } from "@/lib/admin";
 import { formatDay } from "@/lib/format";
 import { createModule } from "../actions";
@@ -21,7 +20,6 @@ export default async function AdminModules({
     title?: string;
     description?: string;
     releaseDate?: string;
-    dueDate?: string;
   }>;
 }) {
   await requireAdmin();
@@ -90,11 +88,6 @@ export default async function AdminModules({
                       Releases {formatDay(m.releaseDate)}
                     </Badge>
                   )}
-                  {m.dueDate && (
-                    <Badge tone="neutral" icon="flag">
-                      Due {formatDay(m.dueDate)}
-                    </Badge>
-                  )}
                 </Link>
               ))}
               {list.length === 0 && (
@@ -134,7 +127,14 @@ export default async function AdminModules({
             defaultValue={carried.weekNumber ?? ""}
             style={{ width: 140 }}
           />
-          <ReleaseDueFields release={carried.releaseDate ?? ""} due={carried.dueDate ?? ""} />
+          <Input
+            label="Release date & time"
+            name="releaseDate"
+            type="datetime-local"
+            required
+            defaultValue={carried.releaseDate ?? ""}
+            style={{ maxWidth: 240 }}
+          />
           <Input
             label="Title"
             name="title"
