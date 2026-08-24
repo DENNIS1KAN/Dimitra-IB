@@ -328,6 +328,7 @@ a.lmn-cal-pill.is-release:hover{text-decoration:underline;color:var(--action-pri
 .lmn-stud.is-paused{opacity:.62}
 .lmn-stud>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:13px;padding:13px 16px}
 .lmn-stud>summary::-webkit-details-marker{display:none}
+.lmn-pav{width:34px;height:34px;border-radius:50%;background:var(--surface-tint-blue);color:var(--action-primary);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:var(--font-weight-heavy);flex:none}
 .lmn-stud h3{margin:0;font-size:14.5px;font-weight:var(--font-weight-bold);color:var(--text-strong)}
 .lmn-stud-sub{margin:0;font-size:12.5px;color:var(--text-tertiary)}
 .lmn-stud-chev{color:var(--text-tertiary);display:inline-flex;transition:transform .15s ease}

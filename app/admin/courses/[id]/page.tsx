@@ -5,6 +5,7 @@ import { submissions, type Enrollment } from "@/db/schema";
 import { Badge, Button, Icon, ProgressBar } from "@/components/rts/core";
 import { Input, TextArea } from "@/components/rts/forms";
 import { ProgressMatrix } from "@/components/admin/progress-matrix";
+import { ProgressStudents } from "@/components/admin/progress-students";
 import { ReleaseDateField } from "@/components/admin/release-date-field";
 import { adminCourse } from "@/lib/admin-queries";
 import { requireAdmin } from "@/lib/admin";
@@ -129,7 +130,7 @@ export default async function AdminCoursePage({
         <ModulesTab course={course} here={here} carried={sp} nextWeekNumber={nextWeekNumber} />
       )}
       {tab === "students" && <StudentsTab course={course} here={here} addable={addable} />}
-      {tab === "progress" && <ProgressTab course={course} />}
+      {tab === "progress" && <ProgressTab course={course} here={here} view={sp.view ?? ""} />}
       {tab === "details" && <DetailsTab course={course} />}
     </div>
   );
@@ -526,7 +527,12 @@ function StudentsTab({
   );
 }
 
-async function ProgressTab({ course }: { course: CourseData }) {
+/**
+ * Progress (SPEC §15.7 #27): By student is the default view, the matrix is
+ * one toggle away. Both read the same submissions map, so they can never
+ * tell the tutor two different stories.
+ */
+async function ProgressTab({ course, here, view }: { course: CourseData; here: string; view: string }) {
   const subs = await db.select().from(submissions);
   const moduleIds = new Set(course.moduleRows.map((r) => r.module.id));
   const subByKey = new Map(
@@ -538,22 +544,54 @@ async function ProgressTab({ course }: { course: CourseData }) {
   // Server component renders per-request; "now" is stable within the render.
   // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
+  const byWeek = view === "week";
   return (
-    <div
-      style={{
-        background: "var(--surface-card)",
-        border: "1px solid var(--border-card)",
-        borderRadius: "var(--radius-cards)",
-        overflow: "hidden",
-      }}
-    >
-      <ProgressMatrix
-        modules={course.moduleRows.map((r) => r.module)}
-        students={inCourse.map((m) => m.student)}
-        membership={new Map(inCourse.map((m) => [m.student.id, m.enrollment.status]))}
-        subByKey={subByKey}
-        now={now}
-      />
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <span className="lmn-toggle">
+          <Link
+            href={`${here}?tab=progress`}
+            aria-current={byWeek ? undefined : "page"}
+          >
+            By student
+          </Link>
+          <Link
+            href={`${here}?tab=progress&view=week`}
+            aria-current={byWeek ? "page" : undefined}
+          >
+            By week
+          </Link>
+        </span>
+      </div>
+      {byWeek ? (
+        <div
+          style={{
+            background: "var(--surface-card)",
+            border: "1px solid var(--border-card)",
+            borderRadius: "var(--radius-cards)",
+            overflow: "hidden",
+          }}
+        >
+          <ProgressMatrix
+            modules={course.moduleRows.map((r) => r.module)}
+            students={inCourse.map((m) => m.student)}
+            membership={new Map(inCourse.map((m) => [m.student.id, m.enrollment.status]))}
+            subByKey={subByKey}
+            now={now}
+          />
+        </div>
+      ) : (
+        <ProgressStudents
+          modules={course.moduleRows.map((r) => r.module)}
+          rows={inCourse.map((m) => ({
+            student: m.student,
+            status: m.enrollment.status,
+            decidedAt: m.enrollment.decidedAt,
+          }))}
+          subByKey={subByKey}
+          now={now}
+        />
+      )}
     </div>
   );
 }
