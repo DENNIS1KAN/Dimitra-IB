@@ -11,6 +11,7 @@ import { storage } from "@/lib/storage";
 import { isUniqueViolation } from "@/lib/db-errors";
 import { postTutorReply } from "@/lib/messages";
 import { updateSettings } from "@/lib/settings";
+import { deleteWeek } from "@/lib/weeks";
 import { releaseInstantFromDayText } from "@/lib/tz";
 import { isUuid } from "@/lib/validate";
 import type { ComposerState } from "@/components/messages/composer";
@@ -267,15 +268,20 @@ export async function createModule(formData: FormData) {
   redirect(`${hub}/weeks/${created.id}`);
 }
 
+/**
+ * The week's own fields. Hosted by the week editor's side column and, since
+ * M13 (SPEC §15.7 #27), by the course rail's inline edit row; the hidden
+ * "back" field decides which one it returns to.
+ */
 export async function updateModule(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id") ?? "");
-  const editor = await weekPath(id);
+  const editor = backTo(formData, await weekPath(id));
   const weekNumber = Number(formData.get("weekNumber") ?? 0);
   const title = String(formData.get("title") ?? "").trim();
   const releaseDate = releaseInstantFromDayText(String(formData.get("releaseDay") ?? ""));
   if (!id || !title || !weekNumber || Number.isNaN(releaseDate.getTime())) {
-    redirect(`${editor}?error=save`);
+    redirect(withParam(editor, "error=save"));
   }
   try {
     await db
@@ -290,12 +296,29 @@ export async function updateModule(formData: FormData) {
         title,
         releaseDay: String(formData.get("releaseDay") ?? ""),
       });
-      redirect(`${editor}?${carry.toString()}`);
+      redirect(withParam(editor, carry.toString()));
     }
     throw err;
   }
   revalidatePath(editor);
-  redirect(`${editor}?ok=saved`);
+  redirect(withParam(editor, "ok=saved"));
+}
+
+/**
+ * Delete a week (SPEC §15.7 #27). The rule and the file cleanup live in
+ * lib/weeks; this is the auth, the redirect, and nothing else.
+ */
+export async function deleteModule(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  const [module] = isUuid(id) ? await db.select().from(modules).where(eq(modules.id, id)) : [];
+  if (!module) redirect("/admin");
+  const hub = `/admin/courses/${module.cohortId}?tab=modules`;
+
+  const result = await deleteWeek(id);
+  if (!result.ok) redirect(withParam(hub, "error=has-submissions"));
+  revalidatePath(hub);
+  redirect(withParam(hub, "ok=week-deleted"));
 }
 
 /**

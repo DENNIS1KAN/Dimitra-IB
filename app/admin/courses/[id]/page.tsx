@@ -10,13 +10,16 @@ import { adminCourse } from "@/lib/admin-queries";
 import { requireAdmin } from "@/lib/admin";
 import { completenessLabel } from "@/lib/content";
 import { formatDay } from "@/lib/format";
+import { toDayText } from "@/lib/tz";
 import {
   addEnrollment,
   approveRequest,
   createModule,
   declineRequest,
+  deleteModule,
   setEnrollmentStatus,
   updateCohort,
+  updateModule,
 } from "../../actions";
 
 const TABS = ["modules", "students", "progress", "details"] as const;
@@ -37,6 +40,11 @@ export default async function AdminCoursePage({
     weekNumber?: string;
     title?: string;
     releaseDay?: string;
+    // M13 (SPEC §15.7 #27): the week menu's two inline states.
+    edit?: string;
+    confirm?: string;
+    /** The progress tab's By student / By week toggle. */
+    view?: string;
   }>;
 }) {
   await requireAdmin();
@@ -102,11 +110,18 @@ export default async function AdminCoursePage({
       {sp.ok === "saved" && tab === "details" && (
         <p style={{ margin: 0, fontSize: "var(--text-body-sm)", fontWeight: 700 }}>Saved.</p>
       )}
+      {sp.ok === "week-deleted" && tab === "modules" && (
+        <p style={{ margin: 0, fontSize: "var(--text-body-sm)", fontWeight: 700 }}>Week deleted.</p>
+      )}
       {sp.error && tab === "modules" && (
         <p role="alert" style={{ margin: 0, fontSize: "var(--text-body-sm)", color: "#c4320a" }}>
           {sp.error === "week-taken"
             ? "This course already has a module for that week number."
-            : "Check the composer: week, title, and a release day (dd/mm/yyyy) are required."}
+            : sp.error === "has-submissions"
+              ? "That week has student submissions, so it cannot be deleted."
+              : sp.error === "save"
+                ? "Check the row: week, title, and a release day (dd/mm/yyyy) are required."
+                : "Check the composer: week, title, and a release day (dd/mm/yyyy) are required."}
         </p>
       )}
 
@@ -130,7 +145,13 @@ function ModulesTab({
 }: {
   course: CourseData;
   here: string;
-  carried: { weekNumber?: string; title?: string; releaseDay?: string };
+  carried: {
+    weekNumber?: string;
+    title?: string;
+    releaseDay?: string;
+    edit?: string;
+    confirm?: string;
+  };
   nextWeekNumber: number;
 }) {
   const { cohort, moduleRows } = course;
@@ -149,6 +170,7 @@ function ModulesTab({
         })
         .join(", ")})`
     : undefined;
+  const railTo = `${here}?tab=modules`;
 
   return (
     <div>
@@ -156,14 +178,15 @@ function ModulesTab({
         <div className="lmn-rail" style={railLine ? { ["--rail-line" as string]: railLine } : undefined}>
           <style>{railLine ? `.lmn-rail::before{background:var(--rail-line)}` : ""}</style>
           {moduleRows.map((r) => {
+            if (carried.edit === r.module.id) return <EditWeekRow key={r.module.id} row={r} back={railTo} />;
+            if (carried.confirm === r.module.id) {
+              return <DeleteWeekRow key={r.module.id} row={r} back={railTo} />;
+            }
             const kind = kindOf(r);
             const label = completenessLabel(r.counts);
+            const weekPath = `${here}/weeks/${r.module.id}`;
             return (
-              <Link
-                key={r.module.id}
-                href={`${here}/weeks/${r.module.id}`}
-                className={`lmn-rail-row is-${kind}`}
-              >
+              <div key={r.module.id} className={`lmn-rail-row is-${kind}`}>
                 <span className="lmn-rail-node">
                   <span className="lmn-rail-disc">
                     {kind === "done" && <Icon name="check" size={13} strokeWidth={3.2} />}
@@ -171,7 +194,11 @@ function ModulesTab({
                   </span>
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <h3>{`W${r.module.weekNumber} · ${r.module.title}`}</h3>
+                  <h3>
+                    <Link href={weekPath} style={{ color: "inherit" }}>
+                      {`W${r.module.weekNumber} · ${r.module.title}`}
+                    </Link>
+                  </h3>
                   <p className="lmn-rail-sub">
                     {label === "Complete" ? (
                       <>
@@ -197,8 +224,11 @@ function ModulesTab({
                     ? `Released ${formatDay(r.module.releaseDate)}`
                     : `Releases ${formatDay(r.module.releaseDate)}`}
                 </span>
-                <span className="lmn-rail-go">Open</span>
-              </Link>
+                <Link href={weekPath} className="lmn-rail-go">
+                  Open
+                </Link>
+                <WeekMenu row={r} here={here} weekPath={weekPath} />
+              </div>
             );
           })}
         </div>
@@ -255,6 +285,122 @@ function ModulesTab({
         </span>
       </form>
     </div>
+  );
+}
+
+/**
+ * The per-week menu (SPEC §15.7 #27). A <details> popover, so it works with
+ * no JavaScript. The delete entry is not disabled when the week has
+ * submissions: it is replaced by the reason, because "why can I not" is the
+ * question the tutor actually has.
+ */
+function WeekMenu({
+  row,
+  here,
+  weekPath,
+}: {
+  row: CourseData["moduleRows"][number];
+  here: string;
+  weekPath: string;
+}) {
+  const week = `W${row.module.weekNumber}`;
+  return (
+    <details className="lmn-menu">
+      <summary aria-label={`${week} menu`}>⋯</summary>
+      <div className="lmn-menu-pop">
+        <Link href={`${here}?tab=modules&edit=${row.module.id}`}>Edit week</Link>
+        <Link href={weekPath}>Open week</Link>
+        {row.submitted > 0 ? (
+          <span className="is-why">
+            {row.submitted} student{row.submitted === 1 ? " has" : "s have"} submitted work to this
+            week, so it cannot be deleted.
+          </span>
+        ) : (
+          <Link className="is-danger" href={`${here}?tab=modules&confirm=${row.module.id}`}>
+            Delete week
+          </Link>
+        )}
+      </div>
+    </details>
+  );
+}
+
+/** Edit in place: week number, title and the dd/mm/yyyy release day. */
+function EditWeekRow({ row, back }: { row: CourseData["moduleRows"][number]; back: string }) {
+  return (
+    <form action={updateModule} className="lmn-editrow">
+      <input type="hidden" name="id" value={row.module.id} />
+      <input type="hidden" name="back" value={back} />
+      <p
+        style={{
+          margin: "0 0 9px",
+          fontSize: 11.5,
+          fontWeight: 800,
+          letterSpacing: ".05em",
+          textTransform: "uppercase",
+          color: "var(--text-heading-color)",
+        }}
+      >
+        Editing W{row.module.weekNumber}
+      </p>
+      <div style={{ display: "flex", gap: 9, alignItems: "flex-end", flexWrap: "wrap" }}>
+        <label className="lmn-field" style={{ width: 82 }}>
+          <span className="lmn-field-label">Week</span>
+          <input
+            className="lmn-input"
+            name="weekNumber"
+            type="number"
+            min={1}
+            required
+            defaultValue={row.module.weekNumber}
+            style={{ padding: "8px 11px", fontSize: 13.5 }}
+          />
+        </label>
+        <label className="lmn-field" style={{ flex: 1, minWidth: 180 }}>
+          <span className="lmn-field-label">Title</span>
+          <input
+            className="lmn-input"
+            name="title"
+            required
+            defaultValue={row.module.title}
+            style={{ padding: "8px 11px", fontSize: 13.5 }}
+          />
+        </label>
+        <ReleaseDateField initial={toDayText(row.module.releaseDate)} />
+        <Button variant="primary" size="sm" type="submit">
+          Save
+        </Button>
+        <Link href={back} className="lmn-rail-go" style={{ color: "var(--text-tertiary)" }}>
+          Cancel
+        </Link>
+      </div>
+    </form>
+  );
+}
+
+/** The inline confirmation: it names what goes, and what is already known. */
+function DeleteWeekRow({ row, back }: { row: CourseData["moduleRows"][number]; back: string }) {
+  return (
+    <form action={deleteModule} className="lmn-confirm">
+      <input type="hidden" name="id" value={row.module.id} />
+      <div style={{ flex: 1, minWidth: 220 }}>
+        <p style={{ margin: 0, fontSize: 13, color: "var(--text-primary)" }}>
+          <b style={{ color: "var(--state-alert)" }}>
+            Delete W{row.module.weekNumber} · {row.module.title}?
+          </b>{" "}
+          {row.fileCount > 0
+            ? `Its ${row.fileCount} file${row.fileCount === 1 ? "" : "s"} will be removed and students will no longer see it.`
+            : "It stores no files, and students will no longer see it."}{" "}
+          No one has submitted work to this week.
+        </p>
+      </div>
+      <Button variant="danger" size="sm" type="submit">
+        Delete week
+      </Button>
+      <Link href={back} className="lmn-rail-go" style={{ color: "var(--text-tertiary)" }}>
+        Keep
+      </Link>
+    </form>
   );
 }
 

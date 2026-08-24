@@ -294,8 +294,8 @@ export function Button({
   children,
   style,
 }: {
-  /** primary = blue (standard) · cta = the ONE orange motivational CTA per view (ink text) */
-  variant?: "primary" | "cta" | "dark" | "secondary" | "ghost";
+  /** primary = blue (standard) · cta = the ONE orange motivational CTA per view (ink text) · danger = destructive confirmation only */
+  variant?: "primary" | "cta" | "dark" | "secondary" | "ghost" | "danger";
   size?: keyof typeof buttonSizes;
   fullWidth?: boolean;
   disabled?: boolean;

@@ -1,5 +1,5 @@
 import "server-only";
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import {
   cohorts,
@@ -137,6 +137,8 @@ export type CourseModuleRow = {
   missing: RequiredType[];
   submitted: number;
   released: boolean;
+  /** Files this server stores for the week: what a delete would remove. */
+  fileCount: number;
 };
 
 export type CourseMemberRow = {
@@ -172,6 +174,22 @@ export async function adminCourse(cohortId: string, now = new Date()): Promise<A
   const subs = await db.select().from(submissions);
   const subsByModule = new Map<string, number>();
   for (const s of subs) subsByModule.set(s.moduleId, (subsByModule.get(s.moduleId) ?? 0) + 1);
+  // Link videos hold no bytes here, so only stored keys count as files.
+  const fileRows = mods.length
+    ? await db
+        .select({ moduleId: materials.moduleId, storageKey: materials.storageKey })
+        .from(materials)
+        .where(
+          inArray(
+            materials.moduleId,
+            mods.map((m) => m.id),
+          ),
+        )
+    : [];
+  const filesByModule = new Map<string, number>();
+  for (const f of fileRows) {
+    if (f.storageKey) filesByModule.set(f.moduleId, (filesByModule.get(f.moduleId) ?? 0) + 1);
+  }
 
   const moduleRows: CourseModuleRow[] = mods.map((module) => {
     const c = counts.get(module.id) ?? {};
@@ -181,6 +199,7 @@ export async function adminCourse(cohortId: string, now = new Date()): Promise<A
       missing: missingTypes(c),
       submitted: subsByModule.get(module.id) ?? 0,
       released: module.releaseDate.getTime() <= t,
+      fileCount: filesByModule.get(module.id) ?? 0,
     };
   });
 

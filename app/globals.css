@@ -141,6 +141,8 @@ h1,h2,h3,h4{color:var(--text-heading-color)}
 .lmn-btn-secondary:hover{filter:none;background:var(--color-cream);color:var(--text-strong)}
 .lmn-btn-ghost{background:transparent;color:var(--action-primary);font-weight:var(--font-weight-bold)}
 .lmn-btn-ghost:hover{filter:none;opacity:.75;color:var(--action-primary)}
+.lmn-btn-danger{background:var(--state-alert);color:var(--text-inverse)}
+.lmn-btn-danger:hover{color:var(--text-inverse)}
 .lmn-btn[disabled]{background:var(--color-linen);color:var(--text-disabled);cursor:not-allowed;box-shadow:none;filter:none;transform:none}
 
 .lmn-iconbtn{display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-pills);cursor:pointer;border:1px solid transparent;background:transparent;color:var(--text-secondary);transition:background .15s ease;font-family:var(--font-sans);text-decoration:none}
