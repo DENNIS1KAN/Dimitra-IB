@@ -1,5 +1,9 @@
 # design/ — approved UI sources
 
+>  **M13:** `m13-course-experience-mockup.html` is the authoritative
+> reference for the course page, the week page, the admin week menu and the
+> admin progress tab (SPEC §15.7 #27).
+>
 > **Phase 2 (M9):** `lumen-dashboard-mockup.html` is the authoritative visual
 > reference — Dimitra's palette, Plus Jakarta Sans, inline SVG icons. The
 > `extracted/` sources below belong to the superseded Phase 1 direction

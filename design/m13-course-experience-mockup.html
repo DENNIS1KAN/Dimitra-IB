@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M13 proposal: the course experience, fixed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--blue:#0061EF;--indigo:#3B197F;--orange:#F47D31;--jade:#00A86B;--forest:#1e7a4a;--mint:#e7f5ee;
+    --cream:#F9F4F2;--white:#fff;--ink:#131211;--graphite:#2d2c2b;--stone:#63605d;--linen:#e2ded9;
+    --blue-tint:#e8f0fe;--red:#C0392B;--red-tint:#faeae7;--pill:999px;
+    --shadow:0 1px 2px rgba(19,18,17,.05),0 8px 24px rgba(59,25,127,.07)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Plus Jakarta Sans',ui-sans-serif,system-ui,sans-serif;background:var(--cream);color:var(--graphite);
+    font-size:15px;line-height:1.5;letter-spacing:-0.15px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+  .intro{padding:40px 0 8px}
+  .intro h1{color:var(--indigo);font-size:26px;font-weight:800;letter-spacing:-0.6px}
+  .intro p{color:var(--stone);max-width:68ch;margin-top:6px}
+  .cap{padding:10px 4px 30px;font-size:12.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--stone)}
+  .demo{background:var(--white);border:1px solid var(--linen);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);margin:26px 0 6px}
+  .page{padding:24px 28px 28px}
+  .crumb{font-size:13px;color:var(--stone);margin-bottom:6px}
+  .crumb a{color:var(--blue);text-decoration:none;font-weight:500}
+  .head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .head h2{color:var(--indigo);font-size:21px;font-weight:800;letter-spacing:-0.5px}
+  .chip{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:var(--pill);white-space:nowrap}
+  .ch-g{background:var(--mint);color:var(--forest)} .ch-b{background:var(--blue-tint);color:var(--blue)} .ch-s{background:var(--cream);color:var(--stone)}
+  .bar{height:7px;border-radius:var(--pill);background:var(--linen);overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--jade)}
+  .meta{font-size:12.5px;color:var(--stone)}
+  .grow{flex:1;min-width:0}
+  .lnk{font-size:13px;font-weight:700;color:var(--blue);white-space:nowrap}
+  .lnk.soft{color:var(--stone);font-weight:500}
+  .lnk.danger{color:var(--red)}
+  .cta{display:inline-flex;align-items:center;gap:8px;background:var(--orange);color:var(--ink);font-weight:800;font-size:15px;
+    border:0;border-radius:var(--pill);padding:12px 24px;cursor:pointer}
+  .btn{background:var(--blue);color:#fff;font-weight:700;font-size:13.5px;border:0;border-radius:var(--pill);padding:8px 16px;cursor:pointer}
+  .btn.danger{background:var(--red)}
+  .btn.ghost{background:var(--white);color:var(--blue);border:1.5px solid var(--blue)}
+
+  .resume{border:0;border-radius:18px;box-shadow:var(--shadow);padding:20px;display:flex;gap:18px;align-items:center;margin:16px 0 14px;background:var(--white)}
+  .thumb{width:118px;height:74px;border-radius:12px;background:var(--indigo);flex:none;display:flex;align-items:center;justify-content:center}
+  .thumb .play{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center}
+  .resume .tag{font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--blue)}
+  .resume h3{font-size:17px;font-weight:800;color:var(--ink);letter-spacing:-0.3px;margin:2px 0}
+  .note{background:var(--white);border:1px solid var(--linen);border-radius:14px;padding:13px 15px;margin-bottom:14px;display:flex;gap:11px}
+  .nmark{flex:none;width:30px;height:30px;border-radius:10px;background:var(--mint);color:var(--forest);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
+  .note h4{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--indigo)}
+  .note p{font-size:13.5px;margin-top:2px}
+
+  .rail{position:relative;padding-left:28px;margin-top:6px}
+  .rail::before{content:"";position:absolute;left:8px;top:14px;bottom:14px;width:2px;
+    background:linear-gradient(var(--jade) 0 30%, var(--blue) 30% 42%, var(--linen) 42% 100%)}
+  .mrow{position:relative;border:1px solid var(--linen);border-radius:12px;padding:12px 15px;margin-bottom:9px;display:flex;align-items:center;gap:12px;background:var(--white)}
+  .mrow .node{position:absolute;left:-28px;top:50%;transform:translateY(-50%);width:18px;height:18px;border-radius:50%;background:var(--cream);display:flex;align-items:center;justify-content:center}
+  .nd{width:16px;height:16px;border-radius:50%}
+  .done .nd{background:var(--jade)} .now .nd{background:#fff;border:3px solid var(--blue)} .lock .nd{background:var(--linen)}
+  .mrow h4{font-size:14px;font-weight:700;color:var(--ink)}
+  .mrow .s{font-size:12.5px;color:var(--stone)} .mrow .s b{color:var(--forest);font-weight:700}
+  .when{font-size:12.5px;color:var(--stone);white-space:nowrap}
+
+  .cols{display:grid;grid-template-columns:1.45fr 1fr;gap:18px;margin-top:14px}
+  .player{background:var(--indigo);border-radius:14px;height:190px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+  .player .play{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center}
+  .step{border:1px solid var(--linen);border-radius:12px;padding:12px 14px;margin-bottom:9px;display:flex;align-items:center;gap:12px;background:var(--white)}
+  .snum{width:24px;height:24px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+  .s-done{background:var(--jade);color:#fff}
+  .s-now{background:#fff;border:3px solid var(--blue);color:var(--blue)}
+  .s-wait{background:var(--cream);color:var(--stone);border:1px solid var(--linen)}
+  .step h5{font-size:13.5px;font-weight:700;color:var(--ink)}
+  .step .s{font-size:12px;color:var(--stone)}
+  .step.current{border-color:var(--blue)}
+  .side .card{border:1px solid var(--linen);border-radius:12px;padding:12px 14px;margin-bottom:9px;background:var(--white);display:flex;align-items:center;gap:11px}
+  .side h5{font-size:13.5px;font-weight:700;color:var(--ink)}
+  .side .s{font-size:12px;color:var(--stone)}
+  .side h3{font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--indigo);margin:4px 0 8px}
+
+  .menu{position:relative}
+  .dots{color:var(--stone);font-weight:800;letter-spacing:2px;cursor:pointer}
+  .pop{position:absolute;right:0;top:24px;background:var(--white);border:1px solid var(--linen);border-radius:12px;box-shadow:var(--shadow);
+    padding:6px;min-width:150px;z-index:2}
+  .pop a{display:block;padding:8px 12px;border-radius:8px;font-size:13.5px;font-weight:600;color:var(--graphite);text-decoration:none}
+  .pop a:hover{background:var(--cream)}
+  .pop a.danger{color:var(--red)}
+  .editrow{border:1.5px solid var(--blue);border-radius:12px;padding:13px 15px;margin-bottom:9px;background:var(--white)}
+  .editrow .fields{display:flex;gap:9px;align-items:end;flex-wrap:wrap}
+  .f label{display:block;font-size:11.5px;color:var(--stone);margin-bottom:3px}
+  .f input{border:1px solid var(--linen);border-radius:9px;padding:8px 11px;font:inherit;font-size:13.5px;color:var(--ink)}
+  .confirm{border:1.5px solid var(--red);background:var(--red-tint);border-radius:12px;padding:12px 15px;margin-bottom:9px;display:flex;align-items:center;gap:13px}
+  .confirm p{font-size:13px;color:var(--graphite)}
+  .confirm b{color:var(--red)}
+
+  .toggle{display:inline-flex;border:1px solid var(--linen);border-radius:var(--pill);overflow:hidden;margin-left:auto}
+  .toggle span{font-size:12.5px;font-weight:700;padding:6px 14px;color:var(--stone)}
+  .toggle .on{background:var(--blue);color:#fff}
+  .stud{border:1px solid var(--linen);border-radius:13px;margin-bottom:10px;background:var(--white)}
+  .stud .top{display:flex;align-items:center;gap:13px;padding:13px 16px}
+  .pav{width:34px;height:34px;border-radius:50%;background:var(--blue-tint);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex:none}
+  .stud h4{font-size:14.5px;font-weight:700;color:var(--ink)}
+  .stud .s{font-size:12.5px;color:var(--stone)}
+  .chev{color:var(--stone)}
+  .weekchips{display:flex;gap:8px;flex-wrap:wrap;padding:0 16px 14px 63px}
+  .wc{font-size:12px;font-weight:600;padding:6px 11px;border-radius:9px;display:inline-flex;gap:6px;align-items:center}
+  .wc.ok{background:var(--mint);color:var(--forest)}
+  .wc.wait{background:var(--cream);color:var(--graphite);border:1px solid var(--linen)}
+  .wc.na{color:var(--stone);border:1.5px dashed var(--linen);background:transparent}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--stone)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:12px;height:12px;border-radius:4px;display:inline-block}
+  @media (max-width:880px){.cols{grid-template-columns:1fr}.wrap{padding:0 14px}.resume{flex-wrap:wrap}}
+  footer{padding:26px 0 42px;font-size:12.5px;color:var(--stone)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="intro">
+    <h1>M13 proposal: the course experience, fixed</h1>
+    <p>Four screens. Opening a course lands the student in motion, the week becomes a guided path, Dimitra gets edit and delete on every week, and Progress finally shows people instead of walls.</p>
+  </div>
+
+  <div class="demo">
+    <div class="page">
+      <p class="crumb"><a href="#">My courses</a> / Chemistry HL 2027</p>
+      <div class="head"><h2>Chemistry HL 2027</h2><span class="chip ch-g">5 of 24 weeks</span></div>
+      <div class="bar" style="max-width:300px;margin:10px 0 4px"><i style="width:21%"></i></div>
+
+      <div class="resume">
+        <div class="thumb"><span class="play"><svg width="16" height="16" viewBox="0 0 24 24" fill="var(--indigo)"><path d="M8 5v14l11-7z"/></svg></span></div>
+        <div class="grow">
+          <p class="tag">Pick up where you left off</p>
+          <h3>Video 2 · Titration curves in practice</h3>
+          <p class="meta">Week 6 · 6 minutes left · then the exercises</p>
+        </div>
+        <button class="cta">Resume
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+
+      <div class="note"><span class="nmark">D</span><div><h4>Note from Dimitra · Mon 24 Aug</h4><p>Buffers trip everyone up the first week. Watch video 2 twice before the exercises, and bring your curves on Thursday.</p></div></div>
+
+      <div class="rail">
+        <div class="mrow done"><span class="node"><span class="nd"></span></span><div class="grow"><h4>W5 · Energetics: Born-Haber cycles</h4><p class="s"><b>Done · solutions unlocked</b></p></div><span class="lnk">Review</span></div>
+        <div class="mrow now"><span class="node"><span class="nd"></span></span><div class="grow"><h4>W6 · Buffers &amp; titration curves</h4><p class="s">In progress · step 2 of 5</p></div><span class="lnk">Open</span></div>
+        <div class="mrow lock"><span class="node"><span class="nd"></span></span><div class="grow"><h4>W7 · Redox: half-equations &amp; cells</h4></div><span class="when">Unlocks Mon 31 Aug</span></div>
+      </div>
+    </div>
+  </div>
+  <p class="cap">Screen 1 · Student, inside a course. The first thing on the page is motion: resume the exact video at the exact minute. Structure sits below it, not instead of it.</p>
+
+  <div class="demo">
+    <div class="page">
+      <p class="crumb"><a href="#">My courses</a> / <a href="#">Chemistry HL 2027</a> / Week 6</p>
+      <div class="head"><h2>W6 · Buffers &amp; titration curves</h2><span class="chip ch-b">Step 2 of 5</span></div>
+      <div class="cols">
+        <div>
+          <div class="player"><span class="play"><svg width="20" height="20" viewBox="0 0 24 24" fill="var(--indigo)"><path d="M8 5v14l11-7z"/></svg></span></div>
+          <div class="step"><span class="snum s-done"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><div class="grow"><h5>Watch · Buffer systems explained</h5><p class="s">14:20 · done</p></div><span class="lnk soft">Rewatch</span></div>
+          <div class="step current"><span class="snum s-now">2</span><div class="grow"><h5>Watch · Titration curves in practice</h5><p class="s">6 minutes left</p></div><span class="lnk">Resume above</span></div>
+          <div class="step"><span class="snum s-wait">3</span><div class="grow"><h5>Attempt the exercises on paper</h5><p class="s">Download on the right, work the way the exam asks</p></div></div>
+          <div class="step"><span class="snum s-wait">4</span><div class="grow"><h5>Submit your attempt</h5><p class="s">A photo of honest working is enough</p></div><span class="lnk">Submit</span></div>
+          <div class="step"><span class="snum s-wait"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span><div class="grow"><h5>Solutions</h5><p class="s">Unlock after you submit · then check your work</p></div></div>
+        </div>
+        <div class="side">
+          <h3>Materials</h3>
+          <div class="card"><div class="grow"><h5>W6 slides.pdf</h5><p class="s">2.1 MB</p></div><span class="lnk">Download</span></div>
+          <div class="card"><div class="grow"><h5>W6 exercises.pdf</h5><p class="s">1.4 MB</p></div><span class="lnk">Download</span></div>
+          <h3 style="margin-top:14px">Stuck?</h3>
+          <div class="card"><div class="grow"><h5>Message Dimitra</h5><p class="s">She replies within a day</p></div><span class="lnk">Open</span></div>
+          <div class="card"><div class="grow"><h5>Clinic Thursday 18:00</h5><p class="s">Bring your curves</p></div><span class="lnk">Add</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="cap">Screen 2 · Student, inside a week. The week is a numbered path: watch, watch, attempt, submit, unlock. One current step, one action, no guessing what comes next.</p>
+
+  <div class="demo">
+    <div class="page">
+      <p class="crumb"><a href="#">Courses</a> / Chemistry HL 2027</p>
+      <div class="head"><h2>Chemistry HL 2027</h2><span class="chip ch-g">3 active</span></div>
+      <div class="rail" style="margin-top:16px">
+        <div class="mrow done"><span class="node"><span class="nd"></span></span><div class="grow"><h4>W5 · Energetics: Born-Haber cycles</h4><p class="s">Complete · <b>1 of 3 submitted</b></p></div><span class="when">Released Mon 17 Aug</span><span class="lnk">Open</span>
+          <span class="menu"><span class="dots">⋯</span><span class="pop"><a href="#">Edit week</a><a href="#">Open week</a><a class="danger" href="#">Delete week</a></span></span>
+        </div>
+        <div class="editrow">
+          <p style="font-size:11.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--indigo);margin-bottom:9px">Editing W6</p>
+          <div class="fields">
+            <div class="f"><label>Week</label><input value="6" size="3"></div>
+            <div class="f"><label>Title</label><input value="Buffers &amp; titration curves" size="26"></div>
+            <div class="f"><label>Release day</label><input value="24/08/2026" size="10"></div>
+            <button class="btn">Save</button><span class="lnk soft">Cancel</span>
+          </div>
+        </div>
+        <div class="confirm">
+          <div class="grow"><p><b>Delete W8 · Organic: mechanisms I?</b> Its 4 files will be removed and students will no longer see it. No one has submitted work to this week.</p></div>
+          <button class="btn danger">Delete week</button><span class="lnk soft">Keep</span>
+        </div>
+      </div>
+      <p class="meta" style="margin-top:8px">When a week does have submissions, Delete is replaced by "Contact support to remove": student work is never silently destroyed.</p>
+    </div>
+  </div>
+  <p class="cap">Screen 3 · Admin modules rail. Every row gets a menu: edit opens inline, delete asks properly, and weeks with student submissions cannot be deleted by accident.</p>
+
+  <div class="demo">
+    <div class="page">
+      <div class="head"><h2>Progress</h2><span class="toggle"><span class="on">By student</span><span>By week</span></span></div>
+      <div style="margin-top:14px">
+        <div class="stud">
+          <div class="top"><span class="pav">NK</span><div class="grow"><h4>Nikos Karras</h4><p class="s">Last active today</p></div>
+            <div style="width:150px"><div class="bar"><i style="width:50%"></i></div></div><span class="meta">1 of 2</span><span class="chev">▾</span></div>
+          <div class="weekchips">
+            <span class="wc ok"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>W5 · Wed 19 Aug · view</span>
+            <span class="wc wait">W6 · released, waiting</span>
+            <span class="wc na">W7 · not released</span>
+            <span class="wc na">W8 · not released</span>
+          </div>
+        </div>
+        <div class="stud"><div class="top"><span class="pav">EV</span><div class="grow"><h4>Eleni Vasil</h4><p class="s">Never signed in · worth a WhatsApp</p></div>
+          <div style="width:150px"><div class="bar"><i style="width:0%"></i></div></div><span class="meta">0 of 2</span><span class="chev">▸</span></div></div>
+        <div class="stud" style="opacity:.62"><div class="top"><span class="pav">PA</span><div class="grow"><h4>Petros Adamou</h4><p class="s">Paused Sat 22 Aug</p></div>
+          <div style="width:150px"><div class="bar"><i style="width:0%"></i></div></div><span class="meta">0 of 2</span><span class="chev">▸</span></div></div>
+      </div>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--jade)"></span>Submitted, tap to view</span>
+        <span><span class="sw" style="background:var(--cream);border:1px solid var(--linen)"></span>Released, waiting</span>
+        <span><span class="sw" style="border:1.5px dashed var(--linen)"></span>Not released yet</span>
+        <span><span class="sw" style="background:var(--linen)"></span>Paused student</span>
+      </div>
+    </div>
+  </div>
+  <p class="cap">Screen 4 · Admin progress. People first: a bar and a fraction per student, expand for the week chips, and unreleased weeks fade into the background instead of dominating it. The by-week matrix stays one toggle away.</p>
+
+  <footer>M13 proposal · builds on M11 and M12 after both are pushed and verified</footer>
+</div>
+</body>
+</html>
