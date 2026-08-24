@@ -1,4 +1,6 @@
-# Lumen — Launch checklist
+# Road to Success: Launch checklist
+
+Formerly the working title Lumen; renamed 2026-08-24 (SPEC §15.7 #20).
 
 What stands between the repository at HEAD and real students. Split by owner; each line is done when the person can tick it without asking the other.
 
@@ -14,12 +16,12 @@ What stands between the repository at HEAD and real students. Split by owner; ea
 - [ ] Host in the EU (Hetzner VPS, or Vercel + Neon EU); `DATABASE_URL` to managed Postgres; `AUTH_SECRET` (long random), `APP_URL`, `APP_TIMEZONE=Europe/Athens`.
 - [ ] Backups on: managed Postgres backups, or nightly `pg_dump` (README "Production notes"); the storage zone backed up separately. Do one **restore rehearsal** into a scratch database and sign in against it.
 - [ ] `npm run db:migrate` against production; create Dimitra's admin account (seed is dev-only — never run `db:seed` in production).
-- [ ] Full production smoke, student loop: sign in on a phone → dashboard → watch a video → download stamped slides ("Prepared for {name}") → submit a photo → solutions unlock → message Dimitra → sessions page opens the booking link in a new tab → change own password.
+- [ ] Full production smoke, student loop: sign in on a phone → dashboard → watch a video → download stamped slides ("Road to Success · Prepared for {name}") → submit a photo → solutions unlock → message Dimitra → sessions page opens the booking link in a new tab → change own password.
 - [ ] Full production smoke, admin loop: create a course → create a student (+ first enrollment) → publish a module with videos + PDFs + a dd/mm/yyyy release day (unlocks 09:00 Athens) → approve a join request → pause/resume an enrollment → pause/unpause a student (Rule 3) → open a submission from the matrix → reply in messages → set settings.
 - [ ] Confirm no third-party request leaks beyond Google Fonts (or vendor the font files and switch to `next/font/local`), and that `Cache-Control: private, no-store` holds on material and submission routes.
 
 **Identity**
-- [ ] Final product name (SPEC §14 — "Lumen" is a working title) and domain; update the wordmark copy, `metadata` titles, `APP_URL`, README.
+- [ ] **Name: DONE (2026-08-24):** "Road to Success by Anglou Dimitra" (SPEC §15.7 #20); wordmark, `metadata` titles and README updated. Still open: the **domain**, then `APP_URL`.
 
 ## Dimitra
 

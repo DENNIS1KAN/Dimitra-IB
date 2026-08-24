@@ -1,12 +1,12 @@
-# Lumen — Project Report
+# Road to Success: Project Report
 
 *A complete technical report on what has been built and how it works, regenerated strictly from the repository at HEAD on 2026-08-22 after Phase 2 (M6–M9), amended 2026-08-24 after the owner-review round M10 (deadlines removed, calendar added, palette audited). Written to be handed to an AI assistant or a new developer as full project context. The remaining work before real students use it is in `LAUNCH.md`.*
 
 ---
 
-## 1. What Lumen is
+## 1. What Road to Success is
 
-Lumen (working title) is a **private learning platform for one IB tutor, Dimitra Anglou**. Her 1:1 chemistry students move to weekly pre-recorded modules — videos, annotated slides, exercise sets — with worked solutions gated behind a submitted attempt. Payment happens offline (PayPal); the platform mirrors it with one global toggle per student plus, since Phase 2, per-course enrollments.
+Road to Success (formerly the working title Lumen; renamed 2026-08-24, SPEC §15.7 #20) is a **private learning platform for one IB tutor, Anglou Dimitra**. Her 1:1 chemistry students move to weekly pre-recorded modules — videos, annotated slides, exercise sets — with worked solutions gated behind a submitted attempt. Payment happens offline (PayPal); the platform mirrors it with one global toggle per student plus, since Phase 2, per-course enrollments.
 
 - **Scale:** 10–30 students, one admin (the tutor), one tenant. Deliberately small and boring.
 - **Sources of truth:** `SPEC.md` (scope/behavior; §15 holds the owner's Phase 2 amendments, milestones M6–M10 with their verified checklists, and the decision log §15.7), `DESIGN.md` (Dimitra's palette, tokens, component and screen recipes), `CLAUDE.md` (working rules). The gating rules in `lib/gating.ts` are *the entire business logic*.

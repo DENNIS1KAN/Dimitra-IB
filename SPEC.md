@@ -1,6 +1,6 @@
-# Lumen — V1 Build Specification
+# Road to Success: V1 Build Specification
 
-**Status:** V1 built (M1–M5) · Phase 2 built (M6–M9) · M10 owner-review round in progress (§15.6/§15.7) · **Working title:** Lumen · **Last updated:** 2026-08-24
+**Status:** V1 built (M1–M5) · Phase 2 built (M6–M9) · M10 owner-review round done (§15.6/§15.7) · **Name:** "Road to Success by Anglou Dimitra", formerly the working title Lumen (§15.7 #20) · **Last updated:** 2026-08-24
 
 This document is the source of truth for V1 scope. Anything not listed in the Goals or Milestones is out of scope until this spec changes. When in doubt, build less.
 
@@ -218,7 +218,7 @@ Parent monthly digest email (built from `events` + `submissions`) · clinic auto
 
 ## 14. Open questions
 
-- **Name & domain** — "Lumen" is a working title; confirm before the landing page ships (non-blocking until M5). *Owner: tutor + developer.*
+- **Name & domain** — "Lumen" is a working title; confirm before the landing page ships (non-blocking until M5). *Owner: tutor + developer.* *Resolved 2026-08-24: the name is "Road to Success by Anglou Dimitra" (§15.7 #20); the domain is still open.*
 - **Vendor account ownership** — Bunny/Resend/domain should live under the tutor's accounts for continuity; developer gets access. *Owner: both. Non-blocking until M3.*
 - **Slides inline viewer vs download-only** — default: inline browser view + stamped download; confirm she's happy exercises are download-only. *Owner: tutor. Non-blocking.*
 - **Greek copy for parents on the landing page** — default English-only in V1. *Owner: tutor. Non-blocking.*

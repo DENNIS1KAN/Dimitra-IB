@@ -1,4 +1,6 @@
-# Lumen — Design System
+# Road to Success: Design System
+
+Formerly the working title Lumen; renamed 2026-08-24. The wordmark system and name rules live in SPEC §15.7 #20/#21/#22; `design/road-to-success-mockup.html` is the approved brand reference.
 
 **Phase 2 (M9, 2026-08-22; audited M10, 2026-08-24): this file describes Dimitra's palette as locked by the owner (SPEC §15.7 #13).** Source of truth is `design/lumen-dashboard-mockup.html` (authoritative) **as constrained by the M10 audit**: only the owner's brand hexes render (blue / indigo / orange / jade+forest), neutrals are the ink/graphite/stone/linen ramp, tints are alpha of brand hexes, the hero is solid indigo, and the tokens.css extras (plum, celeste, ash, driftwood, indigo-soft) are retired. The original direction — Apercu Pro, Material Symbols, sunbeam-yellow accents — is **superseded**; §10 maps the old tokens so older notes still read. **All UI is built from the tokens and recipes in this file — never improvised, never re-inferred from the raw HTML.** Where this file and SPEC.md disagree, SPEC.md wins on scope/behavior, this file wins on skin; every known disagreement is listed in §9.
 
@@ -63,7 +65,7 @@
 
 **Family:** `--font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif`. Loaded as the mockup does — a Google Fonts stylesheet link (`display=swap`) in `app/layout.tsx` — so the build never depends on a network fetch; offline or blocked, the system stack renders. Weights 400 / 500 / 700 / 800.
 
-**Icons:** inline SVG only (`components/lumen/icon.tsx`): 24×24 stroke glyphs in `currentColor`, keyed by the names the code always used (`check_circle`, `lock`, `play_circle`, `chevron_right`, …). No icon font — nothing can ever render as a literal word again.
+**Icons:** inline SVG only (`components/rts/icon.tsx`): 24×24 stroke glyphs in `currentColor`, keyed by the names the code always used (`check_circle`, `lock`, `play_circle`, `chevron_right`, …). No icon font — nothing can ever render as a literal word again.
 
 **Scale** (px / line-height / tracking):
 
@@ -115,7 +117,7 @@ Conventions: headings are indigo 800 with tight negative tracking; the hero h1 i
 
 Interaction defaults: filled buttons hover `brightness(.96)`; the CTA lifts 2px with `--shadow-cta`; rows hover → blue border + `translateX(2px)`; transitions `.15s ease`; `.lmn-rise` entrance (`.55s`, respects `prefers-reduced-motion`).
 
-**Wordmark** — "lumen" 800 (ink, or white with `inverse`) + an orange disc (`--accent-brand`) as the full stop. Sizes sm 22 / md 28 / lg 44 / xl 88; optional byline "by Dimitra Anglou" 500 stone (inverse: white 75%).
+**Wordmark** — "Road to Success" 800 with the orange dot terminal (`--accent-brand`), ink or white with `inverse` (`design/road-to-success-mockup.html`; SPEC §15.7 #22). Three sizes: **full** clamp(42px, 7.5vw, 76px), ls -0.035em, for the landing, login and documents (optional byline "by Anglou Dimitra" 500, stone; inverse white 72%; em-based internals, so `fontSize` rescales the whole mark); **bar** 17px in the app navs at 640px and up; the **RTS monogram** with the same dot below 640px. Favicon: the dot alone on an indigo tile (RTS lettering is illegible at 16px).
 
 **Button** — inline-flex, gap 8, 700, radius pills. Sizes sm 14px/8×16 · md 16px/12×24 · lg 16.5px/15×30. Variants: **primary** (blue, white text — the standard button) · **cta** (orange, **ink** text, 800, hover lift — exactly one per view: "Start module" / "Continue module" on the dashboard, "Submit my attempt" on the module page) · **dark** (ink, white text, `--shadow-subtle`) · **secondary** (white, linen border, ink text; hover cream) · **ghost** (transparent, blue 700 text). `external` renders `<a target="_blank" rel="noopener noreferrer">`. Disabled: linen + stone.
 
@@ -131,7 +133,7 @@ Interaction defaults: filled buttons hover `brightness(.96)`; the CTA lifts 2px 
 
 **Icon** — `<Icon name size color strokeWidth />` → inline SVG, `aria-hidden`. Names: check, check_circle, circle, lock, lock_open, play_circle, description, edit_note, photo_camera, chevron_right, arrow_back, arrow_right, logout, download, upload, hourglass, schedule, pause, flag, chat, calendar, menu, school, history_edu, fact_check, trending_up.
 
-**Nav** (`.lmn-nav`) — blue bar, 1040px wrap, min-height 64; brand = inverse sm Wordmark; links 14.5px 500 white-78% 8×14 pill (hover white on 10% white; `aria-current` white on 16% white); "who" = the inverse sm **initials Avatar alone** (no name text — SPEC §15.7 #14; the admin bar carries the same chip); inverse IconButton sign-out. Under 1024px the link row wraps beneath the brand and scrolls sideways (`min-width: 0`). Admin: same bar with an "ADMIN" label (white 55%, 13px uppercase). Unread dot on Messages: 8px jade disc + sr-only text.
+**Nav** (`.lmn-nav`) — blue bar, 1040px wrap, min-height 64; brand = the inverse bar Wordmark (full mark at 640px and up, the RTS monogram below); links 14.5px 500 white-78% 8×14 pill (hover white on 10% white; `aria-current` white on 16% white); "who" = the inverse sm **initials Avatar alone** (no name text — SPEC §15.7 #14; the admin bar carries the same chip); inverse IconButton sign-out. Under 1024px the link row wraps beneath the brand and scrolls sideways (`min-width: 0`). Admin: same bar with an "ADMIN" label (white 55%, 13px uppercase). Unread dot on Messages: 8px jade disc + sr-only text.
 
 **Hero** (`.lmn-hero`) — solid indigo band (M10; the indigo-soft gradient is retired), white text, 40/84 (52/92 ≥ 641px): eyebrow 13px 700 uppercase `.06em` white-55% → h1 clamp(28, 4.4vw, 40) 800 −0.03em → progress line: 8px track white-18% with jade fill + 14px white-75% caption.
 
@@ -157,7 +159,7 @@ Interaction defaults: filled buttons hover `brightness(.96)`; the CTA lifts 2px 
 
 **Toast** — white, radius cards, `--shadow-float`; 32px **jade** disc with a white check; message ink 700; detail stone.
 
-**Footer** (`.lmn-footer`) — linen top border, 26/40 pad, 13.5px stone, two spans space-between ("Lumen · IB Chemistry with Dimitra Anglou" / "Access by invitation").
+**Footer** (`.lmn-footer`) — linen top border, 26/40 pad, 13.5px stone, two spans space-between ("Road to Success · IB Chemistry with Anglou Dimitra" / "Access by invitation").
 
 **BackLink** — blue 700 body-sm with a leading `arrow_back`; replaces the old TopBar so every page has exactly one header (the nav bar).
 
@@ -170,10 +172,10 @@ Interaction defaults: filled buttons hover `brightness(.96)`; the CTA lifts 2px 
 Mobile-first; every student screen is built and checked at 390px before desktop. Desktop variants are responsive layouts of the same routes, not separate pages.
 
 ### `/` — public landing
-Indigo hero band (inverse xl Wordmark + byline, white-85% tagline, white-16% pills "Access by invitation" / "IB Chemistry HL · SL", secondary Button "Student sign in" **with indigo text** (M10, SPEC §15.7 #13 — white pill, indigo label) + white "For parents" link) → "How a week works": four white Cards with blue / graphite / indigo SVG icons → About: xl indigo Avatar, indigo 800 name, cream credentials Card (indigo icons), indigo quote Card → Contact: indigo 800 heading + primary Button → footer with the sm Wordmark. Copy stays truthful: students sign in with a username and password from Dimitra.
+Indigo hero band with the road motif behind it (a dotted white path, the short jade segment already travelled; mockup `.road`) (inverse full Wordmark + byline "by Anglou Dimitra", white-85% tagline, white-16% pills "Access by invitation" / "IB Chemistry HL · SL", secondary Button "Student sign in" **with indigo text** (M10, SPEC §15.7 #13 — white pill, indigo label) + white "For parents" link) → "How a week works": four white Cards with blue / graphite / indigo SVG icons → About: xl indigo Avatar, indigo 800 name, cream credentials Card (indigo icons), indigo quote Card → Contact: indigo 800 heading + primary Button → footer with the brand line ("Road to Success · IB Chemistry with Anglou Dimitra"). Copy stays truthful: students sign in with a username and password from Dimitra.
 
 ### `/login` — Welcome
-24px side padding; centered xl Wordmark (ink + orange dot) + stone tagline; bottom-anchored form (username, password Inputs; lg primary Button "Sign in"; caption "Accounts are created by Dimitra").
+24px side padding; centered full Wordmark capped to fit the 480px column (ink + orange dot) + stone tagline; bottom-anchored form (username, password Inputs; lg primary Button "Sign in"; caption "Accounts are created by Dimitra").
 
 ### `/app` — dashboard (mockup, one responsive layout)
 Hero (eyebrow = course name(s); h1 "Good morning/afternoon/evening, {first name}" by the tutor's clock; jade progress "{c} of {r} modules complete · {pct}%") → NoteCard (−52px seam overlap; hidden when the week has no note) → ModuleCard for the current week (chip "This week" — prefixed by the course when the student has several; meta counts; **orange CTA** "Start module" / "Review module") — or a featured Card with the paused / requested / not-enrolled / nothing-yet copy → clinic strip when `settings.clinic_text` is set → "Your term, week by week" (indigo 19px 800) + "All assignments" link → Rail (current · older released · locked teasers, course name in the sub when multi) → footer. *(Due dates and Overdue badges removed in M10 — SPEC §15.7 #16.)*
@@ -185,7 +187,7 @@ BackLink "Home" → eyebrow "Week N" → h1 indigo 800 → badge row (New this w
 As specified in their M6–M8 entries (below in §8/§9 history and PROJECT_REPORT), with indigo headings, white cards, mint/forest done badges, blue-tint "new" chips, jade progress fills, and primary (blue) buttons — "Ask to join" stays dark (ink), "Book a 1:1 on Google Meet" is primary. `/app/assignments` (M10) lists released-not-yet-submitted rows ("Week N: title" + "Released {day}") with the completed section beside/below — no due dates. `/app/calendar` and `/admin/calendar` use the §5 Calendar recipe.
 
 ### Paused state (Rule 3)
-Cream screen, centered column: md Wordmark → locked LockPanel "Your access is paused". No nav, no content.
+Cream screen, centered column: full Wordmark at 28px → locked LockPanel "Your access is paused". No nav, no content.
 
 ### `/admin/*`
 Same blue nav bar with the ADMIN label, the page links, and the initials chip; content inherits the tokens (indigo headings, white cards, blue primary buttons, forest/mint done badges). Function over beauty (SPEC §12). M10 additions: the students table carries "x of y" caption + a 72px jade ProgressBar per course and stacks the row actions vertically; the progress matrix colours cells (jade submitted with white link text · linen released-pending · stone unreleased), adds row/column totals, and pins its header row and student column sticky inside a `70vh` scroll box; `/admin/calendar` uses the §5 Calendar recipe.
@@ -195,7 +197,7 @@ Same blue nav bar with the ADMIN label, the page links, and the initials chip; c
 ## 7. Implementation notes
 
 - Tokens and every `.lmn-*` class live in `app/globals.css`; components use the vars, never raw hex (the error red is the documented exception).
-- No font files and no icon files ship or are gitignored any more: the type comes from the stylesheet link in `app/layout.tsx`, the icons from `components/lumen/icon.tsx`. `scripts/extract-design-assets.mjs` and `public/fonts/` belong to the superseded direction and are no longer used.
+- No font files and no icon files ship or are gitignored any more: the type comes from the stylesheet link in `app/layout.tsx`, the icons from `components/rts/icon.tsx`. `scripts/extract-design-assets.mjs` and `public/fonts/` belong to the superseded direction and are no longer used.
 - `--radius-pills: 999px` ≈ `rounded-full`.
 - Mockup animation (`.lmn-rise`) is opt-in per element and disabled under `prefers-reduced-motion`.
 
@@ -226,7 +228,7 @@ Same blue nav bar with the ADMIN label, the page links, and the initials chip; c
 | 9 | Submit sheet lacks "mark attempted" | Submission = file OR note OR "attempted" §6 | Add ghost "Just mark as attempted" |
 | 10 | "Message Dimitra" buttons | In-app messaging non-goal §3 | Parked in V1. **Phase 2 (SPEC §15):** a single thread per student ships as `/app/messages` (recipe in §6); the mocked buttons themselves stay unbuilt |
 | 11 | No landing, no paused, no admin mockups | Landing + admin required §7; paused state required §5 Rule 3 | Composed from tokens (§6 above); admin = shadcn |
-| 12 | Wordmark "lumen." + "by Dimitra Anglou" | Name is an open question §14, non-blocking until M5 | Keep working title |
+| 12 | Wordmark "lumen." + "by Dimitra Anglou" | Name is an open question §14, non-blocking until M5 | Superseded: "Road to Success" + "by Anglou Dimitra" (SPEC §15.7 #20/#21/#22) |
 | 13 | Locked teaser labeled "Week 7" only | Rule 1 §5: teasers show **title** + "Unlocks {date}" | SPEC wins: label "Week N — {title}" |
 | 14 | Topic badge "Topic 8 · Acids & bases" on module page | No topic/syllabus field in §6 | Parked (no schema backing) |
 | 15 | Per-material meta: video durations, "18 pages", "8 questions" | §6 materials: only type/title/storage_key/sort_order | Parked; derived counts fine; revisit at M3 (Bunny exposes duration) |

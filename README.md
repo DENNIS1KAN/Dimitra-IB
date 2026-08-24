@@ -1,4 +1,6 @@
-# Lumen (working title)
+# Road to Success
+
+**by Anglou Dimitra** · formerly the working title Lumen; renamed 2026-08-24 (SPEC §15.7 #20).
 
 A private learning platform for one IB tutor. Students get weekly
 pre-recorded modules (videos, slides, exercises); worked solutions unlock
@@ -8,7 +10,8 @@ through one active/paused toggle per student plus per-module release dates.
 - **SPEC.md** — authoritative for scope and behavior (the three gating rules
   in §5 are the entire business logic).
 - **DESIGN.md** — authoritative for visuals (Dimitra's palette, tokens and
-  component recipes; `design/lumen-dashboard-mockup.html` is the reference).
+  component recipes; `design/road-to-success-mockup.html` is the brand
+  reference, `design/lumen-dashboard-mockup.html` the dashboard one).
 - **LAUNCH.md** — what stands between HEAD and real students, split by owner.
 - **CLAUDE.md** — standing working rules for AI-assisted development.
 
@@ -30,7 +33,7 @@ migrates it, and seeds the demo data automatically. No Docker, no `.env`.
 > local `package-lock.json` on first run.
 
 **Sign in:** username + password on `/login`. Every seeded account uses the
-password **`lumen123`**.
+password **`success123`**.
 
 <details>
 <summary><strong>Prefer real Postgres 16 (matches production)?</strong></summary>
@@ -53,10 +56,10 @@ The embedded database is dev-only — production requires `DATABASE_URL`
 
 | Account | Username | Password | State |
 |---|---|---|---|
-| Admin (tutor) | `dimitra` | `lumen123` | full admin panel; one pending join request to approve |
-| Student | `nikos` | `lumen123` | Chemistry HL (active), week 5 submitted; has **asked to join** Chemistry SL |
-| Student | `eleni` | `lumen123` | Chemistry HL **and** SL (two courses); week 5 not submitted yet |
-| Student | `petros` | `lumen123` | **paused** globally → sees the Rule 3 screen |
+| Admin (tutor) | `dimitra` | `success123` | full admin panel; one pending join request to approve |
+| Student | `nikos` | `success123` | Chemistry HL (active), week 5 submitted; has **asked to join** Chemistry SL |
+| Student | `eleni` | `success123` | Chemistry HL **and** SL (two courses); week 5 not submitted yet |
+| Student | `petros` | `success123` | **paused** globally → sees the Rule 3 screen |
 
 A fourth, listed course (Mathematics AA SL 2027, no modules yet) sits in the catalog so "Ask to join" can be tried.
 
