@@ -17,12 +17,15 @@ function pillText(entry: CalendarEntry): string {
 export function CalendarView({
   cal,
   bookingUrl,
+  bookingLabel = "Book a 1:1",
   clinicNote,
   labelCourses,
   moduleHref,
 }: {
   cal: CalendarMonth;
   bookingUrl: string;
+  /** The booking button text; /app/schedule names the Meet (SPEC §15.7 #24). */
+  bookingLabel?: string;
   /** settings.clinic_text, shown once above the month as the optional note. */
   clinicNote: string;
   /** Show the course name on release entries (admin always, students when multi). */
@@ -103,7 +106,7 @@ export function CalendarView({
         <span style={{ flex: 1 }} />
         {bookingUrl && (
           <Button variant="primary" size="sm" href={bookingUrl} external>
-            Book a 1:1
+            {bookingLabel}
           </Button>
         )}
       </div>
