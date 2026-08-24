@@ -81,8 +81,6 @@ export const modules = pgTable(
     title: text("title").notNull(),
     description: text("description"),
     releaseDate: timestamp("release_date", { withTimezone: true }).notNull(),
-    // Soft deadline (SPEC §15.1): shows a due date + overdue badge, never blocks.
-    dueDate: timestamp("due_date", { withTimezone: true }),
   },
   // One module per week per cohort — duplicate week numbers would make the
   // week ordering (and the tutor's mental model) ambiguous.

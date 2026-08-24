@@ -71,11 +71,3 @@ export function solutionsVisible(hasSubmission: boolean): boolean {
 export function isModuleComplete(hasSubmission: boolean): boolean {
   return hasSubmission;
 }
-
-/**
- * Soft deadline (SPEC §15.1): overdue iff a due date exists, has passed, and
- * nothing was submitted. A badge only — submission is never blocked by it.
- */
-export function isOverdue(dueDate: Date | null, hasSubmission: boolean, now: Date): boolean {
-  return dueDate !== null && now.getTime() > dueDate.getTime() && !hasSubmission;
-}

@@ -1,20 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { compareByRecency, pickCurrent } from "./current";
 
-// SPEC §15.7 #9 (owner decision): most recent release wins; ties → nearest
-// due date; still tied → alphabetical course title; same course → higher
-// week number. Never by id.
+// SPEC §15.7 #16 (owner decision, M10): most recent release wins; ties →
+// alphabetical course title; same course → higher week number. Never by id.
 const mod = (
   id: string,
   weekNumber: number,
   release: string,
-  opts: { due?: string | null; course?: string } = {},
+  course = "Chemistry HL 2027",
 ) => ({
   id,
   weekNumber,
   releaseDate: new Date(release),
-  dueDate: opts.due === undefined ? null : opts.due === null ? null : new Date(opts.due),
-  courseTitle: opts.course ?? "Chemistry HL 2027",
+  courseTitle: course,
 });
 
 describe("current-module selection", () => {
@@ -30,37 +28,24 @@ describe("current-module selection", () => {
     expect(pickCurrent([w6, w7preview])?.id).toBe("w6");
   });
 
-  it("two courses releasing the same day: the NEAREST due date wins", () => {
-    const hl = mod("hl", 6, "2026-08-17T09:00Z", { due: "2026-08-30T20:59Z", course: "Chemistry HL 2027" });
-    const sl = mod("sl", 6, "2026-08-17T09:00Z", { due: "2026-08-23T20:59Z", course: "Chemistry SL 2027" });
-    expect(pickCurrent([hl, sl])?.id).toBe("sl");
-    expect(pickCurrent([sl, hl])?.id).toBe("sl");
-  });
-
-  it("a module with a due date beats one without, all else equal", () => {
-    const dated = mod("x", 6, "2026-08-17T09:00Z", { due: "2026-08-23T20:59Z", course: "Physics" });
-    const undated = mod("a", 6, "2026-08-17T09:00Z", { due: null, course: "Chemistry" });
-    expect(pickCurrent([dated, undated])?.id).toBe("x");
-  });
-
-  it("same release and due date: alphabetical course title wins (ids disagree on purpose)", () => {
-    const hl = mod("z", 6, "2026-08-17T09:00Z", { due: "2026-08-23T20:59Z", course: "Chemistry HL 2027" });
-    const sl = mod("a", 6, "2026-08-17T09:00Z", { due: "2026-08-23T20:59Z", course: "Chemistry SL 2027" });
+  it("two courses releasing the same day: alphabetical course title wins (ids disagree on purpose)", () => {
+    const hl = mod("z", 6, "2026-08-17T09:00Z", "Chemistry HL 2027");
+    const sl = mod("a", 6, "2026-08-17T09:00Z", "Chemistry SL 2027");
     expect(pickCurrent([hl, sl])?.id).toBe("z");
     expect(pickCurrent([sl, hl])?.id).toBe("z");
   });
 
-  it("same course, same release and due: higher week number wins", () => {
-    const w6 = mod("b", 6, "2026-08-17T09:00Z", { due: "2026-08-23T20:59Z" });
-    const w7 = mod("a", 7, "2026-08-17T09:00Z", { due: "2026-08-23T20:59Z" });
+  it("same course, same release: higher week number wins", () => {
+    const w6 = mod("b", 6, "2026-08-17T09:00Z");
+    const w7 = mod("a", 7, "2026-08-17T09:00Z");
     expect(pickCurrent([w6, w7])?.id).toBe("a");
     expect(pickCurrent([w7, w6])?.id).toBe("a");
   });
 
   it("orders deterministically regardless of input order", () => {
-    const a = mod("a", 6, "2026-08-17T09:00Z", { due: "2026-08-23T20:59Z", course: "B course" });
-    const b = mod("b", 6, "2026-08-17T09:00Z", { due: "2026-08-23T20:59Z", course: "A course" });
-    const c = mod("c", 5, "2026-08-10T09:00Z", { due: "2026-08-16T20:59Z", course: "A course" });
+    const a = mod("a", 6, "2026-08-17T09:00Z", "B course");
+    const b = mod("b", 6, "2026-08-17T09:00Z", "A course");
+    const c = mod("c", 5, "2026-08-10T09:00Z", "A course");
     expect([a, b, c].sort(compareByRecency).map((m) => m.id)).toEqual(["b", "a", "c"]);
     expect([c, a, b].sort(compareByRecency).map((m) => m.id)).toEqual(["b", "a", "c"]);
   });

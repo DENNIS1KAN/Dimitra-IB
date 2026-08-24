@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   courseAccess,
   isModuleComplete,
-  isOverdue,
   isPaused,
   moduleState,
   solutionsVisible,
@@ -106,29 +105,5 @@ describe("Rule 3 — paused behavior", () => {
 
   it("does not flag an active student", () => {
     expect(isPaused({ active: true })).toBe(false);
-  });
-});
-
-describe("soft deadline — overdue is a badge, never a gate (SPEC §15.1)", () => {
-  const due = new Date("2026-08-20T20:59:00Z");
-
-  it("is overdue after the due date with no submission", () => {
-    expect(isOverdue(due, false, NOW)).toBe(true);
-  });
-
-  it("clears on submit", () => {
-    expect(isOverdue(due, true, NOW)).toBe(false);
-  });
-
-  it("is not overdue before the due date", () => {
-    expect(isOverdue(due, false, new Date("2026-08-19T00:00:00Z"))).toBe(false);
-  });
-
-  it("is not overdue exactly at the due instant", () => {
-    expect(isOverdue(due, false, due)).toBe(false);
-  });
-
-  it("is never overdue without a due date", () => {
-    expect(isOverdue(null, false, NOW)).toBe(false);
   });
 });

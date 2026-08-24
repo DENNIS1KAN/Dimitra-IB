@@ -44,15 +44,15 @@ beforeAll(async () => {
   [chemW5, , chemW7] = await db
     .insert(modules)
     .values([
-      { cohortId: chem.id, weekNumber: 5, title: "W5", releaseDate: new Date(NOW - 14 * DAY), dueDate: new Date(NOW - 8 * DAY) },
-      { cohortId: chem.id, weekNumber: 6, title: "W6", releaseDate: new Date(NOW - 7 * DAY), dueDate: new Date(NOW + 1 * DAY) },
-      { cohortId: chem.id, weekNumber: 7, title: "W7", releaseDate: new Date(NOW + 7 * DAY), dueDate: null },
+      { cohortId: chem.id, weekNumber: 5, title: "W5", releaseDate: new Date(NOW - 14 * DAY) },
+      { cohortId: chem.id, weekNumber: 6, title: "W6", releaseDate: new Date(NOW - 7 * DAY) },
+      { cohortId: chem.id, weekNumber: 7, title: "W7", releaseDate: new Date(NOW + 7 * DAY) },
     ])
     .returning();
   [slW6] = await db
     .insert(modules)
     .values([
-      { cohortId: sl.id, weekNumber: 6, title: "SL W6", releaseDate: new Date(NOW - 7 * DAY), dueDate: new Date(NOW + 2 * DAY) },
+      { cohortId: sl.id, weekNumber: 6, title: "SL W6", releaseDate: new Date(NOW - 7 * DAY) },
     ])
     .returning();
   await db.insert(enrollments).values([
@@ -92,8 +92,9 @@ describe("studentModuleList — Rule 1 over enrollments", () => {
     expect(list.activeCohorts).toHaveLength(2);
   });
 
-  it("hero tie-break: same-day releases → the nearest due date wins (SPEC §15.7 #9)", async () => {
-    // W6 (HL) and SL W6 were released the same instant; W6 is due a day sooner.
+  it("hero tie-break: same-day releases resolve by course title A-Z (SPEC §15.7 #16)", async () => {
+    // W6 (Chemistry HL 2027) and SL W6 (Chemistry SL 2027) were released the
+    // same instant; HL sorts before SL alphabetically.
     const list = await q.studentModuleList(eleni);
     expect(list.current?.module.title).toBe("W6");
     expect(list.olderReleased.map((e) => e.module.title)).toEqual(["SL W6", "W5"]);
@@ -121,14 +122,6 @@ describe("studentModuleList — Rule 1 over enrollments", () => {
     expect(list.releasedCount).toBe(0);
     expect(await q.studentModuleDetail(chemW5.id, petros)).toBeNull();
   });
-
-  it("overdue appears after the due date and clears on submit", async () => {
-    const eleniList = await q.studentModuleList(eleni);
-    expect(eleniList.olderReleased.find((e) => e.module.id === chemW5.id)?.overdue).toBe(true);
-    expect(eleniList.current?.overdue).toBe(false); // W6 is due tomorrow
-    const nikosList = await q.studentModuleList(nikos); // nikos submitted W5
-    expect(nikosList.olderReleased.find((e) => e.module.id === chemW5.id)?.overdue).toBe(false);
-  });
 });
 
 describe("studentModuleDetail — invisible by direct URL", () => {
@@ -141,10 +134,9 @@ describe("studentModuleDetail — invisible by direct URL", () => {
     expect(await q.studentModuleDetail("not-a-uuid", nikos)).toBeNull();
   });
 
-  it("opens an enrolled, released module with its overdue flag", async () => {
+  it("opens an enrolled, released module", async () => {
     const d = await q.studentModuleDetail(chemW5.id, eleni);
     expect(d?.module.id).toBe(chemW5.id);
-    expect(d?.overdue).toBe(true);
     expect(d?.hasSubmission).toBe(false);
   });
 });
@@ -169,10 +161,9 @@ describe("studentCourses", () => {
 });
 
 describe("studentAssignments", () => {
-  it("lists open modules by due date with overdue flags, completed below", async () => {
+  it("lists released-not-submitted modules newest first, completed below", async () => {
     const a = await q.studentAssignments(eleni);
-    expect(a.open.map((x) => x.module.title)).toEqual(["W5", "W6", "SL W6"]);
-    expect(a.open[0].overdue).toBe(true);
+    expect(a.open.map((x) => x.module.title)).toEqual(["W6", "SL W6", "W5"]);
     expect(a.completed).toEqual([]);
     const n = await q.studentAssignments(nikos);
     expect(n.open.map((x) => x.module.title)).toEqual(["W6"]);

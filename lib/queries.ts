@@ -14,7 +14,7 @@ import {
 } from "@/db/schema";
 import { loadStudentAccess, type StudentAccess } from "./access";
 import { compareByRecency, pickCurrent } from "./current";
-import { isModuleComplete, isOverdue, moduleState, type ModuleState } from "./gating";
+import { isModuleComplete, moduleState, type ModuleState } from "./gating";
 import { isUuid } from "./validate";
 
 export type ModuleListEntry = {
@@ -22,7 +22,6 @@ export type ModuleListEntry = {
   cohort: Cohort;
   state: ModuleState;
   complete: boolean;
-  overdue: boolean;
   materialCounts: Record<string, number>;
 };
 
@@ -122,7 +121,6 @@ export async function studentModuleList(student: User): Promise<StudentModuleLis
       cohort: byId.get(module.cohortId)!,
       state: moduleState(module, access, now),
       complete: isModuleComplete(has),
-      overdue: isOverdue(module.dueDate, has, now),
       materialCounts: countsByModule.get(module.id) ?? {},
     };
   });
@@ -132,7 +130,7 @@ export async function studentModuleList(student: User): Promise<StudentModuleLis
     .filter((e) => e.state === "locked-teaser")
     .sort((a, b) => a.module.releaseDate.getTime() - b.module.releaseDate.getTime());
   // Hero = "this week" per the shared lib/current rule (most recent release,
-  // then nearest due date, then course title — SPEC §15.7 #9).
+  // then course title, then week — SPEC §15.7 #16).
   const releasable = (e: ModuleListEntry) => ({ ...e.module, courseTitle: e.cohort.name });
   const currentModule = pickCurrent(released.map(releasable));
   const current = released.find((e) => e.module.id === currentModule?.id) ?? null;
@@ -155,7 +153,6 @@ export type StudentModuleDetail = {
   cohort: Cohort;
   materials: Material[];
   hasSubmission: boolean;
-  overdue: boolean;
   isCurrent: boolean;
 };
 
@@ -201,7 +198,6 @@ export async function studentModuleDetail(
     cohort,
     materials: mats,
     hasSubmission: !!sub,
-    overdue: isOverdue(module.dueDate, !!sub, now),
     isCurrent,
   };
 }
@@ -266,14 +262,14 @@ export async function studentCourses(student: User): Promise<StudentCourses> {
 export type Assignment = {
   module: Module;
   cohort: Cohort;
-  overdue: boolean;
   submittedAt: Date | null;
 };
 export type StudentAssignments = { open: Assignment[]; completed: Assignment[] };
 
 /**
- * Every OPEN module across active enrollments: what the student owes (by due
- * date, overdue first), then what they've done (latest first).
+ * Released modules across active enrollments the student has not submitted
+ * yet (newest release first, the shared lib/current order — SPEC §15.7 #16),
+ * then what they've done (latest submission first).
  */
 export async function studentAssignments(student: User): Promise<StudentAssignments> {
   const list = await studentModuleList(student);
@@ -287,22 +283,15 @@ export async function studentAssignments(student: User): Promise<StudentAssignme
   const all: Assignment[] = released.map((e) => ({
     module: e.module,
     cohort: e.cohort,
-    overdue: e.overdue,
     submittedAt: subs.get(e.module.id)?.createdAt ?? null,
   }));
-  const dueOrder = (a: Assignment, b: Assignment) => {
-    const ad = a.module.dueDate?.getTime() ?? Number.POSITIVE_INFINITY;
-    const bd = b.module.dueDate?.getTime() ?? Number.POSITIVE_INFINITY;
-    return (
-      ad - bd ||
-      compareByRecency(
-        { ...a.module, courseTitle: a.cohort.name },
-        { ...b.module, courseTitle: b.cohort.name },
-      )
+  const recency = (a: Assignment, b: Assignment) =>
+    compareByRecency(
+      { ...a.module, courseTitle: a.cohort.name },
+      { ...b.module, courseTitle: b.cohort.name },
     );
-  };
   return {
-    open: all.filter((a) => !a.submittedAt).sort(dueOrder),
+    open: all.filter((a) => !a.submittedAt).sort(recency),
     completed: all
       .filter((a) => a.submittedAt)
       .sort((a, b) => b.submittedAt!.getTime() - a.submittedAt!.getTime()),

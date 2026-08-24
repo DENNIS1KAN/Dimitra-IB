@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  defaultDueDate,
-  defaultDueLocal,
   mostRecentMondayAt,
   parseLocalInTz,
   toLocalInputValue,
@@ -63,35 +61,5 @@ describe("mostRecentMondayAt", () => {
     expect(
       mostRecentMondayAt("09:00", new Date("2026-10-28T12:00:00Z"), "Europe/Athens").toISOString(),
     ).toBe("2026-10-26T07:00:00.000Z");
-  });
-});
-
-describe("default due date — first Sunday 23:59 strictly after release (SPEC §15.3)", () => {
-  it("Monday release → the coming Sunday", () => {
-    expect(defaultDueLocal("2026-08-24T09:00")).toBe("2026-08-30T23:59");
-  });
-
-  it("Sunday morning release → that same Sunday evening", () => {
-    expect(defaultDueLocal("2026-08-30T10:00")).toBe("2026-08-30T23:59");
-  });
-
-  it("Sunday 23:59 release → the following Sunday (strictly after)", () => {
-    expect(defaultDueLocal("2026-08-30T23:59")).toBe("2026-09-06T23:59");
-  });
-
-  it("rolls over month and year boundaries", () => {
-    expect(defaultDueLocal("2026-12-29T09:00")).toBe("2027-01-03T23:59");
-  });
-
-  it("returns '' for unparseable input", () => {
-    expect(defaultDueLocal("")).toBe("");
-    expect(defaultDueLocal("nonsense")).toBe("");
-  });
-
-  it("instant variant speaks the tutor's timezone (Athens, DST)", () => {
-    // Mon 2026-08-24 09:00 EEST = 06:00Z → Sun 2026-08-30 23:59 EEST = 20:59Z
-    expect(defaultDueDate(new Date("2026-08-24T06:00:00Z"), "Europe/Athens").toISOString()).toBe(
-      "2026-08-30T20:59:00.000Z",
-    );
   });
 });

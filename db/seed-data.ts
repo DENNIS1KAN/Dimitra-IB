@@ -3,11 +3,11 @@
 // materials, 1 pre-seeded submission, and enrollments that let every M6
 // checklist item be walked: nikos = HL active + SL *requested* (a requested
 // course shows no modules); eleni = HL + SL active (a two-course student,
-// overdue on week 5); petros = HL active but globally paused (Rule 3). The
+// week 5 still unsubmitted); petros = HL active but globally paused (Rule 3). The
 // Maths cohort is listed with no modules — something to "Ask to join".
 // Callable from the CLI seed and from the dev-db bootstrap.
 import { hashPassword } from "../lib/password";
-import { defaultDueDate, mostRecentMondayAt } from "../lib/tz";
+import { mostRecentMondayAt } from "../lib/tz";
 import type { Db } from "./index";
 import {
   cohorts,
@@ -155,13 +155,9 @@ export async function runSeed(db: Db) {
       releaseDate: new Date(monday + 14 * DAY),
     },
   ];
-  // Soft due dates: the Sunday 23:59 after each release (SPEC §15.3) — so
-  // week 5 is already overdue for anyone who hasn't submitted it.
   const chemModules = await db
     .insert(modules)
-    .values(
-      weeks.map((w) => ({ ...w, cohortId: chem.id, dueDate: defaultDueDate(w.releaseDate) })),
-    )
+    .values(weeks.map((w) => ({ ...w, cohortId: chem.id })))
     .returning();
   const [otherModule] = await db
     .insert(modules)
@@ -171,7 +167,6 @@ export async function runSeed(db: Db) {
       title: "Acids & bases essentials",
       description: "SL cohort module — only students enrolled in the SL course see it.",
       releaseDate: new Date(monday),
-      dueDate: defaultDueDate(new Date(monday)),
     })
     .returning();
 
@@ -230,6 +225,6 @@ export async function runSeed(db: Db) {
   console.log("[seed] done. Password for every account: lumen123");
   console.log("  admin:   dimitra  (full admin panel; 1 pending join request)");
   console.log("  student: nikos    (Chemistry HL active, week 5 submitted; asked to join SL)");
-  console.log("  student: eleni    (Chemistry HL + SL active — two courses; week 5 overdue)");
+  console.log("  student: eleni    (Chemistry HL + SL active — two courses; week 5 not submitted)");
   console.log("  student: petros   (PAUSED globally — Rule 3 screen)");
 }

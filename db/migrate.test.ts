@@ -26,9 +26,11 @@ const ADMIN = "44444444-4444-4444-8444-444444444444";
 describe("migration 0005 — enrollments backfill", () => {
   it("turns every users.cohort_id into an active enrollment, then drops the column", async () => {
     const pg = new PGlite();
-    const before = files.filter((f) => !f.startsWith("0005"));
     const m0005 = files.find((f) => f.startsWith("0005"));
     expect(m0005).toBeDefined();
+    // Everything strictly before 0005 — later migrations (0006 dropped
+    // due_date again) are covered by the full-chain migrate() in memory-db.
+    const before = files.filter((f) => f < m0005!);
     for (const f of before) for (const s of statements(f)) await pg.exec(s);
 
     await pg.exec(
