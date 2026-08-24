@@ -370,7 +370,7 @@ export async function deleteMaterial(formData: FormData) {
   const [mat] = await db.select().from(materials).where(eq(materials.id, id));
   if (mat) {
     await db.delete(materials).where(eq(materials.id, id));
-    await storage.delete(mat.storageKey);
+    if (mat.storageKey) await storage.delete(mat.storageKey);
     const editor = await weekPath(mat.moduleId);
     revalidatePath(editor);
     redirect(editor);
@@ -384,7 +384,7 @@ export async function removeMaterial(materialId: string): Promise<{ ok: boolean 
   const [mat] = await db.select().from(materials).where(eq(materials.id, materialId));
   if (!mat) return { ok: false };
   await db.delete(materials).where(eq(materials.id, materialId));
-  await storage.delete(mat.storageKey);
+  if (mat.storageKey) await storage.delete(mat.storageKey);
   revalidatePath(await weekPath(mat.moduleId));
   return { ok: true };
 }

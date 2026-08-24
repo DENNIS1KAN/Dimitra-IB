@@ -1,5 +1,7 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   index,
   integer,
   pgEnum,
@@ -87,16 +89,32 @@ export const modules = pgTable(
   (t) => [uniqueIndex("modules_cohort_week_unique").on(t.cohortId, t.weekNumber)],
 );
 
-export const materials = pgTable("materials", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  moduleId: uuid("module_id")
-    .notNull()
-    .references(() => modules.id, { onDelete: "cascade" }),
-  type: materialTypeEnum("type").notNull(),
-  title: text("title").notNull(),
-  storageKey: text("storage_key").notNull(),
-  sortOrder: integer("sort_order").notNull().default(0),
-});
+// A material is EITHER a file this server stores (storage_key, served by
+// /api/materials behind the login) OR, for videos only, a link the tutor
+// pasted to a video she hosts elsewhere (external_url). Exactly one of the two
+// is set; SPEC §15.7 #25 records why links are allowed and what they cost.
+export const materials = pgTable(
+  "materials",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    moduleId: uuid("module_id")
+      .notNull()
+      .references(() => modules.id, { onDelete: "cascade" }),
+    type: materialTypeEnum("type").notNull(),
+    title: text("title").notNull(),
+    storageKey: text("storage_key"),
+    externalUrl: text("external_url"),
+    sortOrder: integer("sort_order").notNull().default(0),
+  },
+  // A row with neither is a step that shows a student nothing; a row with both
+  // is two answers to "where does this play". The database refuses both.
+  (t) => [
+    check(
+      "materials_file_or_link",
+      sql`(${t.storageKey} is not null) <> (${t.externalUrl} is not null)`,
+    ),
+  ],
+);
 
 export const submissions = pgTable(
   "submissions",

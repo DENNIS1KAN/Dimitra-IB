@@ -106,7 +106,12 @@ export default async function WeekEditor({
       <div className="rts-cols">
         <WeekSlots
           moduleId={module.id}
-          materials={mats.map((m) => ({ id: m.id, type: m.type, title: m.title }))}
+          materials={mats.map((m) => ({
+            id: m.id,
+            type: m.type,
+            title: m.title,
+            externalUrl: m.externalUrl,
+          }))}
         />
 
         <div>

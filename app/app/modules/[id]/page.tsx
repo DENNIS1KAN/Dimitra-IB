@@ -6,6 +6,7 @@ import { BackLink, LessonRow, LockPanel } from "@/components/rts/learning";
 import { getSessionUser } from "@/lib/auth";
 import { isNewRelease } from "@/lib/format";
 import { studentModuleDetail } from "@/lib/queries";
+import { videoEmbed } from "@/lib/video";
 
 // /app/modules/[id]: module detail (DESIGN.md §6). Rule 1 makes foreign or
 // unreleased modules 404 even by direct URL; Rule 2 gates the solutions.
@@ -23,16 +24,21 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
 
   const rowFor = (m: (typeof materials)[number]) => {
     switch (m.type) {
-      case "video":
+      case "video": {
+        // Uploaded or pasted, a video is one Watch step (per-lesson done
+        // states stay parked, DESIGN.md §9 #8). A link we cannot embed says
+        // so, so the tab that opens is not a surprise (SPEC §15.7 #25).
+        const link = m.externalUrl ? videoEmbed(m.externalUrl) : null;
         return (
           <LessonRow
             key={m.id}
             kind="video"
             title={m.title}
-            meta="Watch"
+            meta={link && !link.embedUrl ? `Open video on ${link.provider}` : "Watch"}
             href={`/app/modules/${module.id}/watch/${m.id}`}
           />
         );
+      }
       case "slides":
         return withDownload(
           m.id,

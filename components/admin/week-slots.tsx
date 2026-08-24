@@ -4,13 +4,21 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { removeMaterial, reorderMaterials } from "@/app/admin/actions";
 import { Icon } from "@/components/rts/core";
+import { videoEmbed } from "@/lib/video";
 
 // The week editor's four labeled slots (SPEC §15.7 #23, per
 // design/admin-blend-final.html): Videos multi-file with drag to reorder,
 // Slides / Exercises / Solutions single-file with Replace. Uploads go through
-// the existing /api/admin/materials path (local FileStorage in dev).
+// the existing /api/admin/materials path, which writes to this server's own
+// storage. The Videos slot also takes a pasted link (SPEC §15.7 #25) for a
+// video the tutor already hosts elsewhere.
 
-export type SlotMaterial = { id: string; type: string; title: string };
+export type SlotMaterial = {
+  id: string;
+  type: string;
+  title: string;
+  externalUrl: string | null;
+};
 
 const ACCEPT: Record<string, string> = {
   video: ".mp4,.webm,.mov",
@@ -150,8 +158,122 @@ function useUploader(moduleId: string) {
     }
   }
 
-  return { upload, pending, error, router };
+  async function addLink(url: string, title: string): Promise<string | null> {
+    setError(null);
+    const form = new FormData();
+    form.set("moduleId", moduleId);
+    form.set("type", "video");
+    form.set("url", url);
+    if (title) form.set("title", title);
+    const res = await fetch("/api/admin/materials", { method: "POST", body: form });
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as { error?: string } | null;
+      return body?.error ?? `Could not add that link (${res.status})`;
+    }
+    router.refresh();
+    return null;
+  }
+
+  return { upload, addLink, pending, error, router };
 }
+
+// The paste alternative to an upload. The limits under it are the honest ones
+// (SPEC §15.7 #25): the tutor is choosing convenience over the login wall, and
+// she should be able to read what that costs before she chooses it.
+function LinkVideo({ onAdd }: { onAdd: (url: string, title: string) => Promise<string | null> }) {
+  const [url, setUrl] = useState("");
+  const [title, setTitle] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+
+  return (
+    <div style={{ marginTop: 12, borderTop: "1px dashed var(--border-divider)", paddingTop: 12 }}>
+      <p style={{ margin: "0 0 8px", fontSize: 13, fontWeight: 700, color: "var(--text-strong)" }}>
+        Or paste a video link
+      </p>
+      <form
+        noValidate
+        onSubmit={async (e) => {
+          e.preventDefault();
+          if (!url.trim() || busy) return;
+          setBusy(true);
+          setProblem(null);
+          const failed = await onAdd(url.trim(), title.trim());
+          setBusy(false);
+          setProblem(failed);
+          if (!failed) {
+            setUrl("");
+            setTitle("");
+          }
+        }}
+        style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}
+      >
+        <label style={{ flex: "2 1 220px", minWidth: 0 }}>
+          <span style={fieldLabel}>Link (Loom, Google Drive, unlisted YouTube)</span>
+          <input
+            type="text"
+            inputMode="url"
+            placeholder="https://www.loom.com/share/..."
+            value={url}
+            onChange={(e) => {
+              setUrl(e.target.value);
+              setProblem(null);
+            }}
+            style={fieldInput}
+          />
+        </label>
+        <label style={{ flex: "1 1 130px", minWidth: 0 }}>
+          <span style={fieldLabel}>Title (optional)</span>
+          <input
+            placeholder="Worked examples"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            style={fieldInput}
+          />
+        </label>
+        <button
+          type="submit"
+          disabled={busy || !url.trim()}
+          className="lmn-btn lmn-btn-secondary"
+          style={{ fontSize: 13, padding: "9px 16px", opacity: busy || !url.trim() ? 0.5 : 1 }}
+        >
+          {busy ? "Adding" : "Add link"}
+        </button>
+      </form>
+      {problem && (
+        <p role="alert" style={{ margin: "8px 0 0", fontSize: 13, color: "var(--state-alert)" }}>
+          {problem}
+        </p>
+      )}
+      <p style={{ margin: "9px 0 0", fontSize: 12, lineHeight: 1.5, color: "var(--text-tertiary)" }}>
+        A pasted link plays on that service, outside this login, so anyone who
+        has the link can open it. You cannot pause it with a student, and
+        nothing reports back how far they watched. It shows as a single Watch
+        step, logged the moment they open it.
+      </p>
+    </div>
+  );
+}
+
+const fieldLabel: React.CSSProperties = {
+  display: "block",
+  fontSize: 12,
+  fontWeight: 700,
+  color: "var(--text-tertiary)",
+  marginBottom: 4,
+};
+
+const fieldInput: React.CSSProperties = {
+  width: "100%",
+  boxSizing: "border-box",
+  border: "1px solid var(--border-input)",
+  borderRadius: "var(--radius-inputs)",
+  padding: "9px 11px",
+  fontFamily: "inherit",
+  fontSize: 13.5,
+  color: "var(--text-primary)",
+  background: "var(--surface-card)",
+};
 
 function Drop({
   label,
@@ -218,7 +340,7 @@ export function WeekSlots({
   moduleId: string;
   materials: SlotMaterial[];
 }) {
-  const { upload, pending, error, router } = useUploader(moduleId);
+  const { upload, addLink, pending, error, router } = useUploader(moduleId);
 
   // Videos take a local order override so a drag lands instantly; the
   // override is keyed to the server order it rearranged, so any refresh
@@ -235,7 +357,10 @@ export function WeekSlots({
   const dragFrom = useRef<number | null>(null);
 
   async function remove(m: SlotMaterial) {
-    if (!confirm(`Remove "${m.title}"? The uploaded file goes with it. There is no undo.`)) return;
+    const consequence = m.externalUrl
+      ? "The link stops showing here. The video itself stays where you host it."
+      : "The uploaded file goes with it.";
+    if (!confirm(`Remove "${m.title}"? ${consequence} There is no undo.`)) return;
     await removeMaterial(m.id);
     router.refresh();
   }
@@ -344,7 +469,18 @@ export function WeekSlots({
               <span style={{ display: "block", fontSize: 13.5, fontWeight: 700, color: "var(--text-strong)" }}>
                 {i + 1} · {m.title}
               </span>
-              <span style={{ display: "block", fontSize: 12, color: "var(--text-tertiary)" }}>ready</span>
+              <span
+                style={{
+                  display: "block",
+                  fontSize: 12,
+                  color: "var(--text-tertiary)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {m.externalUrl ? `Link · ${videoEmbed(m.externalUrl).provider}` : "Uploaded, ready"}
+              </span>
             </span>
             <button type="button" style={softLink} onClick={() => void remove(m)}>
               Remove
@@ -370,6 +506,7 @@ export function WeekSlots({
           multiple
           onFiles={(f) => void upload("video", f)}
         />
+        <LinkVideo onAdd={addLink} />
       </section>
 
       <section style={slotStyle} aria-label="Slides">

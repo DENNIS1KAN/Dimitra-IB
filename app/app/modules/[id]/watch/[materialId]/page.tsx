@@ -4,9 +4,12 @@ import { BackLink } from "@/components/rts/learning";
 import { getSessionUser } from "@/lib/auth";
 import { logMaterialEvent } from "@/lib/material-access";
 import { studentModuleDetail } from "@/lib/queries";
+import { videoEmbed } from "@/lib/video";
 
-// Embedded player (SPEC §7). Dev mode streams from ./storage; with Bunny
-// Stream configured (M3), this renders the tokenized Bunny embed instead.
+// Embedded player (SPEC §7). Uploaded videos stream from this server's own
+// storage through /api/materials, behind the login. A pasted link (SPEC §15.7
+// #25) plays on its own service instead: as an in-page embed where the
+// provider supports one, otherwise as an "Open video" step.
 export default async function WatchPage({
   params,
 }: {
@@ -22,16 +25,14 @@ export default async function WatchPage({
   if (!material) notFound();
 
   // One 'view' per page visit; the bytes route deliberately skips video
-  // views so range/preload requests don't inflate the events table.
+  // views so range/preload requests don't inflate the events table. A link
+  // video reports nothing back, so this visit is the whole of what we know
+  // about it: the single Watch step, logged the moment it is opened.
   await logMaterialEvent(user.id, material.id, "view");
 
-  const { bunnyConfigured, signedEmbedUrl } = await import("@/lib/video");
-  const { isUuid } = await import("@/lib/validate");
-  // Bunny Stream videos are stored by GUID; dropzone uploads land in file
-  // storage under path-shaped keys (modules/…). Signing a path into the
-  // embed would 404 inside the player, so those fall back to the local
-  // player until they're migrated to Bunny Stream (M3 finishing step).
-  const bunny = bunnyConfigured() && isUuid(material.storageKey);
+  // A stored video has no externalUrl; narrowing here keeps both branches honest.
+  const externalUrl = material.externalUrl;
+  const link = externalUrl ? videoEmbed(externalUrl) : null;
 
   return (
     <main style={{ maxWidth: 720, margin: "0 auto" }}>
@@ -47,40 +48,93 @@ export default async function WatchPage({
         >
           {material.title}
         </h1>
-        <div
-          style={{
-            background: "var(--color-charcoal-ink)",
-            borderRadius: "var(--radius-cards)",
-            overflow: "hidden",
-            aspectRatio: "16 / 9",
-          }}
-        >
-          {bunny ? (
-            // Bunny embed with a signed short-TTL token (M3), built
-            // server-side. Bunny tokens can't be session-bound, so the short
-            // expiry is what makes a copied URL die quickly elsewhere.
-            <iframe
-              src={signedEmbedUrl(material.storageKey)}
-              style={{ width: "100%", height: "100%", border: 0 }}
-              allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
-              allowFullScreen
-            />
-          ) : (
-            <VideoPlayer src={`/api/materials/${material.id}`} materialId={material.id} />
-          )}
-        </div>
-        <p
-          style={{
-            margin: 0,
-            fontSize: "var(--text-caption)",
-            letterSpacing: "var(--tracking-caption)",
-            color: "var(--text-tertiary)",
-          }}
-        >
-          If the video doesn&rsquo;t play yet, it may still be processing. Check
-          back in a few minutes.
-        </p>
+        {externalUrl && link && !link.embedUrl ? (
+          <OpenVideo url={externalUrl} provider={link.provider} />
+        ) : (
+          <div
+            style={{
+              background: "var(--surface-ink)",
+              borderRadius: "var(--radius-cards)",
+              overflow: "hidden",
+              aspectRatio: "16 / 9",
+            }}
+          >
+            {link?.embedUrl ? (
+              <iframe
+                src={link.embedUrl}
+                title={material.title}
+                style={{ width: "100%", height: "100%", border: 0 }}
+                allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
+                allowFullScreen
+              />
+            ) : (
+              <VideoPlayer src={`/api/materials/${material.id}`} materialId={material.id} />
+            )}
+          </div>
+        )}
+        {externalUrl && link?.embedUrl ? (
+          // Only the embed needs an escape hatch: the Open video panel is
+          // already nothing but the link.
+          <p
+            style={{
+              margin: 0,
+              fontSize: "var(--text-caption)",
+              letterSpacing: "var(--tracking-caption)",
+              color: "var(--text-tertiary)",
+            }}
+          >
+            This one is hosted on {link.provider}.{" "}
+            <a href={externalUrl} target="_blank" rel="noopener noreferrer">
+              Open it in a new tab
+            </a>{" "}
+            if it does not play here.
+          </p>
+        ) : externalUrl ? null : (
+          <p
+            style={{
+              margin: 0,
+              fontSize: "var(--text-caption)",
+              letterSpacing: "var(--tracking-caption)",
+              color: "var(--text-tertiary)",
+            }}
+          >
+            If the video doesn&rsquo;t play yet, it may still be processing. Check
+            back in a few minutes.
+          </p>
+        )}
       </div>
     </main>
+  );
+}
+
+/** A host we cannot frame: offer the honest thing, a button to the video. */
+function OpenVideo({ url, provider }: { url: string; provider: string }) {
+  return (
+    <div
+      style={{
+        background: "var(--surface-card)",
+        border: "1px solid var(--border-card)",
+        borderRadius: "var(--radius-cards)",
+        padding: "28px 20px",
+        textAlign: "center",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 12,
+      }}
+    >
+      <p style={{ margin: 0, fontSize: "var(--text-body-sm)", color: "var(--text-secondary)" }}>
+        This video is hosted on {provider} and opens in a new tab.
+      </p>
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="lmn-btn lmn-btn-primary"
+        style={{ fontSize: 15, padding: "11px 22px" }}
+      >
+        Open video
+      </a>
+    </div>
   );
 }
