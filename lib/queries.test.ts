@@ -45,7 +45,7 @@ beforeAll(async () => {
     .insert(modules)
     .values([
       { cohortId: chem.id, weekNumber: 5, title: "W5", releaseDate: new Date(NOW - 14 * DAY) },
-      { cohortId: chem.id, weekNumber: 6, title: "W6", releaseDate: new Date(NOW - 7 * DAY) },
+      { cohortId: chem.id, weekNumber: 6, title: "W6", description: "Buffers note", releaseDate: new Date(NOW - 7 * DAY) },
       { cohortId: chem.id, weekNumber: 7, title: "W7", releaseDate: new Date(NOW + 7 * DAY) },
     ])
     .returning();
@@ -160,14 +160,43 @@ describe("studentCourses", () => {
   });
 });
 
-describe("studentAssignments", () => {
-  it("lists released-not-submitted modules newest first, completed below", async () => {
-    const a = await q.studentAssignments(eleni);
-    expect(a.open.map((x) => x.module.title)).toEqual(["W6", "SL W6", "W5"]);
-    expect(a.completed).toEqual([]);
-    const n = await q.studentAssignments(nikos);
-    expect(n.open.map((x) => x.module.title)).toEqual(["W6"]);
-    expect(n.completed.map((x) => x.module.title)).toEqual(["W5"]);
-    expect(n.completed[0].submittedAt).toBeInstanceOf(Date);
+describe("studentHome — one card per course (SPEC §15.7 #24)", () => {
+  it("each card's Continue deep-links into ITS course's current module", async () => {
+    const h = await q.studentHome(eleni);
+    expect(h.courses.map((c) => c.cohort.id)).toEqual([chem.id, sl.id]);
+    const [chemCard, slCard] = h.courses;
+    expect(chemCard).toMatchObject({ hero: true, totalModules: 3, lastWeekNumber: 7, currentWeekNumber: 6 });
+    expect(slCard.hero).toBe(false);
+    expect(slCard.continueModuleId).toBe(slW6.id);
+    expect(chemCard.continueModuleId).not.toBe(slCard.continueModuleId);
+  });
+
+  it("a single-course student gets one card with the hero Continue", async () => {
+    const h = await q.studentHome(nikos);
+    expect(h.courses).toHaveLength(1);
+    expect(h.courses[0].hero).toBe(true);
+    expect(h.courses[0].continueModuleId).not.toBeNull();
+  });
+});
+
+describe("studentCourseDetail — Rule 1 by direct URL", () => {
+  it("404s a requested, foreign, or malformed course", async () => {
+    expect(await q.studentCourseDetail(sl.id, nikos)).toBeNull();
+    expect(await q.studentCourseDetail(maths.id, nikos)).toBeNull();
+    expect(await q.studentCourseDetail("not-a-uuid", nikos)).toBeNull();
+  });
+
+  it("404s for a globally paused student (Rule 3)", async () => {
+    expect(await q.studentCourseDetail(chem.id, petros)).toBeNull();
+  });
+
+  it("opens an active course: ascending rail, current flagged, note from the latest released week", async () => {
+    const d = await q.studentCourseDetail(chem.id, nikos);
+    expect(d?.rows.map((r) => r.module.weekNumber)).toEqual([5, 6, 7]);
+    expect(d?.rows.map((r) => r.released)).toEqual([true, true, false]);
+    expect(d?.rows.map((r) => r.isCurrent)).toEqual([false, true, false]);
+    expect(d?.rows[0].hasSubmission).toBe(true);
+    expect(d?.note).toMatchObject({ text: "Buffers note" });
+    expect([d?.completedCount, d?.releasedCount]).toEqual([1, 2]);
   });
 });

@@ -14,6 +14,7 @@ import {
 } from "@/db/schema";
 import { loadStudentAccess, type StudentAccess } from "./access";
 import { compareByRecency, pickCurrent } from "./current";
+import { isNewRelease } from "./format";
 import { isModuleComplete, moduleState, type ModuleState } from "./gating";
 import { isUuid } from "./validate";
 
@@ -257,44 +258,146 @@ export async function studentCourses(student: User): Promise<StudentCourses> {
   return { mine, catalog };
 }
 
-// --- /app/assignments -------------------------------------------------------
+// --- /app home: My courses (SPEC §15.7 #24) ---------------------------------
 
-export type Assignment = {
-  module: Module;
+export type HomeCourse = {
   cohort: Cohort;
-  submittedAt: Date | null;
+  paused: boolean;
+  totalModules: number;
+  /** The highest planned week: the M in "Week N of M". */
+  lastWeekNumber: number;
+  releasedCount: number;
+  completedCount: number;
+  currentWeekNumber: number | null;
+  /** The Continue deep link: this course's current module. */
+  continueModuleId: string | null;
+  /** The current module's title when it released within the last 7 days. */
+  newThisWeek: string | null;
+  /** The overall current course (the one orange CTA on the home). */
+  hero: boolean;
 };
-export type StudentAssignments = { open: Assignment[]; completed: Assignment[] };
+export type StudentHome = { courses: HomeCourse[]; catalog: CatalogCourse[]; access: StudentAccess };
 
 /**
- * Released modules across active enrollments the student has not submitted
- * yet (newest release first, the shared lib/current order — SPEC §15.7 #16),
- * then what they've done (latest submission first).
+ * One card per enrollment (active and paused), each Continue deep-linking
+ * into that course's OWN current module (per-course pickCurrent); the
+ * overall hero course carries the single orange CTA.
  */
-export async function studentAssignments(student: User): Promise<StudentAssignments> {
-  const list = await studentModuleList(student);
-  const released = [list.current, ...list.olderReleased].filter(
-    (e): e is ModuleListEntry => !!e,
-  );
+export async function studentHome(student: User): Promise<StudentHome> {
+  const [list, { mine, catalog }] = await Promise.all([
+    studentModuleList(student),
+    studentCourses(student),
+  ]);
+  const entriesByCohort = new Map<string, ModuleListEntry[]>();
+  for (const e of [list.current, ...list.olderReleased, ...list.future]) {
+    if (!e) continue;
+    entriesByCohort.set(e.cohort.id, [...(entriesByCohort.get(e.cohort.id) ?? []), e]);
+  }
+  const heroCohortId = list.current?.cohort.id ?? null;
+  const courses: HomeCourse[] = mine.map(({ cohort, enrollment, releasedCount, completedCount }) => {
+    const entries = entriesByCohort.get(cohort.id) ?? [];
+    const releasedHere = entries
+      .filter((e) => e.state === "open")
+      .map((e) => ({ ...e.module, courseTitle: cohort.name }));
+    const cur = pickCurrent(releasedHere);
+    return {
+      cohort,
+      paused: enrollment.status === "paused",
+      totalModules: entries.length,
+      lastWeekNumber: entries.reduce((max, e) => Math.max(max, e.module.weekNumber), 0),
+      releasedCount,
+      completedCount,
+      currentWeekNumber: cur?.weekNumber ?? null,
+      continueModuleId: cur?.id ?? null,
+      newThisWeek: cur && isNewRelease(cur.releaseDate) ? cur.title : null,
+      hero: cohort.id === heroCohortId,
+    };
+  });
+  return { courses, catalog, access: list.access };
+}
+
+// --- /app/courses/[id]: inside one course (SPEC §15.7 #24) -------------------
+
+export type CourseWeekRow = {
+  module: Module;
+  released: boolean;
+  hasSubmission: boolean;
+  /** This course's current week: the row with the single orange Continue. */
+  isCurrent: boolean;
+  materialCounts: Record<string, number>;
+};
+export type StudentCourseDetail = {
+  cohort: Cohort;
+  /** Ascending week order: the course-shaped rail. */
+  rows: CourseWeekRow[];
+  /** The weekly note of the latest released week, for the top card. */
+  note: { text: string; date: Date } | null;
+  completedCount: number;
+  releasedCount: number;
+};
+
+/**
+ * The course page. Null whenever the course must not exist for this student
+ * (Rule 1: no ACTIVE enrollment — requested, paused, ended, or foreign —
+ * and Rule 3: globally paused), so the page 404s even by direct URL.
+ */
+export async function studentCourseDetail(
+  cohortId: string,
+  student: User,
+): Promise<StudentCourseDetail | null> {
+  if (!isUuid(cohortId)) return null;
+  const now = new Date();
+  const access = await loadStudentAccess(student);
+  if (!access.active) return null;
+  if (!access.enrollments.some((e) => e.cohortId === cohortId && e.status === "active")) {
+    return null;
+  }
+  const [cohort] = await db.select().from(cohorts).where(eq(cohorts.id, cohortId));
+  if (!cohort) return null;
+
+  const mods = await db
+    .select()
+    .from(modules)
+    .where(eq(modules.cohortId, cohortId))
+    .orderBy(asc(modules.weekNumber));
   const subs = await submissionMap(
     student.id,
-    released.map((e) => e.module.id),
+    mods.map((m) => m.id),
   );
-  const all: Assignment[] = released.map((e) => ({
-    module: e.module,
-    cohort: e.cohort,
-    submittedAt: subs.get(e.module.id)?.createdAt ?? null,
+  const mats = mods.length
+    ? await db
+        .select({ moduleId: materials.moduleId, type: materials.type })
+        .from(materials)
+        .where(
+          inArray(
+            materials.moduleId,
+            mods.map((m) => m.id),
+          ),
+        )
+    : [];
+  const countsByModule = new Map<string, Record<string, number>>();
+  for (const m of mats) {
+    const c = countsByModule.get(m.moduleId) ?? {};
+    c[m.type] = (c[m.type] ?? 0) + 1;
+    countsByModule.set(m.moduleId, c);
+  }
+
+  const released = mods.filter((m) => m.releaseDate.getTime() <= now.getTime());
+  const cur = pickCurrent(released.map((m) => ({ ...m, courseTitle: cohort.name })));
+  const rows: CourseWeekRow[] = mods.map((module) => ({
+    module,
+    released: module.releaseDate.getTime() <= now.getTime(),
+    hasSubmission: subs.has(module.id),
+    isCurrent: module.id === (cur?.id ?? null),
+    materialCounts: countsByModule.get(module.id) ?? {},
   }));
-  const recency = (a: Assignment, b: Assignment) =>
-    compareByRecency(
-      { ...a.module, courseTitle: a.cohort.name },
-      { ...b.module, courseTitle: b.cohort.name },
-    );
+
   return {
-    open: all.filter((a) => !a.submittedAt).sort(recency),
-    completed: all
-      .filter((a) => a.submittedAt)
-      .sort((a, b) => b.submittedAt!.getTime() - a.submittedAt!.getTime()),
+    cohort,
+    rows,
+    note: cur?.description ? { text: cur.description, date: cur.releaseDate } : null,
+    completedCount: released.filter((m) => subs.has(m.id)).length,
+    releasedCount: released.length,
   };
 }
 
