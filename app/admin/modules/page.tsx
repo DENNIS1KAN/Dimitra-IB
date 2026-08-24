@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { cohorts, modules } from "@/db/schema";
 import { Badge, Button, Card } from "@/components/lumen/core";
 import { Input, TextArea } from "@/components/lumen/forms";
+import { ReleaseDateField } from "@/components/admin/release-date-field";
 import { requireAdmin } from "@/lib/admin";
 import { formatDay } from "@/lib/format";
 import { createModule } from "../actions";
@@ -19,7 +20,7 @@ export default async function AdminModules({
     weekNumber?: string;
     title?: string;
     description?: string;
-    releaseDate?: string;
+    releaseDay?: string;
   }>;
 }) {
   await requireAdmin();
@@ -48,7 +49,7 @@ export default async function AdminModules({
           <p style={{ margin: 0, fontSize: "var(--text-body-sm)", color: "#c4320a" }}>
             {error === "week-taken"
               ? "That cohort already has a module for that week number."
-              : "Module needs a cohort, week number, title, and release date."}
+              : "Module needs a cohort, week number, title, and a release day (dd/mm/yyyy)."}
           </p>
         </Card>
       )}
@@ -127,14 +128,7 @@ export default async function AdminModules({
             defaultValue={carried.weekNumber ?? ""}
             style={{ width: 140 }}
           />
-          <Input
-            label="Release date & time"
-            name="releaseDate"
-            type="datetime-local"
-            required
-            defaultValue={carried.releaseDate ?? ""}
-            style={{ maxWidth: 240 }}
-          />
+          <ReleaseDateField initial={carried.releaseDay ?? ""} />
           <Input
             label="Title"
             name="title"

@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   mostRecentMondayAt,
+  parseDdMmYyyy,
   parseLocalInTz,
+  releaseInstantFromDayText,
+  toDayText,
   toLocalInputValue,
 } from "./tz";
 
@@ -61,5 +64,37 @@ describe("mostRecentMondayAt", () => {
     expect(
       mostRecentMondayAt("09:00", new Date("2026-10-28T12:00:00Z"), "Europe/Athens").toISOString(),
     ).toBe("2026-10-26T07:00:00.000Z");
+  });
+});
+
+describe("release day entry, dd/mm/yyyy at 09:00 Athens (SPEC §15.7 #15)", () => {
+  it("parses a valid day", () => {
+    expect(parseDdMmYyyy("07/09/2026")).toBe("2026-09-07");
+  });
+
+  it("trims whitespace", () => {
+    expect(parseDdMmYyyy(" 07/09/2026 ")).toBe("2026-09-07");
+  });
+
+  it("rejects malformed and impossible entries", () => {
+    for (const bad of ["", "7/9/2026", "2026-09-07", "31/02/2026", "00/10/2026", "12/13/2026", "07/09/26"]) {
+      expect(parseDdMmYyyy(bad)).toBeNull();
+    }
+  });
+
+  it("summer release lands at 06:00 UTC (Athens is UTC+3)", () => {
+    expect(releaseInstantFromDayText("24/08/2026").toISOString()).toBe("2026-08-24T06:00:00.000Z");
+  });
+
+  it("winter release lands at 07:00 UTC (Athens is UTC+2)", () => {
+    expect(releaseInstantFromDayText("18/01/2027").toISOString()).toBe("2027-01-18T07:00:00.000Z");
+  });
+
+  it("invalid text yields an invalid Date", () => {
+    expect(Number.isNaN(releaseInstantFromDayText("31/02/2026").getTime())).toBe(true);
+  });
+
+  it("round-trips an instant back to dd/mm/yyyy in Athens", () => {
+    expect(toDayText(new Date("2026-08-23T22:30:00Z"))).toBe("24/08/2026");
   });
 });

@@ -11,7 +11,7 @@ import { storage } from "@/lib/storage";
 import { isUniqueViolation } from "@/lib/db-errors";
 import { postTutorReply } from "@/lib/messages";
 import { updateSettings } from "@/lib/settings";
-import { parseLocalInTz } from "@/lib/tz";
+import { releaseInstantFromDayText } from "@/lib/tz";
 import { isUuid } from "@/lib/validate";
 import type { ComposerState } from "@/components/messages/composer";
 import type { SettingsFormState } from "@/components/admin/settings-form";
@@ -192,8 +192,9 @@ export async function createModule(formData: FormData) {
   const weekNumber = Number(formData.get("weekNumber") ?? 0);
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim() || null;
-  // datetime-local means the TUTOR's wall clock, not the server's (UTC).
-  const releaseDate = parseLocalInTz(String(formData.get("releaseDate") ?? ""));
+  // dd/mm/yyyy on the TUTOR's calendar; the time is always 09:00 Athens
+  // (SPEC §15.7 #15). Invalid text parses to a NaN Date and is rejected.
+  const releaseDate = releaseInstantFromDayText(String(formData.get("releaseDay") ?? ""));
   if (!cohortId || !title || !weekNumber || Number.isNaN(releaseDate.getTime())) {
     redirect("/admin/modules?error=module");
   }
@@ -213,7 +214,7 @@ export async function createModule(formData: FormData) {
         weekNumber: String(weekNumber),
         title,
         description: (description ?? "").slice(0, 1500),
-        releaseDate: String(formData.get("releaseDate") ?? ""),
+        releaseDay: String(formData.get("releaseDay") ?? ""),
       });
       redirect(`/admin/modules?${carry.toString()}`);
     }
@@ -229,7 +230,7 @@ export async function updateModule(formData: FormData) {
   const weekNumber = Number(formData.get("weekNumber") ?? 0);
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim() || null;
-  const releaseDate = parseLocalInTz(String(formData.get("releaseDate") ?? ""));
+  const releaseDate = releaseInstantFromDayText(String(formData.get("releaseDay") ?? ""));
   if (!id || !title || !weekNumber || Number.isNaN(releaseDate.getTime())) {
     redirect(`/admin/modules/${id}?error=save`);
   }
@@ -245,7 +246,7 @@ export async function updateModule(formData: FormData) {
         weekNumber: String(weekNumber),
         title,
         description: (description ?? "").slice(0, 1500),
-        releaseDate: String(formData.get("releaseDate") ?? ""),
+        releaseDay: String(formData.get("releaseDay") ?? ""),
       });
       redirect(`/admin/modules/${id}?${carry.toString()}`);
     }

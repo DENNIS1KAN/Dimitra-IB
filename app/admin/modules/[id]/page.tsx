@@ -5,9 +5,10 @@ import { cohorts, materials, modules } from "@/db/schema";
 import { Badge, Button, Card, Icon } from "@/components/lumen/core";
 import { Input, TextArea } from "@/components/lumen/forms";
 import { ConfirmSubmit } from "@/components/admin/confirm-submit";
+import { ReleaseDateField } from "@/components/admin/release-date-field";
 import { UploadDropzone } from "@/components/admin/upload-dropzone";
 import { requireAdmin } from "@/lib/admin";
-import { toLocalInputValue } from "@/lib/tz";
+import { toDayText } from "@/lib/tz";
 import { isUuid } from "@/lib/validate";
 import { deleteMaterial, moveMaterial, renameMaterial, updateModule } from "../../actions";
 
@@ -32,7 +33,7 @@ export default async function AdminModuleEdit({
     weekNumber?: string;
     title?: string;
     description?: string;
-    releaseDate?: string;
+    releaseDay?: string;
   }>;
 }) {
   await requireAdmin();
@@ -49,8 +50,9 @@ export default async function AdminModuleEdit({
     .where(eq(materials.moduleId, id))
     .orderBy(asc(materials.sortOrder), asc(materials.id));
 
-  // datetime-local shows the TUTOR's wall clock (lib/tz), not the server's.
-  const local = toLocalInputValue(module.releaseDate);
+  // The release day is shown and edited on the TUTOR's calendar (lib/tz);
+  // saving re-pins the time to 09:00 Athens (SPEC §15.7 #15).
+  const dayText = toDayText(module.releaseDate);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -79,7 +81,7 @@ export default async function AdminModuleEdit({
           <p style={{ margin: 0, fontSize: "var(--text-body-sm)", color: "#c4320a" }}>
             {error === "week-taken"
               ? "That cohort already has a module for that week number."
-              : "Check the fields — week, title, and release date are required."}
+              : "Check the fields: week, title, and a release day (dd/mm/yyyy) are required."}
           </p>
         </Card>
       )}
@@ -99,14 +101,7 @@ export default async function AdminModuleEdit({
             defaultValue={carried.weekNumber ?? module.weekNumber}
             style={{ width: 140 }}
           />
-          <Input
-            label="Release date & time"
-            name="releaseDate"
-            type="datetime-local"
-            required
-            defaultValue={carried.releaseDate ?? local}
-            style={{ maxWidth: 240 }}
-          />
+          <ReleaseDateField initial={carried.releaseDay ?? dayText} />
           <Input label="Title" name="title" required defaultValue={carried.title ?? module.title} />
           <TextArea
             label="Description (shows as your weekly note to students)"

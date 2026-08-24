@@ -56,6 +56,45 @@ export function toLocalInputValue(date: Date, timeZone: string = APP_TIMEZONE): 
   return `${w.y}-${pad(w.mo)}-${pad(w.d)}T${pad(w.h)}:${pad(w.mi)}`;
 }
 
+/** An instant's wall-clock parts in `timeZone` (for lib/calendar and views). */
+export function wallClock(date: Date, timeZone: string = APP_TIMEZONE) {
+  return wallParts(date, timeZone);
+}
+
+// Modules always unlock at this wall-clock time in the tutor's timezone
+// (SPEC §15.7 #15) — the admin types only the day.
+export const RELEASE_TIME = "09:00";
+
+/**
+ * "dd/mm/yyyy" → "yyyy-mm-dd", or null when malformed or not a real calendar
+ * date. Pure and client-safe: the admin form uses it for the inline message,
+ * the server action for the actual parse.
+ */
+export function parseDdMmYyyy(value: string): string | null {
+  const m = value.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  const [, d, mo, y] = m.map(Number);
+  const probe = new Date(Date.UTC(y, mo - 1, d));
+  if (probe.getUTCFullYear() !== y || probe.getUTCMonth() !== mo - 1 || probe.getUTCDate() !== d) {
+    return null;
+  }
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${y}-${pad(mo)}-${pad(d)}`;
+}
+
+/** Release instant for a dd/mm/yyyy entry: 09:00 that day, tutor timezone. */
+export function releaseInstantFromDayText(value: string, timeZone: string = APP_TIMEZONE): Date {
+  const iso = parseDdMmYyyy(value);
+  return iso ? parseLocalInTz(`${iso}T${RELEASE_TIME}`, timeZone) : new Date(NaN);
+}
+
+/** An instant's calendar day as dd/mm/yyyy in `timeZone` (form prefill). */
+export function toDayText(date: Date, timeZone: string = APP_TIMEZONE): string {
+  const w = wallParts(date, timeZone);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(w.d)}/${pad(w.mo)}/${w.y}`;
+}
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
