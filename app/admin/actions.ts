@@ -16,6 +16,25 @@ import { isUuid } from "@/lib/validate";
 import type { ComposerState } from "@/components/messages/composer";
 import type { SettingsFormState } from "@/components/admin/settings-form";
 
+// Forms carry a hidden "back" field naming the admin page that hosted them
+// (SPEC §15.7 #23: the same actions serve the home strip, the course hub
+// tabs, and the students drawer). Anything that is not an /admin path falls
+// back to the home.
+function backTo(formData: FormData, fallback = "/admin"): string {
+  const back = String(formData.get("back") ?? "");
+  return back.startsWith("/admin") ? back : fallback;
+}
+
+function withParam(path: string, param: string): string {
+  return `${path}${path.includes("?") ? "&" : "?"}${param}`;
+}
+
+/** The week editor's canonical path (nested under its course). */
+async function weekPath(moduleId: string): Promise<string> {
+  const [m] = await db.select().from(modules).where(eq(modules.id, moduleId));
+  return m ? `/admin/courses/${m.cohortId}/weeks/${m.id}` : "/admin";
+}
+
 // ---------------------------------------------------------------------------
 // Cohorts
 
@@ -25,26 +44,43 @@ export async function createCohort(formData: FormData) {
   const subject = String(formData.get("subject") ?? "").trim();
   const level = String(formData.get("level") ?? "HL") as "HL" | "SL";
   const examYear = Number(formData.get("examYear") ?? new Date().getFullYear() + 2);
-  if (!name || !subject) redirect("/admin/courses?error=cohort");
-  await db.insert(cohorts).values({ name, subject, level, examYear });
-  revalidatePath("/admin/courses");
-  redirect("/admin/courses?ok=cohort");
+  if (!name || !subject) redirect("/admin/courses/new?error=cohort");
+  const [created] = await db
+    .insert(cohorts)
+    .values({ name, subject, level, examYear })
+    .returning({ id: cohorts.id });
+  revalidatePath("/admin");
+  redirect(`/admin/courses/${created.id}`);
 }
 
-/** Catalog fields (SPEC §15.5): the blurb students read and whether it's listed. */
+/** The Details tab (SPEC §15.7 #23): blurb, listed, subject, level, exam year. */
 export async function updateCohort(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id") ?? "");
   const blurb = String(formData.get("blurb") ?? "").trim() || null;
   const isListed = formData.get("isListed") === "on";
-  if (isUuid(id)) await db.update(cohorts).set({ blurb, isListed }).where(eq(cohorts.id, id));
-  revalidatePath("/admin/courses");
-  redirect("/admin/courses?ok=saved");
+  const subject = String(formData.get("subject") ?? "").trim();
+  const level = String(formData.get("level") ?? "") as "HL" | "SL";
+  const examYear = Number(formData.get("examYear") ?? 0);
+  if (isUuid(id)) {
+    await db
+      .update(cohorts)
+      .set({
+        blurb,
+        isListed,
+        ...(subject ? { subject } : {}),
+        ...(level === "HL" || level === "SL" ? { level } : {}),
+        ...(Number.isInteger(examYear) && examYear > 2000 ? { examYear } : {}),
+      })
+      .where(eq(cohorts.id, id));
+  }
+  revalidatePath(`/admin/courses/${id}`);
+  redirect(`/admin/courses/${id}?tab=details&ok=saved`);
 }
 
 // ---------------------------------------------------------------------------
-// Enrollments (SPEC §15.5): the requests queue + each student's standing
-// per course. users.active stays the global switch; these are per course.
+// Enrollments (SPEC §15.5): the requests + each student's standing per
+// course. users.active stays the global switch; these are per course.
 
 export async function approveRequest(formData: FormData) {
   await requireAdmin();
@@ -55,8 +91,9 @@ export async function approveRequest(formData: FormData) {
       .set({ status: "active", decidedAt: new Date() })
       .where(and(eq(enrollments.id, id), eq(enrollments.status, "requested")));
   }
-  revalidatePath("/admin/requests");
-  redirect("/admin/requests");
+  const back = backTo(formData);
+  revalidatePath(back);
+  redirect(back);
 }
 
 /** Decline = the request disappears; the student may ask again (SPEC §15.7 #7). */
@@ -68,8 +105,9 @@ export async function declineRequest(formData: FormData) {
       .delete(enrollments)
       .where(and(eq(enrollments.id, id), eq(enrollments.status, "requested")));
   }
-  revalidatePath("/admin/requests");
-  redirect("/admin/requests");
+  const back = backTo(formData);
+  revalidatePath(back);
+  redirect(back);
 }
 
 const ENROLLMENT_TRANSITIONS = ["active", "paused", "ended"] as const;
@@ -85,8 +123,9 @@ export async function setEnrollmentStatus(formData: FormData) {
       .set({ status: status as EnrollmentTransition, decidedAt: new Date() })
       .where(eq(enrollments.id, id));
   }
-  revalidatePath("/admin");
-  redirect("/admin");
+  const back = backTo(formData);
+  revalidatePath(back);
+  redirect(back);
 }
 
 export async function addEnrollment(formData: FormData) {
@@ -109,8 +148,9 @@ export async function addEnrollment(formData: FormData) {
         .values({ studentId, cohortId, status: "active", decidedAt: new Date() });
     }
   }
-  revalidatePath("/admin");
-  redirect("/admin");
+  const back = backTo(formData);
+  revalidatePath(back);
+  redirect(back);
 }
 
 // ---------------------------------------------------------------------------
@@ -120,6 +160,7 @@ export async function addEnrollment(formData: FormData) {
 
 export async function createStudent(formData: FormData) {
   await requireAdmin();
+  const back = backTo(formData, "/admin/students");
   const name = String(formData.get("name") ?? "").trim() || "New student";
   const username = String(formData.get("username") ?? "")
     .trim()
@@ -129,8 +170,8 @@ export async function createStudent(formData: FormData) {
     .toLowerCase();
   const password = String(formData.get("password") ?? "");
   const cohortId = String(formData.get("cohortId") ?? "");
-  if (!username || !email || !cohortId) redirect("/admin?error=student");
-  if (!isAcceptablePassword(password)) redirect("/admin?error=password-short");
+  if (!username || !email || !cohortId) redirect(withParam(back, "error=student"));
+  if (!isAcceptablePassword(password)) redirect(withParam(back, "error=password-short"));
 
   try {
     // The cohort picked at creation becomes the student's first ACTIVE
@@ -147,25 +188,26 @@ export async function createStudent(formData: FormData) {
   } catch (err) {
     // Unique indexes on username and email are the truth; a duplicate (or a
     // double-submit race) lands here instead of on the generic error page.
-    if (isUniqueViolation(err)) redirect("/admin?error=taken");
+    if (isUniqueViolation(err)) redirect(withParam(back, "error=taken"));
     throw err;
   }
-  revalidatePath("/admin");
-  redirect("/admin?ok=created");
+  revalidatePath("/admin/students");
+  redirect("/admin/students?ok=created");
 }
 
 export async function resetStudentPassword(formData: FormData) {
   await requireAdmin();
+  const back = backTo(formData, "/admin/students");
   const studentId = String(formData.get("studentId") ?? "");
   const password = String(formData.get("password") ?? "");
-  if (!isAcceptablePassword(password)) redirect("/admin?error=password-short");
+  if (!isAcceptablePassword(password)) redirect(withParam(back, "error=password-short"));
   const [student] = await db
     .select()
     .from(users)
     .where(and(eq(users.id, studentId), eq(users.role, "student")));
-  if (!student) redirect("/admin?error=missing");
+  if (!student) redirect(withParam(back, "error=missing"));
   await db.update(users).set({ passwordHash: hashPassword(password) }).where(eq(users.id, student.id));
-  redirect("/admin?ok=password-set");
+  redirect(withParam(back, "ok=password-set"));
 }
 
 /** Lever 1 (SPEC §5): the active flag mirrors PayPal reality. */
@@ -179,65 +221,66 @@ export async function toggleStudentActive(formData: FormData) {
   if (student) {
     await db.update(users).set({ active: !student.active }).where(eq(users.id, student.id));
   }
-  revalidatePath("/admin");
-  redirect("/admin");
+  const back = backTo(formData, "/admin/students");
+  revalidatePath(back);
+  redirect(back);
 }
 
 // ---------------------------------------------------------------------------
-// Modules
+// Modules. Creation happens inside a course (the "Add week N" composer,
+// SPEC §15.7 #23); the editor lives at /admin/courses/[id]/weeks/[moduleId].
 
 export async function createModule(formData: FormData) {
   await requireAdmin();
   const cohortId = String(formData.get("cohortId") ?? "");
+  if (!isUuid(cohortId)) redirect("/admin");
+  const hub = `/admin/courses/${cohortId}`;
   const weekNumber = Number(formData.get("weekNumber") ?? 0);
   const title = String(formData.get("title") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim() || null;
   // dd/mm/yyyy on the TUTOR's calendar; the time is always 09:00 Athens
   // (SPEC §15.7 #15). Invalid text parses to a NaN Date and is rejected.
   const releaseDate = releaseInstantFromDayText(String(formData.get("releaseDay") ?? ""));
-  if (!cohortId || !title || !weekNumber || Number.isNaN(releaseDate.getTime())) {
-    redirect("/admin/modules?error=module");
+  if (!title || !weekNumber || Number.isNaN(releaseDate.getTime())) {
+    redirect(`${hub}?error=module`);
   }
   let created: { id: string };
   try {
     [created] = await db
       .insert(modules)
-      .values({ cohortId, weekNumber, title, description, releaseDate })
+      .values({ cohortId, weekNumber, title, releaseDate })
       .returning();
   } catch (err) {
     if (isUniqueViolation(err)) {
       // Week-taken is only detectable server-side; carry the typed values
-      // back so the redirect doesn't wipe the form.
+      // back so the redirect doesn't wipe the composer.
       const carry = new URLSearchParams({
         error: "week-taken",
-        cohortId,
         weekNumber: String(weekNumber),
         title,
-        description: (description ?? "").slice(0, 1500),
         releaseDay: String(formData.get("releaseDay") ?? ""),
       });
-      redirect(`/admin/modules?${carry.toString()}`);
+      redirect(`${hub}?${carry.toString()}`);
     }
     throw err;
   }
-  revalidatePath("/admin/modules");
-  redirect(`/admin/modules/${created.id}`);
+  revalidatePath(hub);
+  redirect(`${hub}/weeks/${created.id}`);
 }
 
 export async function updateModule(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id") ?? "");
+  const editor = await weekPath(id);
   const weekNumber = Number(formData.get("weekNumber") ?? 0);
   const title = String(formData.get("title") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim() || null;
   const releaseDate = releaseInstantFromDayText(String(formData.get("releaseDay") ?? ""));
   if (!id || !title || !weekNumber || Number.isNaN(releaseDate.getTime())) {
-    redirect(`/admin/modules/${id}?error=save`);
+    redirect(`${editor}?error=save`);
   }
   try {
     await db
       .update(modules)
-      .set({ weekNumber, title, description, releaseDate })
+      .set({ weekNumber, title, releaseDate })
       .where(eq(modules.id, id));
   } catch (err) {
     if (isUniqueViolation(err)) {
@@ -245,47 +288,65 @@ export async function updateModule(formData: FormData) {
         error: "week-taken",
         weekNumber: String(weekNumber),
         title,
-        description: (description ?? "").slice(0, 1500),
         releaseDay: String(formData.get("releaseDay") ?? ""),
       });
-      redirect(`/admin/modules/${id}?${carry.toString()}`);
+      redirect(`${editor}?${carry.toString()}`);
     }
     throw err;
   }
-  revalidatePath(`/admin/modules/${id}`);
-  redirect(`/admin/modules/${id}?ok=saved`);
+  revalidatePath(editor);
+  redirect(`${editor}?ok=saved`);
+}
+
+/**
+ * The weekly note autosave (SPEC §15.7 #23). The note is the module
+ * description students see; saving returns quietly, no redirect.
+ */
+export async function saveModuleNote(
+  moduleId: string,
+  note: string,
+): Promise<{ ok: boolean }> {
+  await requireAdmin();
+  if (!isUuid(moduleId)) return { ok: false };
+  const description = note.trim().slice(0, 2000) || null;
+  await db.update(modules).set({ description }).where(eq(modules.id, moduleId));
+  revalidatePath(await weekPath(moduleId));
+  return { ok: true };
 }
 
 // ---------------------------------------------------------------------------
 // Materials
 
-export async function moveMaterial(formData: FormData) {
+/**
+ * Drag-to-reorder within one slot (videos). `orderedIds` is the new order of
+ * that type's rows; the other types keep their relative places. The whole
+ * module is renumbered 0..n-1, deterministic and self-healing.
+ */
+export async function reorderMaterials(
+  moduleId: string,
+  type: string,
+  orderedIds: string[],
+): Promise<{ ok: boolean }> {
   await requireAdmin();
-  const id = String(formData.get("id") ?? "");
-  const direction = String(formData.get("direction") ?? "up");
-  const [mat] = await db.select().from(materials).where(eq(materials.id, id));
-  if (!mat) return;
-  // Renumber 0..n-1 instead of swapping values: deterministic order (id
-  // tie-break) and self-healing if duplicate sort_orders ever appear.
+  if (!isUuid(moduleId) || !orderedIds.every(isUuid)) return { ok: false };
   const siblings = await db
     .select()
     .from(materials)
-    .where(eq(materials.moduleId, mat.moduleId))
+    .where(eq(materials.moduleId, moduleId))
     .orderBy(materials.sortOrder, materials.id);
-  const idx = siblings.findIndex((m) => m.id === id);
-  const target = direction === "up" ? idx - 1 : idx + 1;
-  if (target < 0 || target >= siblings.length) return;
-  const reordered = [...siblings];
-  [reordered[idx], reordered[target]] = [reordered[target], reordered[idx]];
+  const ofType = siblings.filter((m) => m.type === type).map((m) => m.id);
+  const isPermutation =
+    ofType.length === orderedIds.length && ofType.every((id) => orderedIds.includes(id));
+  if (!isPermutation) return { ok: false };
+  let cursor = 0;
+  const reordered = siblings.map((m) => (m.type === type ? orderedIds[cursor++] : m.id));
   await db.transaction(async (tx) => {
     for (let i = 0; i < reordered.length; i++) {
-      if (reordered[i].sortOrder !== i) {
-        await tx.update(materials).set({ sortOrder: i }).where(eq(materials.id, reordered[i].id));
-      }
+      await tx.update(materials).set({ sortOrder: i }).where(eq(materials.id, reordered[i]));
     }
   });
-  revalidatePath(`/admin/modules/${mat.moduleId}`);
-  redirect(`/admin/modules/${mat.moduleId}`);
+  revalidatePath(await weekPath(moduleId));
+  return { ok: true };
 }
 
 export async function renameMaterial(formData: FormData) {
@@ -295,9 +356,12 @@ export async function renameMaterial(formData: FormData) {
   const [mat] = await db.select().from(materials).where(eq(materials.id, id));
   if (mat && title) {
     await db.update(materials).set({ title }).where(eq(materials.id, id));
-    revalidatePath(`/admin/modules/${mat.moduleId}`);
   }
-  if (mat) redirect(`/admin/modules/${mat.moduleId}`);
+  if (mat) {
+    const editor = await weekPath(mat.moduleId);
+    revalidatePath(editor);
+    redirect(editor);
+  }
 }
 
 export async function deleteMaterial(formData: FormData) {
@@ -307,9 +371,22 @@ export async function deleteMaterial(formData: FormData) {
   if (mat) {
     await db.delete(materials).where(eq(materials.id, id));
     await storage.delete(mat.storageKey);
-    revalidatePath(`/admin/modules/${mat.moduleId}`);
-    redirect(`/admin/modules/${mat.moduleId}`);
+    const editor = await weekPath(mat.moduleId);
+    revalidatePath(editor);
+    redirect(editor);
   }
+}
+
+/** Used by the slots' Remove links (client-invoked, no redirect). */
+export async function removeMaterial(materialId: string): Promise<{ ok: boolean }> {
+  await requireAdmin();
+  if (!isUuid(materialId)) return { ok: false };
+  const [mat] = await db.select().from(materials).where(eq(materials.id, materialId));
+  if (!mat) return { ok: false };
+  await db.delete(materials).where(eq(materials.id, materialId));
+  await storage.delete(mat.storageKey);
+  revalidatePath(await weekPath(mat.moduleId));
+  return { ok: true };
 }
 
 // ---------------------------------------------------------------------------

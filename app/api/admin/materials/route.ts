@@ -26,6 +26,9 @@ export async function POST(request: NextRequest) {
   const moduleId = String(form.get("moduleId") ?? "");
   const type = String(form.get("type") ?? "");
   const file = form.get("file");
+  // Replace flow (SPEC §15.7 #23): the single-file slots swap their file in
+  // place; the new row inherits the old row's sort position.
+  const replaceId = String(form.get("replace") ?? "");
 
   if (!ALLOWED.has(type) || !(file instanceof File) || !isUuid(moduleId)) {
     return NextResponse.json({ error: "missing module, type, or file" }, { status: 400 });
@@ -44,11 +47,23 @@ export async function POST(request: NextRequest) {
   const key = storageKeyFor(moduleId, file.name);
   await storage.put(key, Buffer.from(await file.arrayBuffer()), file.type);
 
+  let replacedOrder: number | null = null;
+  if (isUuid(replaceId)) {
+    const [old] = await db.select().from(materials).where(eq(materials.id, replaceId));
+    if (old && old.moduleId === moduleId && old.type === type) {
+      replacedOrder = old.sortOrder;
+      await db.delete(materials).where(eq(materials.id, old.id));
+      await storage.delete(old.storageKey);
+    }
+  }
+
   const siblings = await db
     .select({ sortOrder: materials.sortOrder })
     .from(materials)
     .where(eq(materials.moduleId, moduleId));
-  const nextOrder = siblings.length ? Math.max(...siblings.map((s) => s.sortOrder)) + 1 : 0;
+  const nextOrder =
+    replacedOrder ??
+    (siblings.length ? Math.max(...siblings.map((s) => s.sortOrder)) + 1 : 0);
 
   const title = file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ");
   const [created] = await db
