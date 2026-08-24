@@ -1,7 +1,7 @@
 import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { cohorts, enrollments, users, type Enrollment } from "@/db/schema";
-import { Badge, Button, Card } from "@/components/lumen/core";
+import { cohorts, enrollments, modules, submissions, users, type Enrollment } from "@/db/schema";
+import { Badge, Button, Card, ProgressBar } from "@/components/lumen/core";
 import { Input } from "@/components/lumen/forms";
 import { requireAdmin } from "@/lib/admin";
 import { formatDay } from "@/lib/format";
@@ -45,6 +45,26 @@ export default async function AdminStudents({
   }
   const enrollmentTone = (status: Enrollment["status"]) =>
     status === "active" ? "done" : status === "requested" ? "new" : "locked";
+
+  // Progress at a glance (SPEC §15.7 #17): submitted x of y released, per
+  // student per course. Tiny tenant; load once and count in memory.
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
+  const allModules = await db.select().from(modules);
+  const allSubs = await db.select({ studentId: submissions.studentId, moduleId: submissions.moduleId }).from(submissions);
+  const subSet = new Set(allSubs.map((s) => `${s.studentId}:${s.moduleId}`));
+  const releasedByCohort = new Map<string, string[]>();
+  for (const m of allModules) {
+    if (m.releaseDate.getTime() > now) continue;
+    releasedByCohort.set(m.cohortId, [...(releasedByCohort.get(m.cohortId) ?? []), m.id]);
+  }
+  const completion = (studentId: string, cohortId: string) => {
+    const released = releasedByCohort.get(cohortId) ?? [];
+    return {
+      done: released.filter((id) => subSet.has(`${studentId}:${id}`)).length,
+      released: released.length,
+    };
+  };
 
   const th: React.CSSProperties = {
     textAlign: "left",
@@ -128,6 +148,24 @@ export default async function AdminStudents({
                         >
                           <span style={{ fontWeight: 500 }}>{cohortName}</span>
                           <Badge tone={enrollmentTone(enrollment.status)}>{enrollment.status}</Badge>
+                          {(enrollment.status === "active" || enrollment.status === "paused") &&
+                            (() => {
+                              const c = completion(user.id, enrollment.cohortId);
+                              return (
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                                  <span
+                                    style={{
+                                      fontSize: "var(--text-caption)",
+                                      color: "var(--text-tertiary)",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    {c.done} of {c.released}
+                                  </span>
+                                  <ProgressBar value={c.done} total={c.released || 1} style={{ width: 72 }} />
+                                </span>
+                              );
+                            })()}
                           {enrollment.status !== "requested" && (
                             <form action={setEnrollmentStatus} style={{ display: "inline-flex", gap: 2 }}>
                               <input type="hidden" name="enrollmentId" value={enrollment.id} />
@@ -189,8 +227,10 @@ export default async function AdminStudents({
                     )}
                   </td>
                   <td style={td}>{lastSeen ? formatDay(lastSeen) : "never"}</td>
-                  <td style={{ ...td, whiteSpace: "nowrap" }}>
-                    <div style={{ display: "flex", gap: 8 }}>
+                  <td style={td}>
+                    {/* Stacked on purpose (SPEC §15.7 #17): side by side these
+                        overflowed and truncated "Set password". */}
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
                       <form action={toggleStudentActive}>
                         <input type="hidden" name="studentId" value={user.id} />
                         <Button variant="secondary" size="sm" type="submit">
