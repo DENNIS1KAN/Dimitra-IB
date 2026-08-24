@@ -196,6 +196,14 @@ describe("resumeCard", () => {
     expect(card.href).toBe("/app/modules/m6");
   });
 
+  it("moves past a submitted week even with a video left unwatched", () => {
+    const w5 = planWeek(week({ moduleId: "m5", weekNumber: 5, hasSubmission: true }));
+    const w6 = planWeek(week({ moduleId: "m6", weekNumber: 6 }));
+    expect(w5.complete).toBe(false); // its video is still unwatched
+    expect(w5.submitted).toBe(true); // but Rule 2 calls the week done
+    expect(resumeCard([w5, w6])!.weekNumber).toBe(6);
+  });
+
   it("has nothing to show before the first release", () => {
     expect(resumeCard([])).toBeNull();
   });

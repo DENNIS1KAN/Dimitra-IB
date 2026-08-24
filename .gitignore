@@ -24,4 +24,3 @@ npm-debug.log*
 # top-level pins in package.json stand in — npm install regenerates it
 package-lock.json
 pgdata-lite/
-.scratch/

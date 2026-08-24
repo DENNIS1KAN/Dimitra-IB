@@ -47,7 +47,13 @@ export default async function WeekPage({ params }: { params: Promise<{ id: strin
   // Done steps keep the quiet way back in.
   const linkFor = (step: Step) => {
     if (step.state !== "done" || !step.href) return undefined;
-    if (step.kind === "video") return { label: "Rewatch", href: `${step.href}?restart=1` };
+    if (step.kind === "video") {
+      // A pasted link has nothing to rewind, so it says what it does.
+      const isLink = !!materials.find((m) => m.id === step.key)?.externalUrl;
+      return isLink
+        ? { label: "Open again", href: step.href }
+        : { label: "Rewatch", href: `${step.href}?restart=1` };
+    }
     if (step.kind === "attempt") return { label: "Download again", href: step.href };
     if (step.kind === "solutions") return { label: "Open solutions", href: step.href };
     return undefined;

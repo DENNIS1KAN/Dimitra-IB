@@ -1,6 +1,6 @@
 # Road to Success: V1 Build Specification
 
-**Status:** V1 built (M1–M5) · Phase 2 built (M6–M9) · M10 owner-review round done · M11 admin rebuild + M12 student rebuild built · M13 course experience directed (§15.6/§15.7 #23–#24, #27) · **Name:** "Road to Success by Anglou Dimitra", formerly the working title Lumen (§15.7 #20) · **Last updated:** 2026-08-24
+**Status:** V1 built (M1–M5) · Phase 2 built (M6–M9) · M10 owner-review round done · M11 admin rebuild + M12 student rebuild + M13 course experience built (§15.6/§15.7 #23–#24, #27) · **Name:** "Road to Success by Anglou Dimitra", formerly the working title Lumen (§15.7 #20) · **Last updated:** 2026-08-24
 
 This document is the source of truth for V1 scope. Anything not listed in the Goals or Milestones is out of scope until this spec changes. When in doubt, build less.
 
@@ -344,17 +344,17 @@ Verify:
 - [x] tests, typecheck, lint, build green
 
 **M13 — The course experience** (directive of 2026-08-24; decisions in §15.7 #27. Authoritative mockup: `design/m13-course-experience-mockup.html`. Starts only after M12 is pushed).
-Verify:
-- [ ] watch 30 seconds of an uploaded video, leave, return: Resume lands at the saved second
-- [ ] a link video renders as one Watch step and completes on the view event when opened
-- [ ] steps flip as events and the submission happen; solutions unlock on submit
-- [ ] a week's inline edit saves and the rail updates
-- [ ] delete is blocked on Nikos's submitted W5 and succeeds on an empty week, including storage file removal
-- [ ] progress chips link to the real submission; the by-week matrix is one toggle away
-- [ ] the stray "Verification week" test module is gone and the seed never recreates it
-- [ ] em-dash grep zero
-- [ ] walk at 390 and 1280
-- [ ] tests, typecheck, lint, build green
+Verify (walked 2026-08-24 in headless Chrome against the freshly seeded dev DB, both roles, 390 and 1280; 39 scripted checks, all green):
+- [x] watched 30 seconds of the uploaded W6 video, left, returned: the card read "Pick up where you left off" / "Resume" with "3 minutes left", and the player's `currentTime` was 30
+- [x] a pasted Loom link rendered as one Watch step ("Opens on its own service, in a new tab") and flipped to done on the `view` logged when it was opened
+- [x] steps flipped video by video, then Attempt on the exercises download, then Submit; solutions were locked before and unlocked after, and the path finished all done
+- [x] inline edit renamed W6 and the rail showed the new title on return
+- [x] Delete is absent on Nikos's submitted W5, replaced by "1 student has submitted work to this week, so it cannot be deleted"; W8 deleted from the confirm row ("Its 5 files will be removed") and its 5 files went from 5 to 0 in `storage/seed`
+- [x] Progress opens on By student ("Never signed in" for Eleni, dimmed row for paused Petros); the jade chips link to `/admin/submissions/[id]`; By week is one toggle away
+- [x] no "Verification week" module in the dev database, and `db/seed-data.ts` wipes every table and has never created one
+- [x] `grep -rn '—\|–' app components` returns zero
+- [x] no horizontal scroll at 390 on the course page, the week page, the admin rail or the admin progress tab
+- [x] tests (217, +11 for M13), typecheck, lint, build green
 
 **Still out of scope:** payments, parent accounts, message-cap enforcement, Calendar API sync, email notifications, auto-briefs, multi-tutor, individually booked 1:1s on the calendar.
 

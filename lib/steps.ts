@@ -60,10 +60,16 @@ export type WeekPlan = {
   moduleId: string;
   weekNumber: number;
   steps: Step[];
-  /** The single step carrying the action; null when the week is finished. */
+  /** The single step carrying the action; null when the path is finished. */
   current: Step | null;
   /** Every video watched, exercises downloaded, attempt submitted. */
   complete: boolean;
+  /**
+   * Rule 2's own definition of a finished week (lib/gating.isModuleComplete):
+   * an attempt exists. The rail has always called that "Done", so the resume
+   * card must agree with it and move on to the next week.
+   */
+  submitted: boolean;
 };
 
 /**
@@ -195,6 +201,7 @@ export function planWeek(input: WeekInput): WeekPlan {
     steps,
     current,
     complete: current === null,
+    submitted: input.hasSubmission,
   };
 }
 
@@ -242,7 +249,9 @@ function shortName(step: Step): string {
  */
 export function resumeCard(plans: WeekPlan[]): ResumeCard | null {
   if (plans.length === 0) return null;
-  const plan = plans.find((p) => !p.complete);
+  // A submitted week is done, whatever is left unwatched inside it: the rail
+  // says "Done, solutions unlocked", so the card cannot send them back.
+  const plan = plans.find((p) => !p.submitted && !p.complete);
   if (!plan) {
     const last = plans[plans.length - 1];
     return {
