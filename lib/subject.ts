@@ -1,14 +1,7 @@
-// Subject → color token (DESIGN.md §1: one color per class; assignment
-// lives in product data — here, derived from the cohort's subject).
-const bySubject: Record<string, string> = {
-  chemistry: "var(--subject-chemistry)",
-  mathematics: "var(--subject-plum)",
-  math: "var(--subject-plum)",
-  physics: "var(--subject-celeste)",
-  biology: "var(--subject-orange)",
-};
-
+// Subject → color token (SPEC §15.7 #13, M10 palette audit): chemistry is
+// blue, every other subject is indigo. The per-subject spread from
+// tokens.css (plum, celeste, orange) was retired with the extra hexes.
 export function subjectColor(subject: string | undefined | null): string {
-  if (!subject) return "var(--subject-indigo)";
-  return bySubject[subject.trim().toLowerCase()] ?? "var(--subject-indigo)";
+  if (subject?.trim().toLowerCase() === "chemistry") return "var(--subject-chemistry)";
+  return "var(--subject-indigo)";
 }

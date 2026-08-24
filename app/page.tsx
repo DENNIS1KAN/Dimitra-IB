@@ -22,7 +22,7 @@ const steps = [
   },
   {
     icon: "photo_camera",
-    color: "var(--color-plum)",
+    color: "var(--color-indigo)",
     title: "Submit",
     body: "A photo of honest working is all it takes. Marks don't matter here, attempts do.",
   },
@@ -87,7 +87,9 @@ export default function Landing() {
             ))}
           </div>
           <div style={{ display: "flex", gap: 12, marginTop: 4, flexWrap: "wrap", justifyContent: "center" }}>
-            <Button variant="secondary" href="/login">
+            {/* White pill with INDIGO text on the hero (SPEC §15.7 #13); the
+                inline colour outranks the secondary recipe's ink. */}
+            <Button variant="secondary" href="/login" style={{ color: "var(--color-indigo)" }}>
               Student sign in
             </Button>
             <a

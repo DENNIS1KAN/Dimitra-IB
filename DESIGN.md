@@ -1,6 +1,8 @@
 # Lumen — Design System
 
-**Phase 2 (M9, 2026-08-22): this file now describes Dimitra's palette.** Source of truth is `design/lumen-dashboard-mockup.html` (authoritative); `design/extracted/tokens.css` is the secondary reference (radii, input/divider greys, subject colours). The original direction — Apercu Pro, Material Symbols, sunbeam-yellow accents, the cream/linen mockup skin in `design/extracted/` — is **superseded**; §10 maps the old tokens to the new ones so older notes still read. **All UI is built from the tokens and recipes in this file — never improvised, never re-inferred from the raw HTML.** Where this file and SPEC.md disagree, SPEC.md wins on scope/behavior, this file wins on skin; every known disagreement is listed in §9.
+**Phase 2 (M9, 2026-08-22; audited M10, 2026-08-24): this file describes Dimitra's palette as locked by the owner (SPEC §15.7 #13).** Source of truth is `design/lumen-dashboard-mockup.html` (authoritative) **as constrained by the M10 audit**: only the owner's brand hexes render (blue / indigo / orange / jade+forest), neutrals are the ink/graphite/stone/linen ramp, tints are alpha of brand hexes, the hero is solid indigo, and the tokens.css extras (plum, celeste, ash, driftwood, indigo-soft) are retired. The original direction — Apercu Pro, Material Symbols, sunbeam-yellow accents — is **superseded**; §10 maps the old tokens so older notes still read. **All UI is built from the tokens and recipes in this file — never improvised, never re-inferred from the raw HTML.** Where this file and SPEC.md disagree, SPEC.md wins on scope/behavior, this file wins on skin; every known disagreement is listed in §9.
+
+**M10 errata (the invisible-pill bug):** M9 defined `--text-display` and `--text-heading` twice — as colours in §1 and as sizes in §2. The sizes won the cascade, so those "colours" were invalid and inherited: the landing hero's secondary pill rendered white-on-white and every heading rendered graphite. The colour tokens are now **`--text-strong`** (ink) and **`--text-heading-color`** (indigo); the `--text-*` size names are unchanged. Never reuse a size name as a colour.
 
 ---
 
@@ -8,35 +10,32 @@
 
 ### Palette — Dimitra's brand decisions (`app/globals.css`)
 
-| Token | Hex | Role |
+| Token | Value | Role |
 |---|---|---|
 | `--color-blue` | `#0061ef` | navigation bar, links, selected states, standard primary buttons |
-| `--color-blue-tint` | `#e8f0fe` | blue tint chips, `::selection` |
-| `--color-indigo` | `#3b197f` | headings, the hero band, serious/academic surfaces |
-| `--color-indigo-soft` | `#4b2a96` | hero gradient companion |
+| `--color-blue-tint` | `rgba(0,97,239,.09)` | blue tint chips, `::selection` — **alpha of blue**, not its own hex (M10) |
+| `--color-indigo` | `#3b197f` | headings, the hero band (solid since M10), serious/academic surfaces |
 | `--color-orange` | `#f47d31` | **the one motivational CTA per view** (ink text on it, never white); also the brand dot and the clinic-strip accent |
-| `--color-jade` | `#00a86b` | correct / completed / progress — **fills only** |
+| `--color-jade` | `#00a86b` | correct / completed / progress — **fills only** (incl. the matrix submitted cell) |
 | `--color-forest` | `#1e7a4a` | green **as text** (contrast-safe) |
-| `--color-mint` | `#e7f5ee` | jade tint fills (done badges, note mark) |
+| `--color-mint` | `rgba(0,168,107,.12)` | jade tint fills (done badges, note mark) — **alpha of jade** (M10) |
 | `--color-cream` | `#f9f4f2` | page background |
 | `--color-white` | `#ffffff` | cards, interactive panels |
 | `--color-ink` | `#131211` | display text, row titles, text on orange |
 | `--color-graphite` | `#2d2c2b` | body text |
-| `--color-stone` | `#63605d` | muted text, locked state |
-| `--color-linen` | `#e2ded9` | borders |
-| `--color-ash` / `--color-driftwood` | `#d0d0d0` / `#c6c1b9` | input borders / dividers (tokens.css) |
-| `--color-plum` / `--color-celeste` | `#5f2b89` / `#00a4ff` | subject colours (tokens.css) |
+| `--color-stone` | `#63605d` | muted text, locked state, the matrix unreleased cell |
+| `--color-linen` | `#e2ded9` | ALL borders (inputs and dividers folded in, M10), the matrix released-pending cell |
 
-**No yellow anywhere.** `#ffce00` is gone from every token, class and component.
+**No yellow anywhere.** `#ffce00` is gone from every token, class and component. **Retired in M10 (SPEC §15.7 #13):** `--color-indigo-soft`, `--color-ash`, `--color-driftwood`, `--color-plum`, `--color-celeste` — nothing outside the table above may render, plus the error red below.
 
 ### Semantic tokens
 
-- **Surfaces:** `--surface-page` = cream · `--surface-card` = white · `--surface-nav` = blue · `--surface-hero` = `linear-gradient(135deg, indigo, indigo-soft)` · `--surface-contemplative` = indigo · `--surface-tint-blue` = blue-tint · `--surface-tint-green` = mint · `--surface-ink` = ink
-- **Text:** `--text-primary` = graphite · `--text-display` = ink · `--text-heading` = indigo (every `h1–h4` by default) · `--text-secondary` = graphite · `--text-tertiary` / `--text-disabled` = stone · `--text-inverse` = white · `--text-on-cta` = ink · `--text-success` = forest
-- **Borders:** `--border-card` = linen · `--border-input` = ash · `--border-divider` = driftwood
+- **Surfaces:** `--surface-page` = cream · `--surface-card` = white · `--surface-nav` = blue · `--surface-hero` = indigo (solid, M10) · `--surface-contemplative` = indigo · `--surface-tint-blue` = blue-tint · `--surface-tint-green` = mint · `--surface-ink` = ink
+- **Text colours:** `--text-primary` = graphite · `--text-strong` = ink (row titles, field labels, wordmark) · `--text-heading-color` = indigo (every `h1–h4` by default) · `--text-secondary` = graphite · `--text-tertiary` / `--text-disabled` = stone · `--text-inverse` = white · `--text-on-cta` = ink · `--text-success` = forest
+- **Borders:** `--border-card` / `--border-input` / `--border-divider` = linen (one border neutral since M10)
 - **Actions:** `--action-primary` = blue · `--action-cta` = orange · `--action-dark` = ink · `--accent-brand` = orange (wordmark dot) · `--accent-dimitra` = indigo (her avatar)
-- **States:** `--state-done` = jade · `--state-now` = blue · `--state-locked` = stone · `--state-alert` = `#c4320a`
-- **Subject colours:** `--subject-chemistry` = blue · `--subject-orange` · `--subject-plum` · `--subject-celeste` · `--subject-indigo`
+- **States:** `--state-done` = jade · `--state-now` = blue · `--state-locked` = stone · `--state-alert` = `#c4320a` (inline form errors only — the alert Badge tone left with the overdue state)
+- **Subject colours:** `--subject-chemistry` = blue · `--subject-indigo` = everything else (M10)
 
 ### Recurring literals
 
@@ -47,8 +46,9 @@
 | `rgba(255,255,255,.18)` / `.75` | hero progress track / hero secondary text |
 | `rgba(255,255,255,.2)` | avatar disc on the nav |
 | `rgba(0,97,239,.12)` | input focus ring (3px) |
-| `rgba(196,50,10,.08)` + `#c4320a` | alert badge tint / error text — the only non-palette colour, kept for errors |
+| `#c4320a` | inline error text — the only non-palette colour, kept for errors (the `.08` badge tint left with the alert Badge in M10) |
 | `rgba(19,18,17,.06)` | ghost IconButton hover |
+| `rgba(255,255,255,.55)` | the matrix submitted-cell link underline (white text on jade) |
 
 ### Global element defaults
 
@@ -123,7 +123,7 @@ Interaction defaults: filled buttons hover `brightness(.96)`; the CTA lifts 2px 
 
 **Avatar** — circle, 700 initials ≈ 38%; sm 28 / md 36 / lg 48 / xl 72. Tones: **indigo** (Dimitra) · **neutral** (linen, graphite — students on light surfaces) · **inverse** (white 20% disc, white text — on the nav).
 
-**Badge** — pill, 4×10, caption 700, optional 13px SVG. Tones: neutral (cream + linen border, stone) · **new** (blue-tint + blue — the mockup "chip") · **done** (mint + **forest**) · locked (linen + stone) · live (indigo + white) · alert (red tint + `#c4320a`).
+**Badge** — pill, 4×10, caption 700, optional 13px SVG. Tones: neutral (cream + linen border, stone) · **new** (blue-tint + blue — the mockup "chip") · **done** (mint + **forest**) · locked (linen + stone) · live (indigo + white). *The alert tone was removed with the overdue state (M10); errors are inline `#c4320a` text, never badges.*
 
 **Chip** (`.lmn-chip`) — the feature card's "This week": blue-tint bg, blue 13px 700, 5×12, pill.
 
@@ -131,25 +131,29 @@ Interaction defaults: filled buttons hover `brightness(.96)`; the CTA lifts 2px 
 
 **Icon** — `<Icon name size color strokeWidth />` → inline SVG, `aria-hidden`. Names: check, check_circle, circle, lock, lock_open, play_circle, description, edit_note, photo_camera, chevron_right, arrow_back, arrow_right, logout, download, upload, hourglass, schedule, pause, flag, chat, calendar, menu, school, history_edu, fact_check, trending_up.
 
-**Nav** (`.lmn-nav`) — blue bar, 1040px wrap, min-height 64; brand = inverse sm Wordmark; links 14.5px 500 white-78% 8×14 pill (hover white on 10% white; `aria-current` white on 16% white); "who" = first name (hidden < 1024) + inverse sm Avatar; inverse IconButton sign-out. Under 1024px the link row wraps beneath the brand and scrolls sideways (`min-width: 0`). Admin: same bar with an "ADMIN" label (white 55%, 13px uppercase). Unread dot on Messages: 8px jade disc + sr-only text.
+**Nav** (`.lmn-nav`) — blue bar, 1040px wrap, min-height 64; brand = inverse sm Wordmark; links 14.5px 500 white-78% 8×14 pill (hover white on 10% white; `aria-current` white on 16% white); "who" = the inverse sm **initials Avatar alone** (no name text — SPEC §15.7 #14; the admin bar carries the same chip); inverse IconButton sign-out. Under 1024px the link row wraps beneath the brand and scrolls sideways (`min-width: 0`). Admin: same bar with an "ADMIN" label (white 55%, 13px uppercase). Unread dot on Messages: 8px jade disc + sr-only text.
 
-**Hero** (`.lmn-hero`) — indigo gradient band, white text, 40/84 (52/92 ≥ 641px): eyebrow 13px 700 uppercase `.06em` white-55% → h1 clamp(28, 4.4vw, 40) 800 −0.03em → progress line: 8px track white-18% with jade fill + 14px white-75% caption.
+**Hero** (`.lmn-hero`) — solid indigo band (M10; the indigo-soft gradient is retired), white text, 40/84 (52/92 ≥ 641px): eyebrow 13px 700 uppercase `.06em` white-55% → h1 clamp(28, 4.4vw, 40) 800 −0.03em → progress line: 8px track white-18% with jade fill + 14px white-75% caption.
 
 **NoteCard** (`.lmn-note`) — white, radius cards, `--shadow-card`, 22×26 pad (18×20 ≤ 640), flex gap 16: 38px mint square (radius 12) with a forest `chat` icon · h2 13px 700 uppercase `.05em` indigo "Note from Dimitra · {day}" · body 15.5px graphite, max 62ch. Overlaps the hero seam by −52px.
 
-**ModuleCard** (`.lmn-feature`) — white, radius 24, `--shadow-card`, 30px pad (24 ≤ 640), flex wrap gap 28: chip + optional New / Overdue badges → h2 indigo 24 800 "Week N · title" → meta 14.5px stone → optional due caption 13px 600 → the **cta** Button with a trailing `arrow_right`.
+**ModuleCard** (`.lmn-feature`) — white, radius 24, `--shadow-card`, 30px pad (24 ≤ 640), flex wrap gap 28: chip + optional New badge → h2 indigo 24 800 "Week N · title" → meta 14.5px stone → the **cta** Button with a trailing `arrow_right`. *(Due caption and Overdue badge removed in M10 — SPEC §15.7 #16.)*
 
 **Clinic strip** (`.lmn-clinic`) — white, 3px orange left border, radius 0 12 12 0, 14×18, orange `calendar` icon, 14.5px "**Next clinic** — {clinic_text}"; links to `/app/sessions`.
 
-**Rail** (`.lmn-rail` / `.lmn-rail-row`) — the term, week by week: 2px line on the left (jade for done rows, blue for the current, linen for locked — one segment per row), rows white + linen border + radius row + 16×20 + 12px gap; node 24px cream disc holding a 22px disc: **done** jade + white check · **now** white with a 3px blue ring · **locked** linen + stone lock. Title ink 15.5 700; sub 13.5 stone with `.ok` forest 600 ("Solutions unlocked"); right side: blue 700 "Continue" / "Review" (hidden ≤ 640) or stone "Unlocks …" for locked rows; Overdue = alert Badge.
+**Rail** (`.lmn-rail` / `.lmn-rail-row`) — the term, week by week: 2px line on the left (jade for done rows, blue for the current, linen for locked — one segment per row), rows white + linen border + radius row + 16×20 + 12px gap; node 24px cream disc holding a 22px disc: **done** jade + white check · **now** white with a 3px blue ring · **locked** linen + stone lock. Title ink 15.5 700; sub 13.5 stone with `.ok` forest 600 ("Solutions unlocked"); right side: blue 700 "Continue" / "Review" (hidden ≤ 640) or stone "Unlocks …" for locked rows.
 
-**ListRow / LessonRow** — white, linen border, radius row, 16×20 / 14×16, gap 12; leading 22px SVG in the subject / kind colour (video blue · slides plum · exercise graphite · solutions indigo); title ink 15.5 700; meta 13.5 stone; trailing node; chevron stone; hover → blue border + 2px shift. Locked lesson: stone title + locked Badge.
+**ListRow / LessonRow** — white, linen border, radius row, 16×20 / 14×16, gap 12; leading 22px SVG in the subject / kind colour (video blue · slides indigo · exercise graphite · solutions indigo — plum retired in M10); title ink 15.5 700; meta 13.5 stone; trailing node; chevron stone; hover → blue border + 2px shift. Locked lesson: stone title + locked Badge.
 
-**LockPanel** — locked: white, dashed driftwood border, radius 24, stone `lock`, indigo subheading 800, body-sm, dark CTA. Unlocked: hero gradient, **jade** `lock_open`, white text, secondary (white) CTA.
+**LockPanel** — locked: white, dashed linen border (driftwood folded into linen, M10), radius 24, stone `lock`, indigo subheading 800, body-sm, dark CTA. Unlocked: solid indigo, **jade** `lock_open`, white text, secondary (white) CTA.
 
 **ProgressBar** — 6px linen track (8px white-18% `onDark`), **jade** fill, caption label stone (white-75% on dark), `role=progressbar`.
 
 **Input / TextArea** — unchanged recipe; labels ink 500; focus blue border + ring. **Composer / password / settings forms** — `useActionState` with inline `role=alert` / `role=status` copy (DESIGN.md §6 M7/M8 entries).
+
+**ReleaseDateField** (M10, SPEC §15.7 #15) — plain text input, dd/mm/yyyy, `inputMode=numeric`; required + pattern + `setCustomValidity`, with `onInvalid` suppressing the browser popup in favour of a friendly `.lmn-field-help` message (`role=alert`, error border via `.lmn-field-error`). Helper when valid: "Modules unlock at 09:00 Athens time on this day." No native date widget anywhere in the module forms.
+
+**Calendar** (M10, SPEC §15.7 #18) — `.lmn-cal-*`: a bar (outline IconButton prev/next + h2 month title + primary "Book a 1:1" when `booking_url` is set), the `.lmn-clinic` note strip when `clinic_text` is set, then ONE responsive dataset rendered twice: `.lmn-cal-grid` (≥641px; 7 columns, white day cells with linen borders, cream + transparent for spill days, today's number on a blue pill) and `.lmn-cal-agenda` (≤640px; caption date labels + ListRows). Entry pills 12.5px 600: released → blue-tint bg + blue text (links to the module) · future → linen bg + stone text · clinic → cream bg + 3px orange left border + ink. Course name as an 11.5px stone second line when labeled (admin always, students with several courses).
 
 **Toast** — white, radius cards, `--shadow-float`; 32px **jade** disc with a white check; message ink 700; detail stone.
 
@@ -166,25 +170,25 @@ Interaction defaults: filled buttons hover `brightness(.96)`; the CTA lifts 2px 
 Mobile-first; every student screen is built and checked at 390px before desktop. Desktop variants are responsive layouts of the same routes, not separate pages.
 
 ### `/` — public landing
-Indigo hero band (inverse xl Wordmark + byline, white-85% tagline, white-16% pills "Access by invitation" / "IB Chemistry HL · SL", secondary Button "Student sign in" + white "For parents" link) → "How a week works": four white Cards with blue / graphite / plum / indigo SVG icons → About: xl indigo Avatar, indigo 800 name, cream credentials Card (indigo icons), indigo quote Card → Contact: indigo 800 heading + primary Button → footer with the sm Wordmark. Copy stays truthful: students sign in with a username and password from Dimitra.
+Indigo hero band (inverse xl Wordmark + byline, white-85% tagline, white-16% pills "Access by invitation" / "IB Chemistry HL · SL", secondary Button "Student sign in" **with indigo text** (M10, SPEC §15.7 #13 — white pill, indigo label) + white "For parents" link) → "How a week works": four white Cards with blue / graphite / indigo SVG icons → About: xl indigo Avatar, indigo 800 name, cream credentials Card (indigo icons), indigo quote Card → Contact: indigo 800 heading + primary Button → footer with the sm Wordmark. Copy stays truthful: students sign in with a username and password from Dimitra.
 
 ### `/login` — Welcome
 24px side padding; centered xl Wordmark (ink + orange dot) + stone tagline; bottom-anchored form (username, password Inputs; lg primary Button "Sign in"; caption "Accounts are created by Dimitra").
 
 ### `/app` — dashboard (mockup, one responsive layout)
-Hero (eyebrow = course name(s); h1 "Good morning/afternoon/evening, {first name}" by the tutor's clock; jade progress "{c} of {r} modules complete · {pct}%") → NoteCard (−52px seam overlap; hidden when the week has no note) → ModuleCard for the current week (chip "This week" — prefixed by the course when the student has several; Overdue badge; meta counts; due; **orange CTA** "Start module" / "Review module") — or a featured Card with the paused / requested / not-enrolled / nothing-yet copy → clinic strip when `settings.clinic_text` is set → "Your term, week by week" (indigo 19px 800) + "All assignments" link → Rail (current · older released · locked teasers, course name in the sub when multi) → footer.
+Hero (eyebrow = course name(s); h1 "Good morning/afternoon/evening, {first name}" by the tutor's clock; jade progress "{c} of {r} modules complete · {pct}%") → NoteCard (−52px seam overlap; hidden when the week has no note) → ModuleCard for the current week (chip "This week" — prefixed by the course when the student has several; meta counts; **orange CTA** "Start module" / "Review module") — or a featured Card with the paused / requested / not-enrolled / nothing-yet copy → clinic strip when `settings.clinic_text` is set → "Your term, week by week" (indigo 19px 800) + "All assignments" link → Rail (current · older released · locked teasers, course name in the sub when multi) → footer. *(Due dates and Overdue badges removed in M10 — SPEC §15.7 #16.)*
 
 ### `/app/modules/[id]` — module detail
-BackLink "Home" → eyebrow "Week N" → h1 indigo 800 → badge row (New this week · course · Attempt sent · Overdue) + soft-deadline caption → LessonRows → solutions block: unlocked LockPanel (+ solutions LessonRow) or the locked LockPanel whose action is the **orange CTA** "Submit my attempt" (bottom sheet unchanged).
+BackLink "Home" → eyebrow "Week N" → h1 indigo 800 → badge row (New this week · course · Attempt sent) → LessonRows → solutions block: unlocked LockPanel (+ solutions LessonRow) or the locked LockPanel whose action is the **orange CTA** "Submit my attempt" (bottom sheet unchanged). *(Overdue badge + soft-deadline caption removed in M10.)*
 
-### `/app/courses`, `/app/assignments`, `/app/messages`, `/app/sessions`, `/app/account`
-As specified in their M6–M8 entries (below in §8/§9 history and PROJECT_REPORT), with indigo headings, white cards, mint/forest done badges, blue-tint "new" chips, jade progress fills, and primary (blue) buttons — "Ask to join" stays dark (ink), "Book a 1:1 on Google Meet" is primary.
+### `/app/courses`, `/app/assignments`, `/app/messages`, `/app/sessions`, `/app/calendar`, `/app/account`
+As specified in their M6–M8 entries (below in §8/§9 history and PROJECT_REPORT), with indigo headings, white cards, mint/forest done badges, blue-tint "new" chips, jade progress fills, and primary (blue) buttons — "Ask to join" stays dark (ink), "Book a 1:1 on Google Meet" is primary. `/app/assignments` (M10) lists released-not-yet-submitted rows ("Week N: title" + "Released {day}") with the completed section beside/below — no due dates. `/app/calendar` and `/admin/calendar` use the §5 Calendar recipe.
 
 ### Paused state (Rule 3)
 Cream screen, centered column: md Wordmark → locked LockPanel "Your access is paused". No nav, no content.
 
 ### `/admin/*`
-Same blue nav bar with the ADMIN label and the page links; content inherits the tokens (indigo headings, white cards, blue primary buttons, forest/mint done badges). Function over beauty (SPEC §12).
+Same blue nav bar with the ADMIN label, the page links, and the initials chip; content inherits the tokens (indigo headings, white cards, blue primary buttons, forest/mint done badges). Function over beauty (SPEC §12). M10 additions: the students table carries "x of y" caption + a 72px jade ProgressBar per course and stacks the row actions vertically; the progress matrix colours cells (jade submitted with white link text · linen released-pending · stone unreleased), adds row/column totals, and pins its header row and student column sticky inside a `70vh` scroll box; `/admin/calendar` uses the §5 Calendar recipe.
 
 ---
 
@@ -231,9 +235,9 @@ Same blue nav bar with the ADMIN label and the page links; content inherits the 
 | 18 | Badge copy "New this Monday" | Releases aren't necessarily Mondays (release_date is free §6) | Built copy: "New this week" (released < 7 days) |
 | 19 | Welcome CTA "Sign in"; invite-only helper on the combined screen | §7 splits the screen: /login (email → link) + /invite/[token] | /login CTA reads "Email me a sign-in link" (honest about the magic link); the invite-only caption appears on both screens |
 | 20 | — (no landing mockup; SPEC §7 wants tutor bio + **photo**) | Photo required | Initials Avatar stands in until a real photo is provided (see README pre-launch); contact email is a placeholder |
-| 21 | No overdue / deadline state anywhere | SPEC §15.1 soft deadlines need an "Overdue" badge | `alert` Badge tone on the documented `#c4320a` error literal (§5) — kept through M9 as the one non-palette colour |
+| 21 | No overdue / deadline state anywhere | SPEC §15.1 soft deadlines need an "Overdue" badge | ~~`alert` Badge tone on the documented `#c4320a` error literal~~ **Superseded (M10, SPEC §15.7 #16):** deadlines removed; the mockup was right all along — the alert Badge tone is gone and `#c4320a` survives only as inline error text |
 | 22 | Mockup hides the nav links behind a hamburger ≤ 640px | A menu needs client state; the link row must work without JS | Links wrap to a scrollable second row under the brand (no hamburger) |
-| 23 | Mockup feature card shows video "pips" and "2 of 3 videos watched" | Per-lesson progress is parked (#8) | Pips omitted; meta shows material counts + the soft due date |
+| 23 | Mockup feature card shows video "pips" and "2 of 3 videos watched" | Per-lesson progress is parked (#8) | Pips omitted; meta shows material counts (the soft due date left in M10) |
 | 24 | Mockup uses orange for the clinic strip accent and the brand dot as well as the CTA | Owner: "orange — exactly one motivational CTA per view" | Read as a rule about CTAs: one orange *button* per view; the dot and the 3px clinic accent follow the mockup |
 | 25 | Mockup loads Plus Jakarta Sans from Google Fonts at runtime | `next/font` would self-host but needs the network at build time | Runtime stylesheet link (mockup's approach); swap to vendored files if the team wants zero third-party requests |
 

@@ -47,7 +47,7 @@ export function Wordmark({
           fontWeight: 800,
           fontSize: s.fs,
           letterSpacing: s.ls,
-          color: inverse ? "var(--text-inverse)" : "var(--text-display)",
+          color: inverse ? "var(--text-inverse)" : "var(--text-strong)",
         }}
       >
         lumen

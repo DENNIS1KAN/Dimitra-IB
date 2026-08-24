@@ -34,7 +34,7 @@ export function ListRow({
             fontSize: "15.5px",
             fontWeight: 700,
             letterSpacing: "-0.2px",
-            color: "var(--text-display)",
+            color: "var(--text-strong)",
           }}
         >
           {label}
@@ -75,9 +75,9 @@ export function ListRow({
 
 const lessonKinds = {
   video: { icon: "play_circle", color: "var(--action-primary)" },
-  slides: { icon: "description", color: "var(--color-plum)" },
+  slides: { icon: "description", color: "var(--text-heading-color)" },
   exercise: { icon: "edit_note", color: "var(--text-primary)" },
-  solutions: { icon: "lock_open", color: "var(--text-heading)" },
+  solutions: { icon: "lock_open", color: "var(--text-heading-color)" },
 };
 
 export function LessonRow({
@@ -112,7 +112,7 @@ export function LessonRow({
             fontSize: "15.5px",
             fontWeight: 700,
             letterSpacing: "-0.2px",
-            color: locked ? "var(--text-tertiary)" : "var(--text-display)",
+            color: locked ? "var(--text-tertiary)" : "var(--text-strong)",
           }}
         >
           {title}
@@ -200,7 +200,7 @@ export function LockPanel({
           fontSize: "var(--text-subheading)",
           fontWeight: 800,
           letterSpacing: "var(--tracking-subheading)",
-          color: locked ? "var(--text-heading)" : "var(--text-inverse)",
+          color: locked ? "var(--text-heading-color)" : "var(--text-inverse)",
         }}
       >
         {title}
@@ -382,7 +382,7 @@ export function Toast({
             fontSize: "var(--text-body-sm)",
             fontWeight: 700,
             letterSpacing: "var(--tracking-body-sm)",
-            color: "var(--text-display)",
+            color: "var(--text-strong)",
           }}
         >
           {message}

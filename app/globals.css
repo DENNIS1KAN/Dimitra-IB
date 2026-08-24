@@ -1,56 +1,55 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
-   Lumen design tokens — Phase 2 palette (SPEC §15.6 M9; DESIGN.md §1).
-   Source of truth: design/lumen-dashboard-mockup.html (authoritative),
-   design/extracted/tokens.css (secondary — radii, input/divider greys,
-   subject colours). Components use these vars; raw hex never appears in
+   Lumen design tokens — M10 palette audit (SPEC §15.7 #13; DESIGN.md §1).
+   Brand colours are exactly the owner's list; neutrals are the approved
+   ink/graphite/stone/linen ramp; tints are ALPHA of brand hexes, never
+   standalone hexes. Components use these vars; raw hex never appears in
    components except the error red documented in DESIGN.md.
+   NOTE the naming: --text-strong / --text-heading-color are COLOURS; the
+   --text-* names in the type-scale block below are SIZES. The M9 file used
+   --text-display / --text-heading for both, so those colours resolved to
+   px values and silently inherited (the invisible hero pill bug).
 --------------------------------------------------------------------------- */
 
 :root{
-/* Palette — Dimitra's brand decisions */
+/* Palette — Dimitra's brand decisions (SPEC §15.7 #13) */
 --color-cream:#f9f4f2;        /* page background */
 --color-white:#ffffff;        /* cards, interactive panels */
 --color-ink:#131211;          /* display text, text on orange */
 --color-graphite:#2d2c2b;     /* body text */
 --color-stone:#63605d;        /* muted text */
 --color-linen:#e2ded9;        /* borders */
---color-ash:#d0d0d0;          /* input borders (tokens.css) */
---color-driftwood:#c6c1b9;    /* dividers (tokens.css) */
 --color-blue:#0061ef;         /* navigation, primary buttons, links, selected */
---color-blue-tint:#e8f0fe;    /* blue tint chips */
+--color-blue-tint:rgba(0,97,239,.09);  /* blue tint chips (alpha of blue) */
 --color-indigo:#3b197f;       /* headings, hero, serious/academic */
---color-indigo-soft:#4b2a96;  /* hero gradient companion */
 --color-orange:#f47d31;       /* the one motivational CTA, brand dot, clinic accent */
 --color-jade:#00a86b;         /* correct, completed, progress — fills only */
 --color-forest:#1e7a4a;       /* green as TEXT (contrast-safe) */
---color-mint:#e7f5ee;         /* jade tint fills */
---color-plum:#5f2b89;         /* subject colour (tokens.css) */
---color-celeste:#00a4ff;      /* subject colour (tokens.css) */
+--color-mint:rgba(0,168,107,.12);      /* jade tint fills (alpha of jade) */
 /* Semantic — surfaces */
 --surface-page:var(--color-cream);
 --surface-card:var(--color-white);
 --surface-nav:var(--color-blue);
---surface-hero:linear-gradient(135deg,var(--color-indigo) 0%,var(--color-indigo-soft) 100%);
+--surface-hero:var(--color-indigo);
 --surface-contemplative:var(--color-indigo);
 --surface-tint-blue:var(--color-blue-tint);
 --surface-tint-green:var(--color-mint);
 --surface-ink:var(--color-ink);
-/* Semantic — text */
+/* Semantic — text COLOURS */
 --text-primary:var(--color-graphite);
---text-display:var(--color-ink);
---text-heading:var(--color-indigo);
+--text-strong:var(--color-ink);
+--text-heading-color:var(--color-indigo);
 --text-secondary:var(--color-graphite);
 --text-tertiary:var(--color-stone);
 --text-disabled:var(--color-stone);
 --text-inverse:var(--color-white);
 --text-on-cta:var(--color-ink);
 --text-success:var(--color-forest);
-/* Semantic — borders */
+/* Semantic — borders (one border neutral: linen) */
 --border-card:var(--color-linen);
---border-input:var(--color-ash);
---border-divider:var(--color-driftwood);
+--border-input:var(--color-linen);
+--border-divider:var(--color-linen);
 /* Semantic — actions */
 --action-primary:var(--color-blue);
 --action-cta:var(--color-orange);
@@ -61,12 +60,9 @@
 --state-done:var(--color-jade);
 --state-now:var(--color-blue);
 --state-locked:var(--color-stone);
---state-alert:#c4320a;
-/* Subject colours — one per class (assignment lives in product data) */
+--state-alert:#c4320a;        /* the sole functional exception: errors only */
+/* Subject colours — chemistry blue, everything else indigo (SPEC §15.7 #13) */
 --subject-chemistry:var(--color-blue);
---subject-orange:var(--color-orange);
---subject-plum:var(--color-plum);
---subject-celeste:var(--color-celeste);
 --subject-indigo:var(--color-indigo);
 }
 
@@ -116,7 +112,7 @@ html{scroll-behavior:smooth}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--text-primary);font-size:var(--text-body);line-height:var(--leading-body);letter-spacing:var(--tracking-body);-webkit-font-smoothing:antialiased}
 a{color:var(--action-primary);text-decoration:none}
 a:hover{text-decoration:underline}
-h1,h2,h3,h4{color:var(--text-heading)}
+h1,h2,h3,h4{color:var(--text-heading-color)}
 ::selection{background:var(--color-blue-tint);color:var(--color-ink)}
 :focus-visible{outline:3px solid var(--action-primary);outline-offset:2px;border-radius:6px}
 .lmn-nav :focus-visible,.lmn-hero :focus-visible{outline-color:#fff}
@@ -136,8 +132,8 @@ h1,h2,h3,h4{color:var(--text-heading)}
 .lmn-btn-dark{background:var(--action-dark);color:var(--text-inverse);box-shadow:var(--shadow-subtle)}
 .lmn-btn-dark:hover{color:var(--text-inverse)}
 .lmn-btn-dark:active{box-shadow:none}
-.lmn-btn-secondary{background:var(--surface-card);color:var(--text-display);border-color:var(--border-card)}
-.lmn-btn-secondary:hover{filter:none;background:var(--color-cream);color:var(--text-display)}
+.lmn-btn-secondary{background:var(--surface-card);color:var(--text-strong);border-color:var(--border-card)}
+.lmn-btn-secondary:hover{filter:none;background:var(--color-cream);color:var(--text-strong)}
 .lmn-btn-ghost{background:transparent;color:var(--action-primary);font-weight:var(--font-weight-bold)}
 .lmn-btn-ghost:hover{filter:none;opacity:.75;color:var(--action-primary)}
 .lmn-btn[disabled]{background:var(--color-linen);color:var(--text-disabled);cursor:not-allowed;box-shadow:none;filter:none;transform:none}
@@ -145,7 +141,7 @@ h1,h2,h3,h4{color:var(--text-heading)}
 .lmn-iconbtn{display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-pills);cursor:pointer;border:1px solid transparent;background:transparent;color:var(--text-secondary);transition:background .15s ease;font-family:var(--font-sans);text-decoration:none}
 .lmn-iconbtn:hover{background:rgba(19,18,17,.06);color:var(--text-secondary);text-decoration:none}
 .lmn-iconbtn:active{transform:translateY(1px)}
-.lmn-iconbtn-outline{background:var(--surface-card);border-color:var(--border-card);color:var(--text-display)}
+.lmn-iconbtn-outline{background:var(--surface-card);border-color:var(--border-card);color:var(--text-strong)}
 .lmn-iconbtn-dark{background:var(--action-dark);color:var(--text-inverse)}
 .lmn-iconbtn-dark:hover{background:var(--color-graphite);color:var(--text-inverse)}
 .lmn-iconbtn-inverse{color:rgba(255,255,255,.85)}
@@ -160,7 +156,7 @@ h1,h2,h3,h4{color:var(--text-heading)}
 .lmn-lessonrow[data-static="true"]:hover{border-color:var(--border-card);transform:none}
 
 .lmn-field{display:flex;flex-direction:column;gap:8px;font-family:var(--font-sans)}
-.lmn-field-label{font-size:var(--text-body-sm);font-weight:var(--font-weight-medium);letter-spacing:var(--tracking-body-sm);color:var(--text-display)}
+.lmn-field-label{font-size:var(--text-body-sm);font-weight:var(--font-weight-medium);letter-spacing:var(--tracking-body-sm);color:var(--text-strong)}
 .lmn-input{font-family:var(--font-sans);font-size:var(--text-body);letter-spacing:var(--tracking-body);color:var(--text-primary);background:var(--surface-card);border:1px solid var(--border-input);border-radius:var(--radius-inputs);padding:12px 16px;outline:none;transition:border-color .15s ease,box-shadow .15s ease;width:100%;box-sizing:border-box}
 .lmn-input::placeholder{color:var(--text-disabled)}
 .lmn-input:focus{border-color:var(--action-primary);box-shadow:0 0 0 3px rgba(0,97,239,.12)}
@@ -200,7 +196,7 @@ h1,h2,h3,h4{color:var(--text-heading)}
 /* Clinic strip (mockup .clinic) */
 .lmn-clinic{display:flex;align-items:center;gap:12px;padding:14px 18px;border-left:3px solid var(--color-orange);background:var(--surface-card);border-radius:0 12px 12px 0;font-size:14.5px;color:var(--text-primary);text-decoration:none}
 .lmn-clinic:hover{text-decoration:none;color:var(--text-primary)}
-.lmn-clinic b{font-weight:var(--font-weight-bold);color:var(--text-display)}
+.lmn-clinic b{font-weight:var(--font-weight-bold);color:var(--text-strong)}
 .lmn-clinic svg{color:var(--color-orange);flex:none}
 
 /* Week rail (mockup .rail / .row) */
@@ -213,7 +209,7 @@ a.lmn-rail-row:hover{border-color:var(--action-primary);transform:translateX(2px
 .lmn-rail-row.is-done .lmn-rail-disc{background:var(--state-done);color:#fff}
 .lmn-rail-row.is-now .lmn-rail-disc{background:#fff;border:3px solid var(--state-now)}
 .lmn-rail-row.is-locked .lmn-rail-disc{background:var(--color-linen);color:var(--state-locked)}
-.lmn-rail-row h3{margin:0;font-size:15.5px;font-weight:var(--font-weight-bold);letter-spacing:-0.2px;color:var(--text-display)}
+.lmn-rail-row h3{margin:0;font-size:15.5px;font-weight:var(--font-weight-bold);letter-spacing:-0.2px;color:var(--text-strong)}
 .lmn-rail-row.is-locked h3{color:var(--text-tertiary)}
 .lmn-rail-sub{font-size:13.5px;color:var(--text-tertiary);margin:2px 0 0}
 .lmn-rail-sub .ok{color:var(--text-success);font-weight:600}
@@ -226,13 +222,13 @@ a.lmn-rail-row:hover{border-color:var(--action-primary);transform:translateX(2px
 .lmn-note{background:var(--surface-card);border-radius:var(--radius-cards);box-shadow:var(--shadow-card);padding:18px 20px;display:flex;gap:16px;align-items:flex-start}
 @media (min-width:641px){.lmn-note{padding:22px 26px}}
 .lmn-note-mark{flex:none;width:38px;height:38px;border-radius:12px;background:var(--surface-tint-green);display:flex;align-items:center;justify-content:center;color:var(--text-success)}
-.lmn-note h2{margin:0 0 5px;font-size:13px;font-weight:var(--font-weight-bold);letter-spacing:.05em;text-transform:uppercase;color:var(--text-heading)}
+.lmn-note h2{margin:0 0 5px;font-size:13px;font-weight:var(--font-weight-bold);letter-spacing:.05em;text-transform:uppercase;color:var(--text-heading-color)}
 .lmn-note p{margin:0;font-size:15.5px;max-width:62ch;color:var(--text-primary)}
 
 /* Feature card (mockup .feature) */
 .lmn-feature{background:var(--surface-card);border-radius:var(--radius-featured);box-shadow:var(--shadow-card);padding:24px;display:flex;gap:24px;align-items:center;flex-wrap:wrap}
 @media (min-width:641px){.lmn-feature{padding:30px;gap:28px}}
-.lmn-feature h2{margin:0 0 6px;color:var(--text-heading);font-size:var(--text-heading-sm);font-weight:var(--font-weight-heavy);letter-spacing:var(--tracking-heading-sm)}
+.lmn-feature h2{margin:0 0 6px;color:var(--text-heading-color);font-size:var(--text-heading-sm);font-weight:var(--font-weight-heavy);letter-spacing:var(--tracking-heading-sm)}
 
 .lmn-footer{border-top:1px solid var(--border-card);padding:26px 0 calc(40px + env(safe-area-inset-bottom));font-size:13.5px;color:var(--text-tertiary)}
 .lmn-footer .lmn-wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
