@@ -1,4 +1,4 @@
-// Inline SVG icons (DESIGN.md §2 — replaces the Material Symbols icon font,
+// Inline SVG icons (DESIGN.md §2; replaces the Material Symbols icon font,
 // which rendered as literal words wherever the local woff2 was absent).
 // 24×24 stroke glyphs, currentColor, keyed by the names the code already
 // used so call sites read the same. Decorative: aria-hidden.

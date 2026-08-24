@@ -18,8 +18,8 @@ export async function signIn(formData: FormData) {
   const now = new Date();
   const [user] = await db.select().from(users).where(eq(users.username, username));
   const locked = user ? isLockedOut(user.lockedUntil, now) : false;
-  // The scrypt verify always runs — dummy hash for unknown users, and even
-  // while locked — so unknown / locked / wrong-password are indistinguishable
+  // The scrypt verify always runs (dummy hash for unknown users, and even
+  // while locked) so unknown / locked / wrong-password are indistinguishable
   // in both body and timing.
   const passwordOk = verifyPassword(password, user?.passwordHash ?? DUMMY_HASH);
   const ok = !!user && passwordOk && !locked;

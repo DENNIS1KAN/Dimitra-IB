@@ -4,7 +4,7 @@ import { contentTypeFor, extensionOf } from "@/lib/content-type";
 import { storage } from "@/lib/storage";
 import { adminSubmission } from "@/lib/submissions";
 
-// Submission bytes — the ONLY read path, and it is admin-only (SPEC §15.5).
+// Submission bytes: the ONLY read path, and it is admin-only (SPEC §15.5).
 // Everyone else (students included, even for their own file) gets 404, so
 // nothing about a submission's existence leaks.
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

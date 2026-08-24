@@ -2,7 +2,7 @@ import { Button, Card } from "@/components/lumen/core";
 import { getSettings } from "@/lib/settings";
 import { requireStudent } from "@/lib/student";
 
-// /app/sessions — the next clinic (settings.clinic_text) and the Google
+// /app/sessions: the next clinic (settings.clinic_text) and the Google
 // Meet booking link-out (settings.booking_url, new tab). No Calendar API
 // (SPEC §15.1 / §15.4).
 export default async function SessionsPage() {
@@ -49,7 +49,7 @@ export default async function SessionsPage() {
               whiteSpace: "pre-wrap",
             }}
           >
-            {clinicText || "No clinic scheduled yet — Dimitra will post the next one here."}
+            {clinicText || "No clinic scheduled yet. Dimitra will post the next one here."}
           </p>
         </Card>
 
@@ -64,7 +64,7 @@ export default async function SessionsPage() {
               color: "var(--text-secondary)",
             }}
           >
-            Pick a slot in Dimitra&rsquo;s calendar — the Meet link arrives with your booking.
+            Pick a slot in Dimitra&rsquo;s calendar. The Meet link arrives with your booking.
           </p>
           {bookingUrl ? (
             <Button variant="primary" href={bookingUrl} external fullWidth>
@@ -72,7 +72,7 @@ export default async function SessionsPage() {
             </Button>
           ) : (
             <p style={{ margin: 0, fontSize: "var(--text-body-sm)", color: "var(--text-tertiary)" }}>
-              Booking link coming soon — message Dimitra to arrange a session meanwhile.
+              Booking link coming soon. Message Dimitra to arrange a session meanwhile.
             </p>
           )}
         </Card>

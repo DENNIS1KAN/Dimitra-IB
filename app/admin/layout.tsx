@@ -10,7 +10,7 @@ import { signOut } from "@/lib/auth-actions";
 import { initials } from "@/lib/format";
 import { unreadForTutor } from "@/lib/messages";
 
-// Admin shell — function over beauty (SPEC §12). Students get redirected
+// Admin shell, function over beauty (SPEC §12). Students get redirected
 // to /app; logged-out users to /login.
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const user = await getSessionUser();

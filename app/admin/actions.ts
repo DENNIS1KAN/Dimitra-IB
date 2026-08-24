@@ -43,7 +43,7 @@ export async function updateCohort(formData: FormData) {
 }
 
 // ---------------------------------------------------------------------------
-// Enrollments (SPEC §15.5) — the requests queue + each student's standing
+// Enrollments (SPEC §15.5): the requests queue + each student's standing
 // per course. users.active stays the global switch; these are per course.
 
 export async function approveRequest(formData: FormData) {
@@ -114,7 +114,7 @@ export async function addEnrollment(formData: FormData) {
 }
 
 // ---------------------------------------------------------------------------
-// Students & credentials — Dimitra creates each account and hands the
+// Students & credentials: Dimitra creates each account and hands the
 // username + password to the student herself (no email involved). Passwords
 // are typed in the form so no secret ever rides in a redirect URL.
 
@@ -134,7 +134,7 @@ export async function createStudent(formData: FormData) {
 
   try {
     // The cohort picked at creation becomes the student's first ACTIVE
-    // enrollment (SPEC §15.5) — user + enrollment land together or not at all.
+    // enrollment (SPEC §15.5); user + enrollment land together or not at all.
     await db.transaction(async (tx) => {
       const [created] = await tx
         .insert(users)
@@ -206,7 +206,7 @@ export async function createModule(formData: FormData) {
       .returning();
   } catch (err) {
     if (isUniqueViolation(err)) {
-      // Week-taken is only detectable server-side — carry the typed values
+      // Week-taken is only detectable server-side; carry the typed values
       // back so the redirect doesn't wipe the form.
       const carry = new URLSearchParams({
         error: "week-taken",
@@ -313,7 +313,7 @@ export async function deleteMaterial(formData: FormData) {
 }
 
 // ---------------------------------------------------------------------------
-// Messages (SPEC §15.5) — the tutor's reply; replying marks the thread read.
+// Messages (SPEC §15.5): the tutor's reply; replying marks the thread read.
 
 export async function replyToStudent(
   studentId: string,
@@ -329,7 +329,7 @@ export async function replyToStudent(
 }
 
 // ---------------------------------------------------------------------------
-// Settings (SPEC §15.5) — booking_url, clinic_text.
+// Settings (SPEC §15.5): booking_url, clinic_text, clinic_day, clinic_time.
 
 export async function saveSettings(
   _prev: SettingsFormState,

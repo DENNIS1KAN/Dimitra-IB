@@ -19,7 +19,7 @@ const TYPE_ICONS: Record<string, string> = {
   solutions: "lock_open",
 };
 
-// /admin/modules/[id] — edit title/description/release date; upload
+// /admin/modules/[id]: edit title/description/release day; upload
 // materials (drag-and-drop); reorder (SPEC §7).
 export default async function AdminModuleEdit({
   params,
@@ -66,7 +66,7 @@ export default async function AdminModuleEdit({
             flex: 1,
           }}
         >
-          Week {module.weekNumber} — {module.title}
+          Week {module.weekNumber}: {module.title}
         </h1>
         <Badge tone="neutral">{cohort?.name}</Badge>
       </div>
@@ -165,7 +165,7 @@ export default async function AdminModuleEdit({
                 <form action={deleteMaterial}>
                   <input type="hidden" name="id" value={m.id} />
                   <ConfirmSubmit
-                    message={`Delete "${m.title}"? The uploaded file and its viewing history go with it — there is no undo.`}
+                    message={`Delete "${m.title}"? The uploaded file and its viewing history go with it. There is no undo.`}
                   >
                     Delete
                   </ConfirmSubmit>

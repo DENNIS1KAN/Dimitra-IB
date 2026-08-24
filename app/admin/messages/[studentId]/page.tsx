@@ -9,7 +9,7 @@ import { firstName } from "@/lib/format";
 import { adminThread } from "@/lib/messages";
 import { replyToStudent } from "../../actions";
 
-// /admin/messages/[studentId] — one student's thread + reply (SPEC §15.5).
+// /admin/messages/[studentId]: one student's thread + reply (SPEC §15.5).
 // Replying marks the thread read for the tutor; opening alone does not.
 export default async function AdminThread({ params }: { params: Promise<{ studentId: string }> }) {
   const user = await requireAdmin();
@@ -46,7 +46,7 @@ export default async function AdminThread({ params }: { params: Promise<{ studen
       ) : (
         <Card padding="20px">
           <p style={{ margin: 0, fontSize: "var(--text-body-sm)", color: "var(--text-secondary)" }}>
-            No messages yet — write the first one below.
+            No messages yet. Write the first one below.
           </p>
         </Card>
       )}

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Lumen — private IB tutoring with Dimitra Anglou",
+  title: "Lumen: private IB tutoring with Dimitra Anglou",
   description:
     "Weekly modules, gated practice, and clinics for Dimitra Anglou's IB Chemistry students. Access by invitation.",
 };
@@ -14,7 +14,7 @@ export const viewport: Viewport = {
 };
 
 // Plus Jakarta Sans (DESIGN.md §2) loaded the way the reference mockup does
-// — a stylesheet link with display=swap — so the build never depends on a
+// (a stylesheet link with display=swap) so the build never depends on a
 // network fetch; the fallback stack applies until it arrives (or offline).
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

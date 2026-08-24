@@ -39,7 +39,7 @@ export function PasswordForm({
       {state && !state.ok && (
         <p role="alert" style={{ margin: 0, fontSize: "var(--text-body-sm)", color: "#c4320a" }}>
           {state.reason === "wrong-current"
-            ? "That isn't your current password — try again."
+            ? "That isn't your current password. Try again."
             : `Your new password needs at least ${MIN_PASSWORD_LENGTH} characters.`}
         </p>
       )}

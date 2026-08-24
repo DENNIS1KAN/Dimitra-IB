@@ -7,7 +7,7 @@ import { firstName, formatDay, formatUnlock, greeting, isNewRelease } from "@/li
 import { materialMeta, studentModuleList, type ModuleListEntry } from "@/lib/queries";
 import { getSettings } from "@/lib/settings";
 
-// /app — the dashboard, composed per design/lumen-dashboard-mockup.html:
+// /app, the dashboard, composed per design/lumen-dashboard-mockup.html:
 // indigo hero (greeting + progress) → note from Dimitra → "This week"
 // feature card with the ONE orange CTA → clinic strip → the term rail →
 // footer. One responsive layout. Same data, same rules as before (Rule 1
@@ -30,15 +30,15 @@ export default async function AppPage() {
   const emptyFeature = () => {
     const requested = list.access.enrollments.some((e) => e.status === "requested");
     if (list.activeCohorts.length === 0 && list.pausedCohorts.length > 0) {
-      return "Your course is paused — talk to Dimitra to continue. Your progress is safe.";
+      return "Your course is paused. Talk to Dimitra to continue. Your progress is safe.";
     }
     if (list.activeCohorts.length === 0 && requested) {
-      return "Your request is with Dimitra — your modules appear here once she confirms your place.";
+      return "Your request is with Dimitra. Your modules appear here once she confirms your place.";
     }
     if (list.activeCohorts.length === 0) {
-      return "You're not in a course yet — browse the catalog and ask to join.";
+      return "You're not in a course yet. Browse the catalog and ask to join.";
     }
-    return "Your first module lands soon — Dimitra will let you know the moment it unlocks.";
+    return "Your first module lands soon. Dimitra will let you know the moment it unlocks.";
   };
 
   const noteCard = hero?.module.description ? (
@@ -69,7 +69,7 @@ export default async function AppPage() {
   );
 
   // The term rail: current week first, then older released (newest first),
-  // then locked teasers — the same order the list always had.
+  // then locked teasers: the same order the list always had.
   type Kind = "now" | "open" | "done" | "locked";
   const rows: { entry: ModuleListEntry; kind: Kind }[] = [
     ...(hero ? [{ entry: hero, kind: (hero.complete ? "done" : "now") as Kind }] : []),
@@ -174,7 +174,7 @@ export default async function AppPage() {
             <Link href="/app/sessions" className="lmn-clinic lmn-rise" style={{ margin: "14px 0 0", animationDelay: ".2s" }}>
               <Icon name="calendar" size={18} />
               <span>
-                <b>Next clinic</b> — {settings.clinicText}
+                <b>Next clinic</b>: {settings.clinicText}
               </span>
             </Link>
           )}

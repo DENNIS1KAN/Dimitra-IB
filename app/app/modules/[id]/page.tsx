@@ -7,7 +7,7 @@ import { getSessionUser } from "@/lib/auth";
 import { isNewRelease } from "@/lib/format";
 import { studentModuleDetail } from "@/lib/queries";
 
-// /app/modules/[id] — module detail (DESIGN.md §6). Rule 1 makes foreign or
+// /app/modules/[id]: module detail (DESIGN.md §6). Rule 1 makes foreign or
 // unreleased modules 404 even by direct URL; Rule 2 gates the solutions.
 export default async function ModulePage({ params }: { params: Promise<{ id: string }> }) {
   const user = await getSessionUser();
@@ -70,7 +70,7 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
     }
   };
 
-  // SPEC §7: slides are "inline view + download" — the row opens the viewer,
+  // SPEC §7: slides are "inline view + download": the row opens the viewer,
   // the trailing button fetches the stamped copy (SPEC §9).
   const withDownload = (materialId: string, row: React.ReactNode) => (
     <div key={materialId} style={{ display: "flex", alignItems: "stretch", gap: 8 }}>
@@ -125,7 +125,7 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
             <LockPanel
               locked={false}
               title="Solutions unlocked"
-              body="Nice work. Compare your working line by line — and bring anything that still feels off to Dimitra."
+              body="Nice work. Compare your working line by line, and bring anything that still feels off to Dimitra."
               cta={solutions.length > 0 ? "Open solutions" : undefined}
               ctaHref={solutions.length > 0 ? `/api/materials/${solutions[0].id}` : undefined}
             />

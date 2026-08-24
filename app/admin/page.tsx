@@ -13,7 +13,7 @@ import {
   toggleStudentActive,
 } from "./actions";
 
-// /admin — students table: name, cohort, active toggle, last seen, account
+// /admin, the students table: name, cohort, active toggle, last seen, account
 // creation + password resets (SPEC §7). Plain and fast; no design effort (§12).
 export default async function AdminStudents({
   searchParams,
@@ -99,8 +99,8 @@ export default async function AdminStudents({
         <Card padding="16px" style={{ borderColor: "var(--action-primary)" }}>
           <p style={{ margin: 0, fontSize: "var(--text-body-sm)", fontWeight: 700 }}>
             {ok === "created"
-              ? "Student created — share the username and password with them."
-              : "Password updated — share the new password with the student."}
+              ? "Student created. Share the username and password with them."
+              : "Password updated. Share the new password with the student."}
           </p>
         </Card>
       )}
@@ -111,7 +111,7 @@ export default async function AdminStudents({
               ? "That username or email already has an account."
               : error === "password-short"
                 ? "Passwords need at least 8 characters."
-                : "Something was missing — check the form and try again."}
+                : "Something was missing. Check the form and try again."}
           </p>
         </Card>
       )}
@@ -260,7 +260,7 @@ export default async function AdminStudents({
               {students.length === 0 && (
                 <tr>
                   <td style={{ ...td, color: "var(--text-tertiary)" }} colSpan={6}>
-                    No students yet — create the first account below.
+                    No students yet. Create the first account below.
                   </td>
                 </tr>
               )}

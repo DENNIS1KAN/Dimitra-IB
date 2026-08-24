@@ -6,7 +6,7 @@ import { contentTypeFor } from "@/lib/content-type";
 import { formatDateTime } from "@/lib/format";
 import { adminSubmission } from "@/lib/submissions";
 
-// /admin/submissions/[id] — one student's attempt: file + note (SPEC §15.5).
+// /admin/submissions/[id]: one student's attempt, file + note (SPEC §15.5).
 // Admin-only read path; the bytes come from /api/admin/submissions/[id]/file.
 export default async function AdminSubmissionPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireAdmin();
@@ -35,7 +35,7 @@ export default async function AdminSubmissionPage({ params }: { params: Promise<
             letterSpacing: "var(--tracking-heading-sm)",
           }}
         >
-          {student.name} — Week {module.weekNumber}: {module.title}
+          {student.name}, Week {module.weekNumber}: {module.title}
         </h1>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
           <Badge tone="neutral">{cohort.name}</Badge>
@@ -64,7 +64,7 @@ export default async function AdminSubmissionPage({ params }: { params: Promise<
         {label("File")}
         {!submission.fileKey ? (
           <p style={{ margin: 0, fontSize: "var(--text-body-sm)", color: "var(--text-tertiary)" }}>
-            No file — {submission.note ? "a note only." : "marked as attempted."}
+            No file: {submission.note ? "a note only." : "marked as attempted."}
           </p>
         ) : type?.startsWith("image/") ? (
           <a href={fileUrl} target="_blank" rel="noopener noreferrer">

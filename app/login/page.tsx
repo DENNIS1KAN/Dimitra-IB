@@ -5,7 +5,7 @@ import { getSessionUser } from "@/lib/auth";
 import { signIn } from "./actions";
 
 // Welcome skin (DESIGN.md §6): centered xl wordmark + tagline, bottom-anchored
-// form, 24px side padding. Username + password — Dimitra hands out the
+// form, 24px side padding. Username + password; Dimitra hands out the
 // credentials herself.
 export default async function LoginPage({
   searchParams,
@@ -51,7 +51,7 @@ export default async function LoginPage({
               color: "#c4320a",
             }}
           >
-            Wrong username or password — try again.
+            Wrong username or password. Try again.
           </p>
         )}
         <Input
@@ -81,7 +81,7 @@ export default async function LoginPage({
             color: "var(--text-tertiary)",
           }}
         >
-          Accounts are created by Dimitra — ask her for your credentials
+          Accounts are created by Dimitra. Ask her for your credentials
         </p>
       </form>
     </main>

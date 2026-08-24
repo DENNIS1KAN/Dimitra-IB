@@ -9,7 +9,7 @@ import { requireAdmin } from "@/lib/admin";
 import { formatDay } from "@/lib/format";
 import { createModule } from "../actions";
 
-// /admin/modules — list by cohort + new module (SPEC §7).
+// /admin/modules: list by cohort + new module (SPEC §7).
 export default async function AdminModules({
   searchParams,
 }: {
@@ -141,7 +141,7 @@ export default async function AdminModules({
             name="description"
             rows={3}
             defaultValue={carried.description ?? ""}
-            placeholder="A couple of sentences in your voice — what to focus on, what to bring to the clinic."
+            placeholder="A couple of sentences in your voice: what to focus on, what to bring to the clinic."
           />
           <Button variant="primary" size="sm" type="submit">
             Create module

@@ -3,7 +3,7 @@ import { Card } from "@/components/lumen/core";
 import { requireStudent } from "@/lib/student";
 import { changePassword } from "../actions";
 
-// /app/account — who I am + change my own password (SPEC §15.4).
+// /app/account: who I am + change my own password (SPEC §15.4).
 export default async function AccountPage() {
   const user = await requireStudent();
 

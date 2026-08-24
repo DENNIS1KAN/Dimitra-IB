@@ -6,7 +6,7 @@ import { Input, TextArea } from "@/components/lumen/forms";
 import { requireAdmin } from "@/lib/admin";
 import { createCohort, updateCohort } from "../actions";
 
-// /admin/courses — each cohort's catalog fields (blurb, listed) and member
+// /admin/courses: each cohort's catalog fields (blurb, listed) and member
 // counts, plus cohort creation (SPEC §15.5). Function over beauty (§12).
 export default async function AdminCourses({
   searchParams,
@@ -114,7 +114,7 @@ export default async function AdminCourses({
             />
           </div>
           <p style={{ margin: 0, fontSize: "var(--text-caption)", color: "var(--text-tertiary)" }}>
-            New courses start unlisted — add a blurb and tick &ldquo;Listed&rdquo; above when it&rsquo;s ready.
+            New courses start unlisted. Add a blurb and tick &ldquo;Listed&rdquo; above when it&rsquo;s ready.
           </p>
           <Button variant="dark" size="sm" type="submit">
             Create course

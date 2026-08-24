@@ -26,7 +26,7 @@ export default function ErrorPage({ reset }: { error: Error; reset: () => void }
             maxWidth: 360,
           }}
         >
-          Not your fault. Try again — and if it keeps happening, tell Dimitra
+          Not your fault. Try again, and if it keeps happening, tell Dimitra
           what you were doing.
         </p>
       </div>

@@ -16,8 +16,8 @@ import type { PasswordFormState } from "@/components/app/password-form";
 
 /**
  * "Ask to join" (SPEC §15.1): creates a request that Dimitra approves in
- * /admin/requests. Only LISTED cohorts can be asked for — even by a crafted
- * POST — and an existing active/paused/requested row is left untouched.
+ * /admin/requests. Only LISTED cohorts can be asked for, even by a crafted
+ * POST, and an existing active/paused/requested row is left untouched.
  */
 export async function requestToJoin(formData: FormData) {
   const user = await requireStudent();
@@ -54,7 +54,7 @@ export async function requestToJoin(formData: FormData) {
 
 /**
  * The student's composer (SPEC §15.4). The thread is derived from the
- * session — lib/messages ignores any student id in the form.
+ * session; lib/messages ignores any student id in the form.
  */
 export async function sendMessage(_prev: ComposerState, formData: FormData): Promise<ComposerState> {
   const user = await requireStudent();

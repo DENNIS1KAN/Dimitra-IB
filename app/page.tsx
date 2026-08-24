@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { Avatar, Button, Card, Icon, Wordmark } from "@/components/lumen/core";
 
 export const metadata: Metadata = {
-  title: "Lumen — private IB tutoring with Dimitra Anglou",
+  title: "Lumen: private IB tutoring with Dimitra Anglou",
   description:
-    "Weekly pre-recorded IB Chemistry modules, gated practice with worked solutions, and live clinics. A private program by Dimitra Anglou — access by invitation.",
+    "Weekly pre-recorded IB Chemistry modules, gated practice with worked solutions, and live clinics. A private program by Dimitra Anglou, access by invitation.",
 };
 
 const steps = [
@@ -12,7 +12,7 @@ const steps = [
     icon: "play_circle",
     color: "var(--action-primary)",
     title: "Watch",
-    body: "Short, focused videos land every Monday — the week's teaching, recorded once and explained properly.",
+    body: "Short, focused videos land every Monday: the week's teaching, recorded once and explained properly.",
   },
   {
     icon: "edit_note",
@@ -24,7 +24,7 @@ const steps = [
     icon: "photo_camera",
     color: "var(--color-plum)",
     title: "Submit",
-    body: "A photo of honest working is all it takes — marks don't matter here, attempts do.",
+    body: "A photo of honest working is all it takes. Marks don't matter here, attempts do.",
   },
   {
     icon: "lock_open",
@@ -37,7 +37,7 @@ const steps = [
 const credentials = [
   ["school", "MSc Chemistry, National & Kapodistrian University of Athens"],
   ["history_edu", "12 years teaching IB Chemistry HL, 1:1 and small groups"],
-  ["fact_check", "IB examiner — Paper 2, five sessions"],
+  ["fact_check", "IB examiner: Paper 2, five sessions"],
   ["trending_up", "Students average 6.4 in HL Chemistry over the last three cohorts"],
 ];
 
@@ -46,7 +46,7 @@ const credentials = [
 export default function Landing() {
   return (
     <main style={{ display: "flex", flexDirection: "column", minHeight: "100dvh" }}>
-      {/* Hero — indigo owns it (DESIGN.md §6) */}
+      {/* Hero: indigo owns it (DESIGN.md §6) */}
       <section className="lmn-hero" style={{ padding: "64px 0 56px" }}>
         <div
           className="lmn-wrap"
@@ -65,7 +65,7 @@ export default function Landing() {
             }}
           >
             Weekly IB Chemistry modules, practice that earns its solutions, and
-            clinics for the hard parts — structured teaching between lessons,
+            clinics for the hard parts. Structured teaching between lessons,
             without the scheduling.
           </p>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
@@ -158,7 +158,7 @@ export default function Landing() {
             }}
           >
             Modules unlock automatically each week. Live time is kept for
-            clinics and targeted 1:1s — not for re-explaining the basics.
+            clinics and targeted 1:1s, not for re-explaining the basics.
           </p>
         </div>
       </section>
@@ -239,12 +239,12 @@ export default function Landing() {
                   fontWeight: 500,
                 }}
               >
-                “Chemistry isn&rsquo;t hard — it&rsquo;s cumulative. My job is
+                “Chemistry isn&rsquo;t hard, it&rsquo;s cumulative. My job is
                 making sure nothing quietly slips, so exam season feels like
                 revision, not rescue.”
               </p>
               <p style={{ margin: "16px 0 0", fontSize: "var(--text-body-sm)", fontStyle: "italic", opacity: 0.8 }}>
-                — Dimitra
+                Dimitra
               </p>
             </Card>
           </div>

@@ -23,7 +23,7 @@ export default function NotFound() {
             maxWidth: 360,
           }}
         >
-          This page doesn&rsquo;t exist — or it isn&rsquo;t yours to see. If you
+          This page doesn&rsquo;t exist, or it isn&rsquo;t yours to see. If you
           followed a link from Dimitra, ask her for a fresh one.
         </p>
       </div>

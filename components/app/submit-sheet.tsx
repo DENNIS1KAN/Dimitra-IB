@@ -7,7 +7,7 @@ import { TextArea } from "@/components/lumen/forms";
 import { LockPanel } from "@/components/lumen/learning";
 import { markAttemptSent } from "./submission-toast";
 
-// Submit box (SPEC §7): file and/or note and/or "mark attempted" — any of
+// Submit box (SPEC §7): file and/or note and/or "mark attempted"; any of
 // the three counts. Bottom-sheet recipe from DESIGN.md §6; solutions unlock
 // instantly on success (Rule 2).
 export function SubmitPanel({ moduleId }: { moduleId: string }) {
@@ -39,7 +39,7 @@ export function SubmitPanel({ moduleId }: { moduleId: string }) {
       markAttemptSent();
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Submit failed — try again");
+      setError(e instanceof Error ? e.message : "Submit failed. Try again.");
     } finally {
       setBusy(false);
     }
@@ -50,7 +50,7 @@ export function SubmitPanel({ moduleId }: { moduleId: string }) {
       <LockPanel
         locked
         title="Submit your attempt to unlock solutions"
-        body="Upload a photo of your working — marks don't matter here, honest attempts do."
+        body="Upload a photo of your working. Marks don't matter here, honest attempts do."
         action={
           <Button variant="cta" onClick={() => setOpen(true)}>
             Submit my attempt

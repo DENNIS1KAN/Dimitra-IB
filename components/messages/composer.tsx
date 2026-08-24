@@ -68,7 +68,7 @@ export function MessageComposer({
       {state && !state.ok && (
         <p role="alert" style={{ margin: 0, fontSize: "var(--text-body-sm)", color: "#c4320a" }}>
           {state.reason === "empty"
-            ? "Write something first — empty messages aren't sent."
+            ? "Write something first. Empty messages aren't sent."
             : `Messages are limited to ${MAX_MESSAGE_LENGTH} characters.`}
         </p>
       )}

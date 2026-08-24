@@ -1,4 +1,4 @@
-// Lumen learning components — recipes from DESIGN.md §5 (Phase 2 palette).
+// Lumen learning components: recipes from DESIGN.md §5 (Phase 2 palette).
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import { Avatar, Badge, Button, Icon } from "./core";
@@ -272,7 +272,7 @@ export function ModuleCard({
           </p>
         )}
       </div>
-      {/* The one orange CTA on this view — ink text on orange. */}
+      {/* The one orange CTA on this view: ink text on orange. */}
       <Button variant="cta" size="lg" href={href}>
         {cta}
         <Icon name="arrow_right" size={18} strokeWidth={2.6} />
@@ -281,7 +281,7 @@ export function ModuleCard({
   );
 }
 
-// --- NoteCard (mockup .note — "Note from Dimitra") -------------------------
+// --- NoteCard (mockup .note, "Note from Dimitra") --------------------------
 
 export function NoteCard({
   note,

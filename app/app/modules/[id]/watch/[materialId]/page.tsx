@@ -21,7 +21,7 @@ export default async function WatchPage({
   const material = detail.materials.find((m) => m.id === materialId && m.type === "video");
   if (!material) notFound();
 
-  // One 'view' per page visit — the bytes route deliberately skips video
+  // One 'view' per page visit; the bytes route deliberately skips video
   // views so range/preload requests don't inflate the events table.
   await logMaterialEvent(user.id, material.id, "view");
 
@@ -77,7 +77,7 @@ export default async function WatchPage({
             color: "var(--text-tertiary)",
           }}
         >
-          If the video doesn&rsquo;t play yet, it may still be processing — check
+          If the video doesn&rsquo;t play yet, it may still be processing. Check
           back in a few minutes.
         </p>
       </div>

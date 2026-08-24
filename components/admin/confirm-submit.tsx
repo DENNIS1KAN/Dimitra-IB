@@ -3,7 +3,7 @@
 import type { CSSProperties, ReactNode } from "react";
 
 // Submit button with a native confirm() gate, for destructive one-click
-// admin forms (material delete removes the file and its event history —
+// admin forms (material delete removes the file and its event history;
 // there is no undo). Styled like Button size="sm".
 export function ConfirmSubmit({
   message,

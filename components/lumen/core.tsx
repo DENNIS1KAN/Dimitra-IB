@@ -1,4 +1,4 @@
-// Lumen design-system primitives — recipes from DESIGN.md §5 (Phase 2
+// Lumen design-system primitives: recipes from DESIGN.md §5 (Phase 2
 // palette). Every colour is a token from app/globals.css.
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
@@ -137,7 +137,7 @@ const badgeTones: Record<string, CSSProperties> = {
     color: "var(--text-tertiary)",
     border: "1px solid var(--border-card)",
   },
-  // "chip" in the mockup — blue tint + blue text
+  // "chip" in the mockup: blue tint + blue text
   new: {
     background: "var(--surface-tint-blue)",
     color: "var(--action-primary)",

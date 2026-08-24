@@ -3,7 +3,7 @@ import { studentCourses, type CatalogCourse, type MyCourse } from "@/lib/queries
 import { requireStudent } from "@/lib/student";
 import { requestToJoin } from "../actions";
 
-// /app/courses — my courses (active / paused) + the catalog of listed
+// /app/courses: my courses (active / paused) + the catalog of listed
 // courses with "Ask to join" (SPEC §15.4). Mobile-first, DESIGN.md recipes.
 export default async function CoursesPage({
   searchParams,
@@ -72,7 +72,7 @@ export default async function CoursesPage({
             color: "var(--text-secondary)",
           }}
         >
-          Paused — talk to Dimitra to continue. Your modules and progress are kept safe meanwhile.
+          Paused. Talk to Dimitra to continue. Your modules and progress are kept safe meanwhile.
         </p>
       ) : (
         <>
@@ -154,7 +154,7 @@ export default async function CoursesPage({
     ok === "requested" ? (
       <Card padding="16px" style={{ borderColor: "var(--action-primary)" }}>
         <p style={{ margin: 0, fontSize: "var(--text-body-sm)", fontWeight: 700 }}>
-          Request sent — Dimitra will confirm your place.
+          Request sent. Dimitra will confirm your place.
         </p>
       </Card>
     ) : null;
@@ -162,7 +162,7 @@ export default async function CoursesPage({
   const emptyMine = (
     <Card padding="20px">
       <p style={{ margin: 0, fontSize: "var(--text-body-sm)", color: "var(--text-secondary)" }}>
-        You&rsquo;re not in a course yet — ask to join one below.
+        You&rsquo;re not in a course yet. Ask to join one below.
       </p>
     </Card>
   );

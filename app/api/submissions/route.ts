@@ -14,7 +14,7 @@ import { isUuid } from "@/lib/validate";
 const FILE_EXTS = new Set([".jpg", ".jpeg", ".png", ".heic", ".webp", ".pdf"]);
 const MAX_BYTES = 25 * 1024 * 1024;
 
-// A submission may be a file upload, a note, or just "I attempted this" —
+// A submission may be a file upload, a note, or just "I attempted this";
 // any of the three counts (SPEC §6). Unique per (student, module).
 export async function POST(request: NextRequest) {
   const user = await getSessionUser();
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     }
     console.error("[submissions] insert failed:", err);
     return NextResponse.json(
-      { error: "Something went wrong saving your attempt — try again." },
+      { error: "Something went wrong saving your attempt. Try again." },
       { status: 500 },
     );
   }

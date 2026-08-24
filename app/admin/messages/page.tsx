@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/admin";
 import { formatDateTime } from "@/lib/format";
 import { adminThreads } from "@/lib/messages";
 
-// /admin/messages — every student as a thread, latest activity first, with
+// /admin/messages: every student as a thread, latest activity first, with
 // unread counts (SPEC §15.5). Function over beauty (§12).
 export default async function AdminMessages() {
   const user = await requireAdmin();

@@ -11,7 +11,7 @@ import { storage } from "@/lib/storage";
 import { isUuid } from "@/lib/validate";
 
 
-// Serves material bytes from storage — with the gating rules enforced
+// Serves material bytes from storage, with the gating rules enforced
 // server-side, not just hidden in the UI. Direct URLs obey Rules 1 & 2.
 export async function GET(
   request: NextRequest,
@@ -58,10 +58,10 @@ export async function GET(
     headers.set("Content-Disposition", `attachment; filename="${filename}"`);
   }
 
-  // Range support so <video> can seek — served via storage.getRange, so a
+  // Range support so <video> can seek, served via storage.getRange, so a
   // seek reads only its slice instead of buffering the whole file per
   // request. (Videos log a single 'view' from the watch page instead of
-  // here — otherwise every byte-range/preload request would count.)
+  // here, otherwise every byte-range/preload request would count.)
   const range = request.headers.get("range");
   const m = range?.match(/bytes=(\d+)-(\d*)/);
   if (m && contentType.startsWith("video/")) {
@@ -70,7 +70,7 @@ export async function GET(
       size = await storage.size(material.storageKey);
     } catch {
       return NextResponse.json(
-        { error: "This file is still processing — try again shortly." },
+        { error: "This file is still processing. Try again shortly." },
         { status: 404 },
       );
     }
@@ -91,7 +91,7 @@ export async function GET(
     data = await storage.get(material.storageKey);
   } catch {
     return NextResponse.json(
-      { error: "This file is still processing — try again shortly." },
+      { error: "This file is still processing. Try again shortly." },
       { status: 404 },
     );
   }

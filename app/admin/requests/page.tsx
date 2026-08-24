@@ -6,7 +6,7 @@ import { requireAdmin } from "@/lib/admin";
 import { formatDay } from "@/lib/format";
 import { approveRequest, declineRequest } from "../actions";
 
-// /admin/requests — pending join requests: approve (→ active enrollment) or
+// /admin/requests: pending join requests, approve (→ active enrollment) or
 // decline (SPEC §15.5). Plain and fast (§12).
 export default async function AdminRequests() {
   await requireAdmin();
@@ -48,7 +48,7 @@ export default async function AdminRequests() {
       </h1>
       <p style={{ margin: 0, fontSize: "var(--text-body-sm)", color: "var(--text-tertiary)" }}>
         Students ask to join from their Courses page. Approving makes the enrollment active
-        straight away — sort out payment with them first.
+        straight away. Sort out payment with them first.
       </p>
 
       <Card padding="0">

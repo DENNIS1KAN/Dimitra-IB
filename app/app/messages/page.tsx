@@ -6,12 +6,12 @@ import { markThreadReadForStudent, studentThread } from "@/lib/messages";
 import { requireStudent } from "@/lib/student";
 import { sendMessage } from "../actions";
 
-// /app/messages — the student's single thread with Dimitra (SPEC §15.4).
+// /app/messages: the student's single thread with Dimitra (SPEC §15.4).
 // Opening it marks her messages read; the thread is always the actor's own.
 export default async function MessagesPage() {
   const user = await requireStudent();
   // Rule 3: the /app layout renders the full-screen paused state instead of
-  // children, but Next renders page segments in parallel — so a paused
+  // children, but Next renders page segments in parallel, so a paused
   // student must not touch the thread here either.
   if (!user.active) return null;
   await markThreadReadForStudent(user);
@@ -50,7 +50,7 @@ export default async function MessagesPage() {
         ) : (
           <Card padding="20px">
             <p style={{ margin: 0, fontSize: "var(--text-body-sm)", color: "var(--text-secondary)" }}>
-              No messages yet — ask Dimitra anything about your modules.
+              No messages yet. Ask Dimitra anything about your modules.
             </p>
           </Card>
         )}
