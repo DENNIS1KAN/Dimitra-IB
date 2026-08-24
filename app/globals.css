@@ -67,8 +67,11 @@
 }
 
 :root{
-/* Plus Jakarta Sans via a stylesheet link in app/layout.tsx (swap; fallback stack offline) */
---font-sans:'Plus Jakarta Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+/* Plus Jakarta Sans, vendored under OFL and self-hosted by next/font/local
+   in app/layout.tsx (DESIGN.md §9 #25). Two variable subsets, each pinned to
+   its unicode-range: latin-ext first so a Latin-Extended glyph finds it, then
+   latin (which carries the metric-adjusted fallback), then the system stack. */
+--font-sans:var(--font-jakarta-ext),var(--font-jakarta),ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
 --font-weight-regular:400;
 --font-weight-medium:500;
 --font-weight-bold:700;
