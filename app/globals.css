@@ -108,7 +108,9 @@
 --shadow-cta:0 8px 20px rgba(244,125,49,.35);
 }
 
-html{scroll-behavior:smooth}
+/* Explicit colour on <html> too: the UA default is black, which the M10
+   palette walk would flag even though nothing ever paints it. */
+html{scroll-behavior:smooth;color:var(--text-primary)}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--text-primary);font-size:var(--text-body);line-height:var(--leading-body);letter-spacing:var(--tracking-body);-webkit-font-smoothing:antialiased}
 a{color:var(--action-primary);text-decoration:none}
 a:hover{text-decoration:underline}

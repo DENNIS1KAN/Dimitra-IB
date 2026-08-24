@@ -307,15 +307,15 @@ Verify (walked 2026-08-22 in Chrome at 390px and 1280px against the seeded dev D
 Brief: to Dimitra's palette using `design/lumen-dashboard-mockup.html` as the **authoritative** reference (`design/extracted/tokens.css` secondary): Blue `#0061EF` for the nav bar, links, selected states and standard primary buttons; Indigo `#3B197F` for headings and the hero band; Orange `#F47D31` for exactly one motivational CTA per view ("Continue" / "Start module"), ink text on orange — never white; Jade `#00A86B` for fills (progress, checks, pips) with Forest `#1e7a4a` whenever green is text; Cream `#F9F4F2` page, white cards; **no yellow anywhere** — the palette dropped it. Replace the icon font with inline SVGs everywhere; type is Plus Jakarta Sans with tight negative tracking on headings. Update DESIGN.md to the new tokens and note the old direction as superseded. Behavior must not change: gating, routes, and all tests stay green untouched. Verify every student page and the admin at 390px and 1280px: no horizontal scroll, contrast holds (green text = Forest, orange CTA = ink text), no yellow survives.
 
 **M10 — Owner review round 1** (directive of 2026-08-24; decisions in §15.7 #13–#19). Palette audit + landing pill fix, initials-only nav identity, dd/mm/yyyy release entry at a fixed 09:00 Athens, deadlines removed end to end, admin progress at a glance, read-only calendar for both roles, em/en-dash purge.
-Verify:
-- [ ] palette walk (computed styles, every route, both roles, 390px and 1280px): nothing renders outside the §15.7 #13 set; landing "Student sign in" pill readable (white pill, indigo text); headings indigo
-- [ ] student and admin headers show the initials chip only
-- [ ] new-module form: dd/mm/yyyy entry, friendly inline message on empty/impossible dates (no browser popup), created module releases at 09:00 Athens; no due-date field
-- [ ] no due-date remnants: `grep -rn 'due_date\|dueDate\|isOverdue\|overdue' app components lib db` clean (migration 0006 excepted); /app/assignments = released not yet submitted
-- [ ] students table shows "x of y" + jade bar per course; matrix shows jade/linen/stone cells, row+column totals, sticky headers; "Set password" fully visible
-- [ ] both calendars walked at 390px (agenda) and 1280px (month grid): release entries on the right Athens days, weekly clinic marker from clinic_day+clinic_time, "Book a 1:1" button from booking_url
-- [ ] `grep -rn '—\|–' app components --include='*.tsx' --include='*.ts'` returns zero
-- [ ] tests, typecheck, lint, build green
+Verify (walked 2026-08-24 in headless Chrome against the freshly seeded dev DB — the walker collects every element's computed colours on every route, both roles, at 390px and 1280px; script + screenshots in the session scratchpad; plan `docs/superpowers/plans/2026-08-24-m10-owner-review.md`):
+- [x] palette walk (computed styles, every route, both roles, 390px and 1280px): zero colours outside the §15.7 #13 set; landing "Student sign in" pill readable (white pill, computed `rgb(59,25,127)` text); headings indigo (the M9 token collision had them graphite — root cause in #13)
+- [x] student and admin headers show the initials chip only
+- [x] new-module form: dd/mm/yyyy entry; "31/02/2026" produced the friendly inline message with no browser popup and no navigation; "07/09/2026" created a module badged "Releases Mon 7 Sept" (= 09:00 Athens, tz-tested in `lib/tz.test.ts`); no due-date field
+- [x] no due-date remnants: grep clean over app/components/lib/db (historical migrations excepted); /app/assignments = released not yet submitted (`lib/queries.test.ts`)
+- [x] students table shows "x of y" + jade bar per course; matrix shows jade/linen/stone cells, row+column totals ("1 of 2", "Submitted 1 of 3"), sticky headers verified by computed `position: sticky`; "Set password" fully visible inside its cell
+- [x] both calendars walked at 390px (agenda list) and 1280px (month grid): seeded releases on their Athens Mondays, four Thursday clinic markers from clinic_day+clinic_time, "Book a 1:1" button from booking_url; a paused student still sees only the Rule 3 screen on /app/calendar
+- [x] `grep -rn '—\|–' app components --include='*.tsx' --include='*.ts'` returns zero (seed-data strings rewritten too)
+- [x] tests (117), typecheck, lint, build green
 
 **Still out of scope:** payments, parent accounts, message-cap enforcement, Calendar API sync, email notifications, auto-briefs, multi-tutor, individually booked 1:1s on the calendar.
 

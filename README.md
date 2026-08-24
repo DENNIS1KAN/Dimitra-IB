@@ -55,7 +55,7 @@ The embedded database is dev-only — production requires `DATABASE_URL`
 |---|---|---|---|
 | Admin (tutor) | `dimitra` | `lumen123` | full admin panel; one pending join request to approve |
 | Student | `nikos` | `lumen123` | Chemistry HL (active), week 5 submitted; has **asked to join** Chemistry SL |
-| Student | `eleni` | `lumen123` | Chemistry HL **and** SL (two courses); week 5 is overdue |
+| Student | `eleni` | `lumen123` | Chemistry HL **and** SL (two courses); week 5 not submitted yet |
 | Student | `petros` | `lumen123` | **paused** globally → sees the Rule 3 screen |
 
 A fourth, listed course (Mathematics AA SL 2027, no modules yet) sits in the catalog so "Ask to join" can be tried.
@@ -84,19 +84,19 @@ inline SVGs — there are no font or icon files to install.
 | `npm run db:generate` | generate a migration from `db/schema.ts` |
 | `npm run db:migrate` | apply migrations |
 | `npm run db:seed` | reset + seed demo data (writes placeholder PDFs to `./storage`) — stop `npm run dev` first (the embedded DB is single-process; a second opener is refused); a non-empty `DATABASE_URL` database additionally requires `npm run db:seed -- --force` |
-| `npm test` | vitest — gating rules, soft deadlines, hero tie-break, timezone math, the enrollments backfill migration, DB-backed query / messages-authorization / settings / own-password / submission-read tests (in-memory PGlite), Bunny token math, stamping, auth |
+| `npm test` | vitest — gating rules, hero tie-break, timezone math (incl. the dd/mm/yyyy release helpers), the calendar month builder, the enrollments backfill migration, DB-backed query / messages-authorization / settings / own-password / submission-read tests (in-memory PGlite), Bunny token math, stamping, auth |
 | `npm run typecheck` / `lint` | TypeScript strict / ESLint |
 
 ## How it hangs together
 
 - `lib/gating.ts` — Rules 1–3 as pure functions (Rule 1 is enrollment-based
-  since Phase 2 — SPEC §15.2 — plus the soft-deadline "overdue" rule);
+  since Phase 2 — SPEC §15.2; deadlines were removed again in M10, §15.7 #16);
   **every** access decision (pages *and* the material-bytes API) goes
   through them. `lib/access.ts` loads a student's enrollments per request.
   Unit-tested, plus DB-backed query tests on an in-memory PGlite.
 - `db/schema.ts` — the six SPEC §6 tables + `sessions`, plus the Phase 2
   tables (`enrollments`, `messages`, `settings`) and fields (cohort `blurb` /
-  `is_listed`, module `due_date`). Migration 0005 backfilled one active
+  `is_listed`). Migration 0005 backfilled one active
   enrollment per old `users.cohort_id` before dropping that column.
 - `lib/auth.ts` — hashed server-side sessions; `lib/password.ts` — scrypt
   password hashing. Sign-in is username + password; the tutor creates
@@ -110,10 +110,12 @@ inline SVGs — there are no font or icon files to install.
 - `lib/stamp.ts` — every student PDF download gets "Prepared for {name} ·
   {email}" stamped on each page (pdf-lib).
 - `app/app/*` — student screens (mobile-first, 390px-checked, per DESIGN.md):
-  `/app` dashboard (due dates, overdue badges), `/app/courses` (my courses +
+  `/app` dashboard, `/app/courses` (my courses +
   catalog with "Ask to join"), `/app/assignments` (what I owe),
   `/app/messages` (one thread with Dimitra, polling refresh), `/app/sessions`
-  (next clinic + "Book a 1:1 on Google Meet" link-out), `/app/account`
+  (next clinic + "Book a 1:1 on Google Meet" link-out), `/app/calendar`
+  (read-only month grid / 390px agenda: releases + the weekly clinic marker
+  from `clinic_day`/`clinic_time`), `/app/account`
   (change own password), module pages.
 - `lib/messages.ts` — the only reader/writer of `messages`; every function
   takes the acting user and derives the thread from it (a forged student id
@@ -121,7 +123,8 @@ inline SVGs — there are no font or icon files to install.
   thread. Body rule: trimmed, non-empty, ≤ 4000 characters.
 - `app/admin/*` — students (create/pause/reset password, per-course
   enrollments), join-request queue, courses (blurb + catalog listing),
-  modules (create/edit/upload/reorder, due dates), progress matrix (a
+  modules (create/edit/upload/reorder; the release day is dd/mm/yyyy text and
+  always unlocks at 09:00 Athens), calendar (all cohorts), progress matrix (a
   submitted cell opens the attempt — file + note — via the admin-only
   `/api/admin/submissions/[id]/file`), messages inbox (all threads, unread
   counts, reply), settings (`booking_url`, `clinic_text`). Function over beauty.

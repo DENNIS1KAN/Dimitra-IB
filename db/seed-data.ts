@@ -45,7 +45,7 @@ export async function runSeed(db: Db) {
       level: "HL",
       examYear: 2027,
       blurb:
-        "The full HL syllabus in weekly modules — videos, annotated slides, exercise sets, and worked solutions once you've had a go. Thursday clinics for the sticky bits.",
+        "The full HL syllabus in weekly modules: videos, annotated slides, exercise sets, and worked solutions once you've had a go. Thursday clinics for the sticky bits.",
       isListed: true,
     })
     .returning();
@@ -68,7 +68,7 @@ export async function runSeed(db: Db) {
       level: "SL",
       examYear: 2027,
       blurb:
-        "Analysis & Approaches SL — weekly problem sets with full worked solutions. Starting September.",
+        "Analysis & Approaches SL: weekly problem sets with full worked solutions. Starting September.",
       isListed: true,
     })
     .returning();
@@ -130,16 +130,16 @@ export async function runSeed(db: Db) {
   const weeks = [
     {
       weekNumber: 5,
-      title: "Energetics: Born–Haber cycles",
+      title: "Energetics: Born-Haber cycles",
       description:
-        "Born–Haber diagrams reward slow, labelled drawing — sketch the full cycle before any numbers. Bring your enthalpy sign errors on Thursday and we'll fix them together.",
+        "Born-Haber diagrams reward slow, labelled drawing. Sketch the full cycle before any numbers, and bring your enthalpy sign errors on Thursday so we can fix them together.",
       releaseDate: new Date(monday - 7 * DAY),
     },
     {
       weekNumber: 6,
       title: "Buffers & titration curves",
       description:
-        "Buffers trip everyone up the first week — watch video 2 twice before you try the exercises. Bring your titration curves on Thursday and we'll fix them together.",
+        "Buffers trip everyone up the first week. Watch video 2 twice before you try the exercises, and bring your titration curves on Thursday so we can fix them together.",
       releaseDate: new Date(monday),
     },
     {
@@ -165,7 +165,7 @@ export async function runSeed(db: Db) {
       cohortId: other.id,
       weekNumber: 6,
       title: "Acids & bases essentials",
-      description: "SL cohort module — only students enrolled in the SL course see it.",
+      description: "SL cohort module. Only students enrolled in the SL course see it.",
       releaseDate: new Date(monday),
     })
     .returning();
@@ -176,8 +176,8 @@ export async function runSeed(db: Db) {
   const placeholder = (moduleId: string, week: number, prefix = "w") => [
     { moduleId, type: "video" as const, title: `1 · Core ideas`, storageKey: `seed/${prefix}${week}-video-1.webm`, sortOrder: 0 },
     { moduleId, type: "video" as const, title: `2 · Worked examples`, storageKey: `seed/${prefix}${week}-video-2.webm`, sortOrder: 1 },
-    { moduleId, type: "slides" as const, title: "Slides — annotated", storageKey: `seed/${prefix}${week}-slides.pdf`, sortOrder: 2 },
-    { moduleId, type: "exercises" as const, title: "Exercises — set A", storageKey: `seed/${prefix}${week}-exercises.pdf`, sortOrder: 3 },
+    { moduleId, type: "slides" as const, title: "Slides, annotated", storageKey: `seed/${prefix}${week}-slides.pdf`, sortOrder: 2 },
+    { moduleId, type: "exercises" as const, title: "Exercises: set A", storageKey: `seed/${prefix}${week}-exercises.pdf`, sortOrder: 3 },
     { moduleId, type: "solutions" as const, title: "Worked solutions", storageKey: `seed/${prefix}${week}-solutions.pdf`, sortOrder: 4 },
   ];
   // One list feeds both the insert and the PDF writing below, so the rows in
@@ -218,7 +218,7 @@ export async function runSeed(db: Db) {
   await db.insert(submissions).values({
     studentId: nikos.id,
     moduleId: week5.id,
-    note: "Attempted on paper — struggled with lattice enthalpy signs.",
+    note: "Attempted on paper. Struggled with lattice enthalpy signs.",
     createdAt: new Date(monday - 5 * DAY),
   });
 

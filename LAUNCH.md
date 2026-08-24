@@ -14,8 +14,8 @@ What stands between the repository at HEAD and real students. Split by owner; ea
 - [ ] Host in the EU (Hetzner VPS, or Vercel + Neon EU); `DATABASE_URL` to managed Postgres; `AUTH_SECRET` (long random), `APP_URL`, `APP_TIMEZONE=Europe/Athens`.
 - [ ] Backups on: managed Postgres backups, or nightly `pg_dump` (README "Production notes"); the storage zone backed up separately. Do one **restore rehearsal** into a scratch database and sign in against it.
 - [ ] `npm run db:migrate` against production; create Dimitra's admin account (seed is dev-only — never run `db:seed` in production).
-- [ ] Full production smoke, student loop: sign in on a phone → dashboard → watch a video → download stamped slides ("Prepared for {name}") → submit a photo → solutions unlock → overdue badge clears → message Dimitra → sessions page opens the booking link in a new tab → change own password.
-- [ ] Full production smoke, admin loop: create a course → create a student (+ first enrollment) → publish a module with videos + PDFs + release/due dates → approve a join request → pause/resume an enrollment → pause/unpause a student (Rule 3) → open a submission from the matrix → reply in messages → set settings.
+- [ ] Full production smoke, student loop: sign in on a phone → dashboard → watch a video → download stamped slides ("Prepared for {name}") → submit a photo → solutions unlock → message Dimitra → sessions page opens the booking link in a new tab → change own password.
+- [ ] Full production smoke, admin loop: create a course → create a student (+ first enrollment) → publish a module with videos + PDFs + a dd/mm/yyyy release day (unlocks 09:00 Athens) → approve a join request → pause/resume an enrollment → pause/unpause a student (Rule 3) → open a submission from the matrix → reply in messages → set settings.
 - [ ] Confirm no third-party request leaks beyond Google Fonts (or vendor the font files and switch to `next/font/local`), and that `Cache-Control: private, no-store` holds on material and submission routes.
 
 **Identity**
@@ -32,7 +32,7 @@ What stands between the repository at HEAD and real students. Split by owner; ea
 - [ ] Confirm every credential claim on the page is accurate as written (degree, years, examiner role, results) — they are factual statements on a public page.
 
 **Content**
-- [ ] Record and upload **weeks 1–2** for each course (2–4 videos of 10–15 minutes each, slides PDF, exercises PDF, solutions PDF), with release dates and due dates set — so the first two weeks are ready before anyone signs in.
+- [ ] Record and upload **weeks 1–2** for each course (2–4 videos of 10–15 minutes each, slides PDF, exercises PDF, solutions PDF), with release days set — so the first two weeks are ready before anyone signs in.
 - [ ] Write each cohort's catalog blurb and tick "Listed" only for courses students may ask to join.
 
 **Pilot**
@@ -41,4 +41,4 @@ What stands between the repository at HEAD and real students. Split by owner; ea
 
 ## Both
 - [ ] Agree the support path: students message in-app first; WhatsApp stays the fallback.
-- [ ] Agree the weekly rhythm: Dimitra publishes the next module by Friday with its Sunday 23:59 due date; the developer checks the error log once a week for the first month.
+- [ ] Agree the weekly rhythm: Dimitra publishes the next module by Friday for its Monday 09:00 release; the developer checks the error log once a week for the first month.
