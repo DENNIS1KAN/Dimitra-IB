@@ -15,19 +15,20 @@ import type { ComposerState } from "@/components/messages/composer";
 import type { PasswordFormState } from "@/components/app/password-form";
 
 /**
- * "Ask to join" (SPEC §15.1): creates a request that Dimitra approves in
- * /admin/requests. Only LISTED cohorts can be asked for, even by a crafted
- * POST, and an existing active/paused/requested row is left untouched.
+ * "Ask to join" (SPEC §15.1): creates a request that Dimitra approves from
+ * her home strip or the students drawer. Only LISTED cohorts can be asked
+ * for, even by a crafted POST; an existing active/paused/requested row is
+ * left untouched.
  */
 export async function requestToJoin(formData: FormData) {
   const user = await requireStudent();
   const cohortId = String(formData.get("cohortId") ?? "");
-  if (!isUuid(cohortId)) redirect("/app/courses");
+  if (!isUuid(cohortId)) redirect("/app");
   const [cohort] = await db
     .select()
     .from(cohorts)
     .where(and(eq(cohorts.id, cohortId), eq(cohorts.isListed, true)));
-  if (!cohort) redirect("/app/courses");
+  if (!cohort) redirect("/app");
 
   const [existing] = await db
     .select()
@@ -48,8 +49,8 @@ export async function requestToJoin(formData: FormData) {
       .set({ status: "requested", requestedAt: new Date(), decidedAt: null })
       .where(eq(enrollments.id, existing.id));
   }
-  revalidatePath("/app/courses");
-  redirect("/app/courses?ok=requested");
+  revalidatePath("/app");
+  redirect("/app?ok=requested");
 }
 
 /**

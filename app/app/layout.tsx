@@ -50,10 +50,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             <Wordmark variant="bar" inverse />
           </Link>
           <StudentNav unread={unread} />
-          {/* Identity is the initials chip alone (SPEC §15.7 #14). */}
-          <span className="lmn-nav-who">
+          {/* The chip is the identity AND the door to Account (SPEC §15.7 #24). */}
+          <Link href="/app/account" aria-label="Account" className="lmn-nav-who">
             <Avatar size="sm" tone="inverse" initials={initials(user.name)} />
-          </span>
+          </Link>
           <form action={signOut} style={{ display: "inline-flex" }}>
             <IconButton icon="logout" variant="inverse" label="Sign out" type="submit" size="sm" />
           </form>

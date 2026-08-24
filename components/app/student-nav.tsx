@@ -5,14 +5,11 @@ import { usePathname } from "next/navigation";
 
 // DESIGN.md §5 Nav recipe (blue bar; links white at 78%, active white on a
 // 16% white pill). One component, mounted ONCE in app/app/layout.tsx.
+// Three items (SPEC §15.7 #24); Account lives behind the initials chip.
 const ITEMS = [
-  { href: "/app", label: "Home" },
-  { href: "/app/courses", label: "Courses" },
-  { href: "/app/assignments", label: "Assignments" },
+  { href: "/app", label: "Courses" },
   { href: "/app/messages", label: "Messages" },
-  { href: "/app/sessions", label: "Sessions" },
-  { href: "/app/calendar", label: "Calendar" },
-  { href: "/app/account", label: "Account" },
+  { href: "/app/schedule", label: "Schedule" },
 ];
 
 export function StudentNav({ unread = false }: { unread?: boolean }) {
@@ -22,7 +19,9 @@ export function StudentNav({ unread = false }: { unread?: boolean }) {
   const showDot = unread && !pathname.startsWith("/app/messages");
   const isActive = (href: string) =>
     href === "/app"
-      ? pathname === "/app" || pathname.startsWith("/app/modules")
+      ? pathname === "/app" ||
+        pathname.startsWith("/app/modules") ||
+        pathname.startsWith("/app/courses")
       : pathname.startsWith(href);
   return (
     <nav aria-label="Student" className="lmn-nav-links">

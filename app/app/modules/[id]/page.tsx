@@ -89,7 +89,7 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
     <main style={{ maxWidth: 720, margin: "0 auto" }}>
       <SubmissionToastListener />
       <div style={{ padding: "16px 20px 24px", display: "flex", flexDirection: "column", gap: 10 }}>
-        <BackLink href="/app" label="Home" />
+        <BackLink href={`/app/courses/${cohort.id}`} label={cohort.name} />
         <p className="lmn-eyebrow" style={{ margin: "4px 0 0", color: "var(--text-tertiary)" }}>
           Week {module.weekNumber}
         </p>

@@ -332,15 +332,15 @@ Verify:
 
 **M12 — Student rebuild** (directive of 2026-08-24; decisions in §15.7 #24. Authoritative mockup: `design/student-direction-2-course-hub.html`. Starts only after M11 is pushed).
 Verify:
-- [ ] a two-course student sees both cards and each Continue lands in the right course's current module
-- [ ] a single-course student reaches their module in one tap from home
-- [ ] ask-to-join still creates a request from the home catalog
-- [ ] the note renders at the top of the course page
-- [ ] paused students still see only the Rule 3 screen everywhere
-- [ ] all redirects work; one header per page
-- [ ] walk at 390 first, then 1280
-- [ ] em-dash grep zero
-- [ ] tests, typecheck, lint, build green
+- [x] a two-course student sees both cards and each Continue lands in the right course's current module
+- [x] a single-course student reaches their module in one tap from home
+- [x] ask-to-join still creates a request from the home catalog
+- [x] the note renders at the top of the course page
+- [x] paused students still see only the Rule 3 screen everywhere
+- [x] all redirects work; one header per page
+- [x] walk at 390 first, then 1280
+- [x] em-dash grep zero
+- [x] tests, typecheck, lint, build green
 
 **Still out of scope:** payments, parent accounts, message-cap enforcement, Calendar API sync, email notifications, auto-briefs, multi-tutor, individually booked 1:1s on the calendar.
 

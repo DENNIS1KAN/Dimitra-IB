@@ -416,6 +416,6 @@ export async function saveSettings(
   const result = await updateSettings(user, formData);
   if (!result.ok) return result;
   revalidatePath("/admin/settings");
-  revalidatePath("/app/sessions");
+  revalidatePath("/app/schedule");
   return { ok: true, at: Date.now() };
 }
