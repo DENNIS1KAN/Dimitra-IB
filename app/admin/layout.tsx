@@ -4,9 +4,10 @@ import type { ReactNode } from "react";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { enrollments } from "@/db/schema";
-import { IconButton, Wordmark } from "@/components/lumen/core";
+import { Avatar, IconButton, Wordmark } from "@/components/lumen/core";
 import { getSessionUser } from "@/lib/auth";
 import { signOut } from "@/lib/auth-actions";
+import { initials } from "@/lib/format";
 import { unreadForTutor } from "@/lib/messages";
 
 // Admin shell — function over beauty (SPEC §12). Students get redirected
@@ -47,6 +48,10 @@ export default async function AdminLayout({ children }: { children: ReactNode })
               </Link>
             ))}
           </nav>
+          {/* Identity is the initials chip alone (SPEC §15.7 #14). */}
+          <span className="lmn-nav-who">
+            <Avatar size="sm" tone="inverse" initials={initials(user.name)} />
+          </span>
           <form action={signOut} style={{ display: "inline-flex" }}>
             <IconButton icon="logout" variant="inverse" label="Sign out" type="submit" size="sm" />
           </form>

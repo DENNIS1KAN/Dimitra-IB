@@ -6,7 +6,7 @@ import { Avatar, IconButton, Wordmark } from "@/components/lumen/core";
 import { LockPanel } from "@/components/lumen/learning";
 import { getSessionUser } from "@/lib/auth";
 import { signOut } from "@/lib/auth-actions";
-import { firstName, initials } from "@/lib/format";
+import { initials } from "@/lib/format";
 import { unreadForStudent } from "@/lib/messages";
 
 // Student shell. Rule 3 lives here: a paused student sees only the friendly
@@ -50,8 +50,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             <Wordmark size="sm" inverse />
           </Link>
           <StudentNav unread={unread} />
+          {/* Identity is the initials chip alone (SPEC §15.7 #14). */}
           <span className="lmn-nav-who">
-            <span className="lmn-nav-name">{firstName(user.name)}</span>
             <Avatar size="sm" tone="inverse" initials={initials(user.name)} />
           </span>
           <form action={signOut} style={{ display: "inline-flex" }}>

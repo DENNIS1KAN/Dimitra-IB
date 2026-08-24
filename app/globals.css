@@ -180,11 +180,10 @@ h1,h2,h3,h4{color:var(--text-heading)}
 .lmn-nav-link:hover{color:#fff;text-decoration:none;background:rgba(255,255,255,.10)}
 .lmn-nav-link[aria-current]{color:#fff;background:rgba(255,255,255,.16)}
 .lmn-nav-label{color:rgba(255,255,255,.55);font-size:13px;font-weight:var(--font-weight-bold);letter-spacing:.06em;text-transform:uppercase}
-.lmn-nav-who{display:flex;align-items:center;gap:12px;color:rgba(255,255,255,.85);font-size:14px}
+.lmn-nav-who{display:flex;align-items:center;gap:12px}
 @media (max-width:1023px){
   .lmn-nav-wrap{padding:0 16px}
   .lmn-nav-links{order:10;flex-basis:100%;min-width:0;padding:0 0 10px;margin-top:-4px}
-  .lmn-nav-who > .lmn-nav-name{display:none}
 }
 
 /* Hero — indigo owns it (mockup .hero) */
