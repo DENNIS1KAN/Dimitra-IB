@@ -1,0 +1,26 @@
+# Build context hygiene: everything here either does not belong in an image
+# or would make the build non-reproducible.
+.git
+.gitignore
+node_modules
+.next
+out
+*.tsbuildinfo
+
+# Local data, never the image's business
+storage
+pgdata
+pgdata-lite
+backups
+.env
+.env.*
+!.env.production.example
+
+# Docs, design sources and the dev-only compose file
+design
+docs
+*.md
+!README.md
+docker-compose.yml
+docker-compose.prod.yml
+Caddyfile
