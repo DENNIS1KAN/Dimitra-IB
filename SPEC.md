@@ -1,6 +1,6 @@
 # Lumen — V1 Build Specification
 
-**Status:** V1 built (M1–M5) · Phase 2 in progress (M6–M9, see §15) · **Working title:** Lumen · **Last updated:** 2026-08-22
+**Status:** V1 built (M1–M5) · Phase 2 built (M6–M9) · M10 owner-review round in progress (§15.6/§15.7) · **Working title:** Lumen · **Last updated:** 2026-08-24
 
 This document is the source of truth for V1 scope. Anything not listed in the Goals or Milestones is out of scope until this spec changes. When in doubt, build less.
 
@@ -83,7 +83,7 @@ Postgres. Six domain tables plus whatever the auth library needs.
 
 **cohorts** — `id`, `name` (e.g. "Chemistry HL 2027"), `subject`, `level` (`HL` | `SL`), `exam_year` *(Phase 2: + `blurb`, `is_listed` — §15.3)*
 
-**modules** — `id`, `cohort_id`, `week_number` (int), `title`, `description` (short), `release_date` (timestamptz) *(Phase 2: + `due_date`, nullable — §15.3)*
+**modules** — `id`, `cohort_id`, `week_number` (int), `title`, `description` (short), `release_date` (timestamptz) *(Phase 2: + `due_date`, nullable — §15.3; dropped again in M10 — §15.7 #16)*
 
 **materials** — `id`, `module_id`, `type` (`video` | `slides` | `exercises` | `solutions`), `title`, `storage_key` (Bunny video ID or storage path), `sort_order`
 
@@ -212,7 +212,7 @@ Landing page; PDF name-stamping on download; empty/locked/error states with frie
 
 ## 13. Parking lot (P2 — design so these stay possible; build none now)
 
-Parent monthly digest email (built from `events` + `submissions`) · clinic auto-briefs (most-missed questions per cohort per week) · in-app messaging with per-plan caps *(Phase 2 builds the thread without caps — §15)* · 1:1 booking *(Phase 2 links out — §15)* · per-student video watermarking · payments/subscriptions · multi-tutor tenancy.
+Parent monthly digest email (built from `events` + `submissions`) · clinic auto-briefs (most-missed questions per cohort per week) · in-app messaging with per-plan caps *(Phase 2 builds the thread without caps — §15)* · 1:1 booking *(Phase 2 links out — §15)* · per-student video watermarking · payments/subscriptions · multi-tutor tenancy · per-module MCQ self-check (5 questions, auto-marked, jade feedback) *(Phase 3 candidate — owner decision after the pilot)*.
 
 ---
 
@@ -232,7 +232,7 @@ The owner amended this spec for Phase 2. Everything below **overrides** the earl
 ### 15.1 Decisions (locked by the owner)
 
 - **Enrolment:** students browse a course catalog and **"Ask to join"**; Dimitra approves (payment stays offline-first). No self-checkout.
-- **Deadlines are SOFT:** a due date shows on modules and an *overdue* badge appears when missed; **submission is never blocked**.
+- **Deadlines are SOFT:** a due date shows on modules and an *overdue* badge appears when missed; **submission is never blocked**. *Amended (M10, §15.7 #16): deadlines are removed entirely — no due dates, no overdue state anywhere.*
 - **Sessions:** Google Meet, scheduled through Dimitra's Google Calendar appointment-schedule booking page. The app links out; **no Calendar API integration** in this phase.
 
 ### 15.2 Gating update (Rule 1 rewritten; Rules 2 and 3 unchanged)
@@ -243,7 +243,7 @@ The owner amended this spec for Phase 2. Everything below **overrides** the earl
 
 **Rule 3 is unchanged:** `users.active` stays the global master switch — `false` still shows the full-screen paused state on every `/app` route, regardless of enrollments.
 
-**Soft deadline (presentation rule, not a gate):** a released module is *overdue* iff `due_date` is set, `now > due_date`, and the student has no submission for it. Submitting clears the badge. Nothing is ever blocked by a due date.
+**Soft deadline (presentation rule, not a gate):** a released module is *overdue* iff `due_date` is set, `now > due_date`, and the student has no submission for it. Submitting clears the badge. Nothing is ever blocked by a due date. *Amended (M10, §15.7 #16): rule deleted with the column.*
 
 `lib/gating.ts` remains the single tested home of these rules.
 
@@ -251,15 +251,15 @@ The owner amended this spec for Phase 2. Everything below **overrides** the earl
 
 - **enrollments** — `id`, `student_id`, `cohort_id`, `status` (`requested` | `active` | `paused` | `ended`), `requested_at`, `decided_at`; unique (`student_id`, `cohort_id`). **Backfill:** one *active* enrollment from every existing `users.cohort_id`, then **drop that column**. `users.active` stays as the global master switch (Rule 3 screen unchanged).
 - **cohorts** += `blurb` (text), `is_listed` (bool, default false) — catalog fields.
-- **modules** += `due_date` (timestamptz, nullable). The admin form defaults it to the **Sunday 23:59 after release**, tutor timezone.
+- **modules** += `due_date` (timestamptz, nullable). The admin form defaults it to the **Sunday 23:59 after release**, tutor timezone. *Amended (M10, §15.7 #16): column dropped again by migration 0006.*
 - **messages** — `id`, `student_id`, `sender` (`student` | `tutor`), `body`, `created_at`, `read_at`. **One thread per student** — not per course.
-- **settings** — key/value: `booking_url`, `clinic_text` — editable in admin.
+- **settings** — key/value: `booking_url`, `clinic_text` — editable in admin. *Amended (M10, §15.7 #18): + `clinic_day`, `clinic_time` for the calendars' weekly clinic marker; `clinic_text` becomes the optional note.*
 
 ### 15.4 Student pages (all mobile-first, 390px first)
 
-- **`/app` dashboard** — as before, plus: due date on the hero card, overdue badges on rows, unread-messages dot in the nav. With several active enrollments the list spans all of them (rows name their course); with a single enrollment the page is exactly what a pre-migration student saw.
+- **`/app` dashboard** — as before, plus: due date on the hero card, overdue badges on rows *(both removed in M10 — §15.7 #16)*, unread-messages dot in the nav. With several active enrollments the list spans all of them (rows name their course); with a single enrollment the page is exactly what a pre-migration student saw.
 - **`/app/courses`** — *my courses* (active / paused states) + *catalog* of `is_listed` courses with **"Ask to join"** → request created, button becomes **"Requested"**.
-- **`/app/assignments`** — every open module across enrollments with its due date; overdue badge; completed section below. This is the "what do I owe" page.
+- **`/app/assignments`** — every open module across enrollments with its due date; overdue badge; completed section below. This is the "what do I owe" page. *Amended (M10, §15.7 #16): the list of released modules not yet submitted, completed below; no due dates.*
 - **`/app/messages`** — single thread with Dimitra: composer (trimmed, max 4000 characters, empty submits rejected server-side), sent/received bubbles with timestamps in the tutor's timezone, unread tutor messages marked read when the thread is opened. Simple polling refresh; no websockets. Empty state: "No messages yet — ask Dimitra anything about your modules." The student header shows an unread dot on Messages. No events/analytics for messages in this phase.
 - **`/app/sessions`** — next clinic (`settings.clinic_text`) + **"Book a 1:1 on Google Meet"** button opening `settings.booking_url` in a new tab.
 - **`/app/account`** — change own password (current + new, min 8, same scrypt path).
@@ -271,7 +271,7 @@ A student nav (Home · Courses · Assignments · Messages · Sessions · Account
 - **Requests queue** — pending join requests; **approve** (→ active enrollment) / **decline**.
 - **Courses** — edit `blurb` + `is_listed` per cohort (cohort creation moves here).
 - **Students** — per-student enrollments with pause / resume / end, and "add to course"; the global active toggle stays.
-- **Modules** — `due_date` field (defaulting per §15.3).
+- **Modules** — `due_date` field (defaulting per §15.3). *Amended (M10, §15.7 #15/#16): field removed; release day is dd/mm/yyyy at a fixed 09:00 Athens.*
 - **`/admin/messages`** — all threads sorted by latest activity, unread counts (the admin nav shows the unread total), open a thread, reply. **Replying** marks that thread read for the tutor. Only admins reach the inbox.
 - **Progress matrix** — clicking a submitted cell opens that student's submission (file + note) — admin-only read path; students still can never read submissions back.
 - **Settings page** — `booking_url`, `clinic_text`.
@@ -306,7 +306,18 @@ Verify (walked 2026-08-22 in Chrome at 390px and 1280px against the seeded dev D
 
 Brief: to Dimitra's palette using `design/lumen-dashboard-mockup.html` as the **authoritative** reference (`design/extracted/tokens.css` secondary): Blue `#0061EF` for the nav bar, links, selected states and standard primary buttons; Indigo `#3B197F` for headings and the hero band; Orange `#F47D31` for exactly one motivational CTA per view ("Continue" / "Start module"), ink text on orange — never white; Jade `#00A86B` for fills (progress, checks, pips) with Forest `#1e7a4a` whenever green is text; Cream `#F9F4F2` page, white cards; **no yellow anywhere** — the palette dropped it. Replace the icon font with inline SVGs everywhere; type is Plus Jakarta Sans with tight negative tracking on headings. Update DESIGN.md to the new tokens and note the old direction as superseded. Behavior must not change: gating, routes, and all tests stay green untouched. Verify every student page and the admin at 390px and 1280px: no horizontal scroll, contrast holds (green text = Forest, orange CTA = ink text), no yellow survives.
 
-**Still out of scope:** payments, parent accounts, message-cap enforcement, Calendar API sync, email notifications, auto-briefs, multi-tutor.
+**M10 — Owner review round 1** (directive of 2026-08-24; decisions in §15.7 #13–#19). Palette audit + landing pill fix, initials-only nav identity, dd/mm/yyyy release entry at a fixed 09:00 Athens, deadlines removed end to end, admin progress at a glance, read-only calendar for both roles, em/en-dash purge.
+Verify:
+- [ ] palette walk (computed styles, every route, both roles, 390px and 1280px): nothing renders outside the §15.7 #13 set; landing "Student sign in" pill readable (white pill, indigo text); headings indigo
+- [ ] student and admin headers show the initials chip only
+- [ ] new-module form: dd/mm/yyyy entry, friendly inline message on empty/impossible dates (no browser popup), created module releases at 09:00 Athens; no due-date field
+- [ ] no due-date remnants: `grep -rn 'due_date\|dueDate\|isOverdue\|overdue' app components lib db` clean (migration 0006 excepted); /app/assignments = released not yet submitted
+- [ ] students table shows "x of y" + jade bar per course; matrix shows jade/linen/stone cells, row+column totals, sticky headers; "Set password" fully visible
+- [ ] both calendars walked at 390px (agenda) and 1280px (month grid): release entries on the right Athens days, weekly clinic marker from clinic_day+clinic_time, "Book a 1:1" button from booking_url
+- [ ] `grep -rn '—\|–' app components --include='*.tsx' --include='*.ts'` returns zero
+- [ ] tests, typecheck, lint, build green
+
+**Still out of scope:** payments, parent accounts, message-cap enforcement, Calendar API sync, email notifications, auto-briefs, multi-tutor, individually booked 1:1s on the calendar.
 
 ### 15.7 Conflicts flagged while applying the amendments
 
@@ -319,8 +330,15 @@ Brief: to Dimitra's palette using `design/lumen-dashboard-mockup.html` as the **
 | 5 | §7: `/admin` students table has a *cohort* column and the create form picks one cohort | Students can hold several enrollments | Create form keeps one cohort (→ active enrollment); more enrollments are added per row |
 | 6 | DESIGN.md §8: TabBar and DeskNav page links deferred (single student destination) | Six student pages need a nav | Nav links built from the DeskNav link recipe, mounted once in the `/app` layout; restyled in M9 |
 | 7 | §15.3 lists the `status` values but not what *decline* does | — | **APPROVED (owner, 2026-08-22):** decline **deletes** the request row; the student may ask again. `ended` is an admin-set state for students who left a course |
-| 8 | Default due date "Sunday 23:59 after release" | — | **APPROVED (owner, 2026-08-22):** the first Sunday 23:59 (tutor timezone) strictly after the release instant |
-| 9 | `/app` hero ("this week") tie-break when two courses release the same day was by module id | — | **Owner decision (2026-08-22):** most recent release wins; ties → the module with the **nearest due date**; still tied → **alphabetical course title**; same course, same release and due → higher week number. Never by id. Covered by `lib/current.test.ts` |
+| 8 | Default due date "Sunday 23:59 after release" | — | **APPROVED (owner, 2026-08-22):** the first Sunday 23:59 (tutor timezone) strictly after the release instant. *Superseded (M10): deadlines removed — see #16* |
+| 9 | `/app` hero ("this week") tie-break when two courses release the same day was by module id | — | **Owner decision (2026-08-22):** most recent release wins; ties → the module with the **nearest due date**; still tied → **alphabetical course title**; same course, same release and due → higher week number. Never by id. Covered by `lib/current.test.ts`. *Superseded (M10): the due step drops out — see #16* |
 | 10 | `design/lumen-dashboard-mockup.html` was an untracked local file | M9 needs it as the restyle reference | **Owner decision (2026-08-22):** committed to the repo |
 | 11 | §15.4 `/app/account`: "change own password (current + new, min 8, same scrypt path)" says nothing about existing sessions | — | **APPROVED (owner, 2026-08-22):** a successful change signs out the student's other devices (their other session rows are deleted; the current device stays) |
 | 12 | §15.3 `booking_url` has no format rule | — | **APPROVED (owner, 2026-08-22):** must be an absolute `http(s)://` URL or empty (a `javascript:` value would become a live new-tab link); `clinic_text` is trimmed and capped at 2000 characters |
+| 13 | M9 palette carried extra hexes (tints, plum/celeste subject colours, indigo-soft hero companion, ash/driftwood greys); DESIGN.md defined `--text-display`/`--text-heading` as colours in §1 AND as sizes in §2 | M10 palette audit: only the owner's list may render | **APPROVED (owner, 2026-08-24):** brand colours are exactly blue `#0061EF`, indigo `#3B197F`, orange `#F47D31`, jade `#00A86B` (Forest `#1e7a4a` whenever green is text); page `#F9F4F2`, cards `#FFFFFF`. Text stays ink/graphite (recorded deviation from `#000000`, reaffirmed); stone/linen stay as the muted-text/border neutrals (the owner names them in #17); tints must render as alpha of brand hexes, never standalone hexes; error red `#c4320a` remains the sole functional exception (inline form errors only); the hero flattens to solid indigo (indigo-soft removed); subject colours reduce to blue (chemistry) / indigo (everything else). The colour-vs-size token collision (found in this audit: `color:var(--text-display)` resolved to `52px`, so the landing "Student sign in" pill inherited white-on-white and headings inherited graphite) is fixed by `--text-strong` (ink) and `--text-heading-color` (indigo); the landing pill becomes a white pill with indigo text |
+| 14 | DESIGN.md §5 Nav: "who" = first name (hidden < 1024) + initials chip; the admin bar showed no identity | — | **APPROVED (owner, 2026-08-24):** initials chip only — the name text is removed from the student header, and the admin header gains the same chip |
+| 15 | §15.3 / M6: release entered as `datetime-local` with a due-date companion | — | **APPROVED (owner, 2026-08-24):** the module form takes the release day as plain `dd/mm/yyyy` text, required with a friendly inline message instead of the browser popup (no native picker); release **time** is no longer an input — always 09:00 Europe/Athens; saving an older module re-pins its release to 09:00 that day. The due-date field is removed (#16) |
+| 16 | §15.1 "Deadlines are SOFT"; #8 due default; #9 nearest-due hero tie-break | Owner reversal after first hands-on review | **APPROVED (owner, 2026-08-24):** deadlines are removed entirely. Migration 0006 drops `modules.due_date`; `isOverdue`, overdue badges and every due label are deleted; `/app/assignments` becomes the list of released modules not yet submitted; the hero tie-break becomes most recent release → course title A-Z → higher week number. Recorded assumption: the open-assignments list uses that same order (newest release first) |
+| 17 | §7 `/admin` and `/admin/progress` are plain tables; the actions column truncated "Set password" | — | **APPROVED (owner, 2026-08-24):** students table gains a per-course completion figure ("submitted x of y released") with a small jade bar; the progress matrix gains cell colour states (jade submitted · linen released-pending · stone unreleased), row and column totals, and sticky headers; the actions column stacks vertically so nothing truncates |
+| 18 | §3 non-goal: booking logic / Calendar API; no calendar screen existed anywhere | A read-only calendar for both roles | **APPROVED (owner, 2026-08-24):** `/app/calendar` and `/admin/calendar` join the navs. Entries: module release dates (students see their active courses, admin sees all cohorts labeled), a recurring weekly clinic marker driven by new structured settings `clinic_day` + `clinic_time` (`clinic_text` stays as an optional note), and a "Book a 1:1" button using `booking_url`. Month grid on desktop, agenda list at 390px; read-only, computed from the database. Individual Google-booked 1:1s are explicitly out of scope |
+| 19 | UI copy has carried em/en dashes since M1 (89 occurrences in app/ and components/) | UI copy style rule | **APPROVED (owner, 2026-08-24):** no em or en dashes in app/ or components/ strings; sentences are restructured with commas, colons, or periods — never a swapped-in hyphen. Repo docs are exempt |
