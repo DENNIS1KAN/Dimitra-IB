@@ -29,6 +29,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     { href: "/admin/courses", label: "Courses" },
     { href: "/admin/modules", label: "Modules" },
     { href: "/admin/progress", label: "Progress" },
+    { href: "/admin/calendar", label: "Calendar" },
     { href: "/admin/messages", label: unread > 0 ? `Messages (${unread})` : "Messages" },
     { href: "/admin/settings", label: "Settings" },
   ];

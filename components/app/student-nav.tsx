@@ -11,6 +11,7 @@ const ITEMS = [
   { href: "/app/assignments", label: "Assignments" },
   { href: "/app/messages", label: "Messages" },
   { href: "/app/sessions", label: "Sessions" },
+  { href: "/app/calendar", label: "Calendar" },
   { href: "/app/account", label: "Account" },
 ];
 

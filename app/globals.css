@@ -237,6 +237,26 @@ a.lmn-rail-row:hover{border-color:var(--action-primary);transform:translateX(2px
 .lmn-footer{border-top:1px solid var(--border-card);padding:26px 0 calc(40px + env(safe-area-inset-bottom));font-size:13.5px;color:var(--text-tertiary)}
 .lmn-footer .lmn-wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
+/* Calendar (M10, SPEC §15.7 #18): month grid from 641px, agenda below that */
+.lmn-cal-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.lmn-cal-grid{display:none}
+.lmn-cal-agenda{display:flex;flex-direction:column;gap:14px}
+@media (min-width:641px){
+  .lmn-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .lmn-cal-agenda{display:none}
+}
+.lmn-cal-dow{font-size:var(--text-caption);font-weight:var(--font-weight-bold);text-transform:uppercase;letter-spacing:.03em;color:var(--text-tertiary);padding:2px 6px}
+.lmn-cal-day{background:var(--surface-card);border:1px solid var(--border-card);border-radius:var(--radius-small);min-height:92px;padding:6px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.lmn-cal-day.is-out{background:var(--surface-page);border-color:transparent}
+.lmn-cal-num{font-size:var(--text-caption);font-weight:var(--font-weight-bold);color:var(--text-tertiary);align-self:flex-start}
+.lmn-cal-day.is-today .lmn-cal-num{color:#fff;background:var(--color-blue);border-radius:var(--radius-pills);min-width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px}
+.lmn-cal-pill{font-size:12.5px;font-weight:600;letter-spacing:-0.1px;border-radius:8px;padding:3px 7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;text-decoration:none;min-width:0}
+.lmn-cal-pill.is-release{background:var(--surface-tint-blue);color:var(--action-primary)}
+a.lmn-cal-pill.is-release:hover{text-decoration:underline;color:var(--action-primary)}
+.lmn-cal-pill.is-future{background:var(--color-linen);color:var(--text-tertiary)}
+.lmn-cal-pill.is-clinic{background:var(--surface-page);border-left:3px solid var(--color-orange);color:var(--text-primary);border-radius:0 8px 8px 0}
+.lmn-cal-course{display:block;font-size:11.5px;font-weight:500;color:var(--text-tertiary);overflow:hidden;text-overflow:ellipsis}
+
 /* load sequence (mockup) — respects reduced motion */
 @media (prefers-reduced-motion:no-preference){
   .lmn-rise{animation:lmn-rise .55s cubic-bezier(.2,.7,.2,1) both}
