@@ -56,17 +56,24 @@ export async function adminHome(now = new Date()): Promise<AdminHome> {
   const allModules = await db.select().from(modules).orderBy(asc(modules.weekNumber));
   const allEnrollments = await db.select().from(enrollments);
   const subs = await db
-    .select({ moduleId: submissions.moduleId })
+    .select({ moduleId: submissions.moduleId, studentId: submissions.studentId })
     .from(submissions);
   const counts = await materialCounts();
-  const subsByModule = new Map<string, number>();
-  for (const s of subs) subsByModule.set(s.moduleId, (subsByModule.get(s.moduleId) ?? 0) + 1);
 
   const byCohort = new Map(allCohorts.map((c) => [c.id, c]));
   const t = now.getTime();
 
   const courses: CourseCard[] = allCohorts.map((cohort) => {
     const mods = allModules.filter((m) => m.cohortId === cohort.id);
+    // "x of y submitted" counts current ACTIVE members only, so a paused or
+    // ended student's old submission can never read 4 of 3.
+    const activeIds = new Set(
+      allEnrollments
+        .filter((e) => e.cohortId === cohort.id && e.status === "active")
+        .map((e) => e.studentId),
+    );
+    const submittedFor = (moduleId: string) =>
+      subs.filter((s) => s.moduleId === moduleId && activeIds.has(s.studentId)).length;
     const released = mods.filter((m) => m.releaseDate.getTime() <= t);
     const future = mods.filter((m) => m.releaseDate.getTime() > t);
     // Most recent release; releases share a course-level cadence, so the
@@ -85,7 +92,7 @@ export async function adminHome(now = new Date()): Promise<AdminHome> {
         (e) => e.cohortId === cohort.id && e.status === "requested",
       ).length,
       moduleCount: mods.length,
-      lastReleased: last ? { module: last, submitted: subsByModule.get(last.id) ?? 0 } : null,
+      lastReleased: last ? { module: last, submitted: submittedFor(last.id) } : null,
       nextRelease: next ?? null,
     };
   });
