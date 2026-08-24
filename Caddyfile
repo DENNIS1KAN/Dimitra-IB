@@ -1,0 +1,38 @@
+# Public edge for Road to Success (DEPLOY.md). Caddy gets and renews the
+# certificate on its own; there is nothing to run for HTTPS.
+#
+# DOMAIN is the one value to set: put it in .env.production, where it must
+# match the host in APP_URL. Locally, DOMAIN=localhost makes Caddy use its
+# own internal CA instead of Let's Encrypt.
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Videos are served as range slices from a file offset (SPEC §15.7 #25).
+	# flush_interval -1 turns off response buffering so a seek starts playing
+	# immediately instead of filling a proxy buffer first.
+	reverse_proxy app:3000 {
+		flush_interval -1
+	}
+
+	# A week's recording is the largest thing anyone uploads. Generous, but
+	# not unbounded: an unbounded body is a way to fill the disk.
+	request_body {
+		max_size 2GB
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options SAMEORIGIN
+		-Server
+	}
+
+	log {
+		output file /data/access.log {
+			roll_size 20MiB
+			roll_keep 5
+		}
+	}
+}

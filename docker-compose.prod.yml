@@ -1,0 +1,96 @@
+# Production stack for Road to Success (DEPLOY.md). One box: Caddy terminates
+# TLS on 80/443 and proxies to the app, the app talks to Postgres on a private
+# network, and the two things that must be backed up live in a bind mount
+# (storage/) and a named volume (Postgres).
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# STORAGE_PATH and APP_BIND exist so a restore rehearsal can run a second copy
+# of this stack beside the live one (scripts/restore.sh); leave them unset in
+# production.
+name: rts
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    # POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB come from here, and must
+    # agree with DATABASE_URL.
+    env_file:
+      - .env.production
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    healthcheck:
+      # $$ so the variables are expanded by the shell inside the container,
+      # not by compose on the host.
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks:
+      - internal
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: rts-app:latest
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Videos, PDFs and submitted photos. A bind mount, not a named volume,
+      # so scripts/backup.sh can tar it without entering a container.
+      - ${STORAGE_PATH:-./storage}:/app/storage
+    ports:
+      # Loopback only: Caddy is the public door. Published at all so a human
+      # can curl the app directly while debugging a certificate.
+      - "${APP_BIND:-127.0.0.1:3000}:3000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    networks:
+      - internal
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    # Reads DOMAIN, which the Caddyfile expands as {$DOMAIN}.
+    env_file:
+      - .env.production
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificates and ACME account keys. Losing this volume means
+      # re-issuing on next boot, which Let's Encrypt rate-limits.
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - internal
+
+volumes:
+  dbdata:
+  caddy_data:
+  caddy_config:
+
+networks:
+  internal:
