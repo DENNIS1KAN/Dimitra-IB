@@ -87,7 +87,7 @@ inline SVGs — there are no font or icon files to install.
 | `npm run db:generate` | generate a migration from `db/schema.ts` |
 | `npm run db:migrate` | apply migrations |
 | `npm run db:seed` | reset + seed demo data (writes placeholder PDFs to `./storage`) — stop `npm run dev` first (the embedded DB is single-process; a second opener is refused); a non-empty `DATABASE_URL` database additionally requires `npm run db:seed -- --force` |
-| `npm test` | vitest — gating rules, hero tie-break, timezone math (incl. the dd/mm/yyyy release helpers), the calendar month builder, the enrollments backfill migration, DB-backed query / messages-authorization / settings / own-password / submission-read tests (in-memory PGlite), Bunny token math, stamping, auth |
+| `npm test` | vitest — gating rules, hero tie-break, timezone math (incl. the dd/mm/yyyy release helpers), the calendar month builder, the enrollments backfill migration, DB-backed query / messages-authorization / settings / own-password / submission-read tests (in-memory PGlite), video-link validation and embeds, HTTP Range parsing, storage slice reads, stamping, auth |
 | `npm run typecheck` / `lint` | TypeScript strict / ESLint |
 
 ## How it hangs together
@@ -106,31 +106,42 @@ inline SVGs — there are no font or icon files to install.
   accounts and resets passwords in `/admin`; students change their own on
   `/app/account` (`lib/account.ts` — a change signs out their other
   devices). No email service anywhere.
-- `lib/storage.ts` — one `FileStorage` interface; `./storage` folder in dev,
-  Bunny Storage when `BUNNY_STORAGE_*` are set.
-- `lib/video.ts` — Bunny Stream signed-embed tokens (tested), video-object
-  creation, TUS upload signatures; local `<video>` streaming in dev.
+- `lib/storage.ts` — one `FileStorage` interface with one implementation:
+  this server's own `storage/` folder, in dev and in production (SPEC §15.7
+  #25). `getRange` streams `[start, end]` from a file offset, so a seek into a
+  large video costs one buffer rather than the file.
+- `lib/range.ts` — HTTP Range parsing for the material bytes route: a slice,
+  the whole object, or 416 with `Content-Range: bytes */size` for anything
+  malformed or unsatisfiable. Pure and tested.
+- `lib/video.ts` — pasted video links: `booking_url`-grade URL validation plus
+  the embed URL for YouTube, Loom and Google Drive. Anything else becomes an
+  "Open video" step. Pure and tested.
 - `lib/stamp.ts` — every student PDF download gets "Prepared for {name} ·
   {email}" stamped on each page (pdf-lib).
 - `app/app/*` — student screens (mobile-first, 390px-checked, per DESIGN.md):
-  `/app` dashboard, `/app/courses` (my courses +
-  catalog with "Ask to join"), `/app/assignments` (what I owe),
-  `/app/messages` (one thread with Dimitra, polling refresh), `/app/sessions`
-  (next clinic + "Book a 1:1 on Google Meet" link-out), `/app/calendar`
+  `/app` My courses (one card per enrollment + the catalog with "Ask to
+  join"), `/app/courses/[id]` (the weekly note + that course's week rail),
+  `/app/messages` (one thread with Dimitra, polling refresh), `/app/schedule`
   (read-only month grid / 390px agenda: releases + the weekly clinic marker
-  from `clinic_day`/`clinic_time`), `/app/account`
-  (change own password), module pages.
+  from `clinic_day`/`clinic_time`, plus the "Book a 1:1 on Google Meet"
+  link-out), `/app/account` (change own password), module and watch pages.
+  The M11/M12 rebuild retired `/app/courses`, `/app/assignments`,
+  `/app/sessions` and `/app/calendar`; they redirect (SPEC §15.7 #24).
 - `lib/messages.ts` — the only reader/writer of `messages`; every function
   takes the acting user and derives the thread from it (a forged student id
   in a POST is ignored — tested), so student A can never read or write B's
   thread. Body rule: trimmed, non-empty, ≤ 4000 characters.
-- `app/admin/*` — students (create/pause/reset password, per-course
-  enrollments), join-request queue, courses (blurb + catalog listing),
-  modules (create/edit/upload/reorder; the release day is dd/mm/yyyy text and
-  always unlocks at 09:00 Athens), calendar (all cohorts), progress matrix (a
-  submitted cell opens the attempt — file + note — via the admin-only
-  `/api/admin/submissions/[id]/file`), messages inbox (all threads, unread
-  counts, reply), settings (`booking_url`, `clinic_text`). Function over beauty.
+- `app/admin/*` — `/admin` is the course home (the "Needs you" strip + course
+  cards); `/admin/courses/[id]` has the Modules / Students / Progress /
+  Details tabs; the week editor at `/admin/courses/[id]/weeks/[moduleId]` has
+  the four slots (Videos take uploads *or* a pasted link, Slides / Exercises /
+  Solutions take one PDF with Replace), the "Ready for Monday?" checklist and
+  the autosaving note. The release day is dd/mm/yyyy text and always unlocks
+  at 09:00 Athens. Plus `/admin/students` (create/pause/reset password,
+  enrollments, the drawer), `/admin/calendar` (all cohorts), the progress
+  matrix (a submitted cell opens the attempt, file + note, via the admin-only
+  `/api/admin/submissions/[id]/file`), `/admin/messages` (all threads, unread
+  counts, reply) and `/admin/settings`. Function over beauty.
 - `events` table is **write-only** in V1 (views, downloads, video progress
   every 30s) — parent digests and clinic briefs build on it later.
 
@@ -142,28 +153,32 @@ inline SVGs — there are no font or icon files to install.
   `mailto:hello@example.com`).
 - Confirm the credential claims on the landing page with Dimitra — they come
   from the approved mockups, but they are factual statements on a public page.
-- Confirm the product name (SPEC §14 — "Lumen" is a working title).
+- The product name is settled: "Road to Success by Anglou Dimitra" (SPEC
+  §15.7 #20). The **domain** is the one identity item still open.
 - Set `APP_TIMEZONE` if the tutor ever works outside Europe/Athens — all
   release-date inputs and displayed dates use it.
 
-## Production notes (M3/M5 finishing steps — need real accounts)
+## Production notes
 
 - **Region:** deploy EU-only (Hetzner VPS, or Vercel + Neon EU). Students
   are mostly minors: the app stores name, email, cohort — nothing else.
 - **Env:** see `.env.example`; set `AUTH_SECRET`, `APP_URL`, `DATABASE_URL`,
-  and the Bunny keys. Every vendor path is env-switched — no code changes.
-- **Bunny Stream:** one library, token authentication ON. Playback URLs are
-  signed server-side and expire (`lib/video.ts`); pasting an embed URL into
-  a logged-out window fails. Uploads: `createBunnyVideo()` +
-  `bunnyUploadSignature()` implement the create + presigned-TUS handshake;
-  wire the admin dropzone to TUS as the finishing step. These paths are
-  written to Bunny's documented contracts but **unverified until real
-  credentials exist** — verify with the M3 checklist in SPEC.md.
-- **Backups:** use managed Postgres backups, or nightly
-  `pg_dump "$DATABASE_URL" | gzip > lumen-$(date +%F).sql.gz`.
-  **Restore:** `gunzip -c lumen-DATE.sql.gz | psql "$DATABASE_URL"` — then
-  log in and spot-check a student account. Files under `./storage` (or the
-  Bunny zone) back up separately with plain file copies.
+  `APP_TIMEZONE`. There are no vendor keys: no email service, and no media
+  host (SPEC §15.7 #25).
+- **Video and files:** everything uploaded lives on the server's disk under
+  `storage/` and is served by `/api/materials` behind the login, which
+  re-checks Rules 1 and 2 per request. A 24-week course of short videos is
+  roughly **15 to 30 GB**, so size the volume for the course and keep
+  headroom. On a host with an ephemeral filesystem, mount a real volume.
+- **Backups cover Postgres AND `storage/`.** Either alone restores to a
+  broken platform. Nightly
+  `pg_dump "$DATABASE_URL" | gzip > rts-$(date +%F).sql.gz`, plus a nightly
+  copy of `storage/` off the box.
+  **Restore:** `gunzip -c rts-DATE.sql.gz | psql "$DATABASE_URL"`, restore
+  `storage/` beside it, then sign in and actually play a video and download a
+  stamped PDF. A database that restores while the files do not is exactly
+  what the rehearsal is for. Dimitra's own drive stays the archive of record
+  for her recordings; the platform is delivery.
 - **Account deletion:** delete the user row (cascades to submissions,
   sessions, events) and remove `storage/submissions/{userId}/`.
 
@@ -177,8 +192,9 @@ db/                                # schema, migrations, seed
 lib/                               # gating, auth, storage, video, stamping
 app/                               # routes: / (landing), /login,
                                    #   /app (student), /admin (tutor), /api/*
-components/lumen/                  # the design system, from DESIGN.md recipes
+components/rts/                    # the design system, from DESIGN.md recipes
 components/app/, components/admin/ # feature components
+assets/fonts/                      # vendored OFL fonts (UI type + PDF stamping)
 scripts/                           # asset extraction + seed-video generator
-storage/                           # dev file storage (gitignored)
+storage/                           # uploaded videos, PDFs and submissions (gitignored)
 ```

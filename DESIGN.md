@@ -63,7 +63,7 @@ Formerly the working title Lumen; renamed 2026-08-24. The wordmark system and na
 
 ## 2. Typography
 
-**Family:** `--font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif`. Loaded as the mockup does — a Google Fonts stylesheet link (`display=swap`) in `app/layout.tsx` — so the build never depends on a network fetch; offline or blocked, the system stack renders. Weights 400 / 500 / 700 / 800.
+**Family:** `--font-sans: var(--font-jakarta-ext), var(--font-jakarta), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif`. Vendored and self-hosted (§9 #25, SPEC §15.7 #26): the two Latin subsets live under their OFL licence in `assets/fonts/plus-jakarta-sans/` and `next/font/local` in `app/layout.tsx` emits the `@font-face` for each, `display: swap`, pinned to the unicode-range Google publishes for it. One variable file per subset covers weights 200 to 800, so the design's 400 / 500 / 700 / 800 all come from one download. No network at build time and none at run time; if a file fails to load, the system stack renders.
 
 **Icons:** inline SVG only (`components/rts/icon.tsx`): 24×24 stroke glyphs in `currentColor`, keyed by the names the code always used (`check_circle`, `lock`, `play_circle`, `chevron_right`, …). No icon font — nothing can ever render as a literal word again.
 
@@ -197,7 +197,7 @@ Same blue nav bar with the ADMIN label, the page links, and the initials chip; c
 ## 7. Implementation notes
 
 - Tokens and every `.lmn-*` class live in `app/globals.css`; components use the vars, never raw hex (the error red is the documented exception).
-- No font files and no icon files ship or are gitignored any more: the type comes from the stylesheet link in `app/layout.tsx`, the icons from `components/rts/icon.tsx`. `scripts/extract-design-assets.mjs` and `public/fonts/` belong to the superseded direction and are no longer used.
+- The only shipped assets are the two OFL font files in `assets/fonts/plus-jakarta-sans/`, wired up in `app/layout.tsx`; icons are inline SVG from `components/rts/icon.tsx`. `scripts/extract-design-assets.mjs` and the gitignored `public/fonts/` belong to the superseded direction and are no longer used.
 - `--radius-pills: 999px` ≈ `rounded-full`.
 - Mockup animation (`.lmn-rise`) is opt-in per element and disabled under `prefers-reduced-motion`.
 
@@ -231,7 +231,7 @@ Same blue nav bar with the ADMIN label, the page links, and the initials chip; c
 | 12 | Wordmark "lumen." + "by Dimitra Anglou" | Name is an open question §14, non-blocking until M5 | Superseded: "Road to Success" + "by Anglou Dimitra" (SPEC §15.7 #20/#21/#22) |
 | 13 | Locked teaser labeled "Week 7" only | Rule 1 §5: teasers show **title** + "Unlocks {date}" | SPEC wins: label "Week N — {title}" |
 | 14 | Topic badge "Topic 8 · Acids & bases" on module page | No topic/syllabus field in §6 | Parked (no schema backing) |
-| 15 | Per-material meta: video durations, "18 pages", "8 questions" | §6 materials: only type/title/storage_key/sort_order | Parked; derived counts fine; revisit at M3 (Bunny exposes duration) |
+| 15 | Per-material meta: video durations, "18 pages", "8 questions" | §6 materials: only type/title/storage_key/sort_order | Parked; derived counts fine. ~~Revisit at M3 (Bunny exposes duration)~~ **Stays parked (SPEC §15.7 #25):** with no video vendor there is nothing that reports a duration, and probing uploads for one is not worth a dependency |
 | 16 | Locked-solutions copy "Solutions unlock after your attempt" / CTA "Submit my attempt" | §5 Rule 2 prescribes hint "Submit your attempt to unlock solutions" | SPEC copy in the mockup's panel skin |
 | 17 | DesktopHome "All modules →" link | Mooted by the /app merge (#4) | Dropped |
 | 18 | Badge copy "New this Monday" | Releases aren't necessarily Mondays (release_date is free §6) | Built copy: "New this week" (released < 7 days) |
@@ -241,7 +241,7 @@ Same blue nav bar with the ADMIN label, the page links, and the initials chip; c
 | 22 | Mockup hides the nav links behind a hamburger ≤ 640px | A menu needs client state; the link row must work without JS | Links wrap to a scrollable second row under the brand (no hamburger) |
 | 23 | Mockup feature card shows video "pips" and "2 of 3 videos watched" | Per-lesson progress is parked (#8) | Pips omitted; meta shows material counts (the soft due date left in M10) |
 | 24 | Mockup uses orange for the clinic strip accent and the brand dot as well as the CTA | Owner: "orange — exactly one motivational CTA per view" | Read as a rule about CTAs: one orange *button* per view; the dot and the 3px clinic accent follow the mockup |
-| 25 | Mockup loads Plus Jakarta Sans from Google Fonts at runtime | `next/font` would self-host but needs the network at build time | Runtime stylesheet link (mockup's approach); swap to vendored files if the team wants zero third-party requests |
+| 25 | Mockup loads Plus Jakarta Sans from Google Fonts at runtime | `next/font/google` would self-host but needs the network at build time | ~~Runtime stylesheet link (mockup's approach)~~ **APPROVED (owner, 2026-08-24, SPEC §15.7 #26):** vendored. Both Latin subsets are committed under their OFL licence in `assets/fonts/plus-jakarta-sans/` and loaded with `next/font/local` (no network at build time either), each pinned to the unicode-range Google publishes for it, the primary subset carrying the metric-adjusted Arial fallback. A page load makes **zero** third-party requests |
 
 
 ---
@@ -260,6 +260,6 @@ The first design system (extracted from `design/Lumen_UI_Mockups_standalone.html
 | `--radius-cards` 16 / `--radius-featured` 24 | `--radius-row` 16 / `--radius-cards` 20 / `--radius-featured` 24 |
 | `--shadow-card` `0 1px 2px rgba(0,0,0,.04)` | the mockup's two-layer shadow |
 | Material Symbols `<span class="material-symbols-rounded">` | `<Icon name=…>` inline SVG |
-| Apercu Pro `@font-face` from `public/fonts/` | Plus Jakarta Sans stylesheet link |
+| Apercu Pro `@font-face` from `public/fonts/` (licensed, gitignored) | Plus Jakarta Sans, OFL, vendored in `assets/fonts/` via `next/font/local` |
 | TopBar (page-level header) | BackLink inside the page; the nav bar is the only header |
 | Badge `new` = yellow | Badge `new` = blue-tint chip |

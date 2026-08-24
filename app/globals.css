@@ -13,7 +13,7 @@
 --------------------------------------------------------------------------- */
 
 :root{
-/* Palette — Dimitra's brand decisions (SPEC §15.7 #13) */
+/* Palette: Dimitra's brand decisions (SPEC §15.7 #13) */
 --color-cream:#f9f4f2;        /* page background */
 --color-white:#ffffff;        /* cards, interactive panels */
 --color-ink:#131211;          /* display text, text on orange */
@@ -24,10 +24,10 @@
 --color-blue-tint:rgba(0,97,239,.09);  /* blue tint chips (alpha of blue) */
 --color-indigo:#3b197f;       /* headings, hero, serious/academic */
 --color-orange:#f47d31;       /* the one motivational CTA, brand dot, clinic accent */
---color-jade:#00a86b;         /* correct, completed, progress — fills only */
+--color-jade:#00a86b;         /* correct, completed, progress; fills only */
 --color-forest:#1e7a4a;       /* green as TEXT (contrast-safe) */
 --color-mint:rgba(0,168,107,.12);      /* jade tint fills (alpha of jade) */
-/* Semantic — surfaces */
+/* Semantic: surfaces */
 --surface-page:var(--color-cream);
 --surface-card:var(--color-white);
 --surface-nav:var(--color-blue);
@@ -36,7 +36,7 @@
 --surface-tint-blue:var(--color-blue-tint);
 --surface-tint-green:var(--color-mint);
 --surface-ink:var(--color-ink);
-/* Semantic — text COLOURS */
+/* Semantic: text COLOURS */
 --text-primary:var(--color-graphite);
 --text-strong:var(--color-ink);
 --text-heading-color:var(--color-indigo);
@@ -46,22 +46,22 @@
 --text-inverse:var(--color-white);
 --text-on-cta:var(--color-ink);
 --text-success:var(--color-forest);
-/* Semantic — borders (one border neutral: linen) */
+/* Semantic: borders (one border neutral, linen) */
 --border-card:var(--color-linen);
 --border-input:var(--color-linen);
 --border-divider:var(--color-linen);
-/* Semantic — actions */
+/* Semantic: actions */
 --action-primary:var(--color-blue);
 --action-cta:var(--color-orange);
 --action-dark:var(--color-ink);
 --accent-brand:var(--color-orange);
 --accent-dimitra:var(--color-indigo);
-/* Semantic — states */
+/* Semantic: states */
 --state-done:var(--color-jade);
 --state-now:var(--color-blue);
 --state-locked:var(--color-stone);
 --state-alert:#c4320a;        /* the sole functional exception: errors only */
-/* Subject colours — chemistry blue, everything else indigo (SPEC §15.7 #13) */
+/* Subject colours: chemistry blue, everything else indigo (SPEC §15.7 #13) */
 --subject-chemistry:var(--color-blue);
 --subject-indigo:var(--color-indigo);
 }
@@ -76,7 +76,7 @@
 --font-weight-medium:500;
 --font-weight-bold:700;
 --font-weight-heavy:800;
-/* Scale — body 16/1.55 −0.16px; headings 800 with tight negative tracking */
+/* Scale: body 16/1.55 at -0.16px letter-spacing; headings 800 with tight negative tracking */
 --text-caption:13px;--leading-caption:1.5;--tracking-caption:-0.1px;
 --text-body-sm:14px;--leading-body-sm:1.5;--tracking-body-sm:-0.15px;
 --text-body:16px;--leading-body:1.55;--tracking-body:-0.16px;
@@ -172,7 +172,7 @@ h1,h2,h3,h4{color:var(--text-heading-color)}
 .lmn-textarea::placeholder{color:var(--text-disabled)}
 .lmn-textarea:focus{border-color:var(--action-primary);box-shadow:0 0 0 3px rgba(0,97,239,.12)}
 
-/* Navigation — blue owns it (mockup .nav) */
+/* Navigation: blue owns it (mockup .nav) */
 .lmn-nav{background:var(--surface-nav);color:#fff}
 .lmn-nav-wrap{max-width:var(--page-max-width);margin:0 auto;padding:0 24px;min-height:64px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .lmn-nav-links{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
@@ -187,7 +187,7 @@ h1,h2,h3,h4{color:var(--text-heading-color)}
   .lmn-nav-links{order:10;flex-basis:100%;min-width:0;padding:0 0 10px;margin-top:-4px}
 }
 
-/* Hero — indigo owns it (mockup .hero) */
+/* Hero: indigo owns it (mockup .hero) */
 .lmn-hero{position:relative;overflow:hidden;background:var(--surface-hero);color:#fff;padding:40px 0 84px}
 .lmn-hero h1{color:#fff}
 /* The road motif behind the landing hero (design/road-to-success-mockup.html) */
@@ -273,7 +273,7 @@ a.lmn-cal-pill.is-release:hover{text-decoration:underline;color:var(--action-pri
 .lmn-cal-pill.is-clinic{background:var(--surface-page);border-left:3px solid var(--color-orange);color:var(--text-primary);border-radius:0 8px 8px 0}
 .lmn-cal-course{display:block;font-size:11.5px;font-weight:500;color:var(--text-tertiary);overflow:hidden;text-overflow:ellipsis}
 
-/* load sequence (mockup) — respects reduced motion */
+/* load sequence (mockup); respects reduced motion */
 @media (prefers-reduced-motion:no-preference){
   .lmn-rise{animation:lmn-rise .55s cubic-bezier(.2,.7,.2,1) both}
   @keyframes lmn-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}

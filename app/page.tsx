@@ -50,12 +50,16 @@ export default function Landing() {
       {/* Hero: indigo owns it (DESIGN.md §6) */}
       <section className="lmn-hero" style={{ padding: "64px 0 56px" }}>
         {/* The road motif: a subtle dotted path with the short jade segment
-            already travelled (design/road-to-success-mockup.html). */}
+            already travelled (design/road-to-success-mockup.html). fill="none"
+            on the root is for the palette walk, which reads computed styles
+            rather than painted pixels: the element paints nothing, but its
+            initial fill is the UA's black. */}
         <svg
           className="lmn-hero-road"
           viewBox="0 0 1000 520"
           preserveAspectRatio="xMidYMax slice"
           aria-hidden="true"
+          fill="none"
         >
           <path
             d="M -40 560 C 240 470, 200 330, 460 300 S 830 250, 1010 130"
