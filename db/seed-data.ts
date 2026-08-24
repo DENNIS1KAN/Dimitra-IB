@@ -6,6 +6,7 @@
 // week 5 still unsubmitted); petros = HL active but globally paused (Rule 3). The
 // Maths cohort is listed with no modules — something to "Ask to join".
 // Callable from the CLI seed and from the dev-db bootstrap.
+import { BRAND_NAME, TUTOR_NAME } from "../lib/brand";
 import { hashPassword } from "../lib/password";
 import { mostRecentMondayAt } from "../lib/tz";
 import type { Db } from "./index";
@@ -74,11 +75,11 @@ export async function runSeed(db: Db) {
     .returning();
 
   console.log("[seed] users…");
-  // Shared dev password for every seeded account: "lumen123".
-  const devPassword = () => hashPassword("lumen123");
+  // Shared dev password for every seeded account: "success123".
+  const devPassword = () => hashPassword("success123");
   await db.insert(users).values({
     role: "admin",
-    name: "Dimitra Anglou",
+    name: TUTOR_NAME,
     username: "dimitra",
     passwordHash: devPassword(),
     email: "dimitra@example.com",
@@ -193,14 +194,21 @@ export async function runSeed(db: Db) {
   // works in dev (inline view, stamped download). Videos come from
   // scripts/make-seed-videos.mjs — the player copes when they're absent.
   const { storage } = await import("../lib/storage");
-  const { PDFDocument, StandardFonts } = await import("pdf-lib");
+  const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   for (const mat of allMaterials) {
     if (!mat.storageKey.endsWith(".pdf")) continue;
     const doc = await PDFDocument.create();
     const font = await doc.embedFont(StandardFonts.Helvetica);
     const bold = await doc.embedFont(StandardFonts.HelveticaBold);
     const page = doc.addPage([595, 842]); // A4
-    page.drawText("lumen.", { x: 48, y: 780, size: 28, font: bold });
+    page.drawText(BRAND_NAME, { x: 48, y: 780, size: 28, font: bold });
+    // The orange dot terminal after the wordmark (SPEC §15.7 #22).
+    page.drawCircle({
+      x: 48 + bold.widthOfTextAtSize(BRAND_NAME, 28) + 8,
+      y: 783,
+      size: 4,
+      color: rgb(0.957, 0.49, 0.192),
+    });
     page.drawText(mat.title, { x: 48, y: 740, size: 16, font: bold });
     page.drawText(`Placeholder ${mat.type} PDF for dev seeding.`, {
       x: 48,
@@ -222,7 +230,7 @@ export async function runSeed(db: Db) {
     createdAt: new Date(monday - 5 * DAY),
   });
 
-  console.log("[seed] done. Password for every account: lumen123");
+  console.log("[seed] done. Password for every account: success123");
   console.log("  admin:   dimitra  (full admin panel; 1 pending join request)");
   console.log("  student: nikos    (Chemistry HL active, week 5 submitted; asked to join SL)");
   console.log("  student: eleni    (Chemistry HL + SL active — two courses; week 5 not submitted)");

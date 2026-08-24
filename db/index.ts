@@ -27,8 +27,8 @@ export type DbDriver =
 const PGLITE_DIR = "./pgdata-lite";
 
 const globalForDb = globalThis as unknown as {
-  __lumenSql?: ReturnType<typeof postgres>;
-  __lumenPglite?: PGlite;
+  __rtsSql?: ReturnType<typeof postgres>;
+  __rtsPglite?: PGlite;
 };
 
 function isProcessAlive(pid: number): boolean {
@@ -86,8 +86,8 @@ function acquirePgliteLock(dataDir: string): void {
 function createDriver(): DbDriver {
   const url = process.env.DATABASE_URL;
   if (url) {
-    const sql = globalForDb.__lumenSql ?? postgres(url, { max: 10 });
-    if (process.env.NODE_ENV !== "production") globalForDb.__lumenSql = sql;
+    const sql = globalForDb.__rtsSql ?? postgres(url, { max: 10 });
+    if (process.env.NODE_ENV !== "production") globalForDb.__rtsSql = sql;
     return { kind: "postgres", db: drizzlePostgres(sql, { schema }) };
   }
   if (process.env.NODE_ENV === "production") {
@@ -96,11 +96,11 @@ function createDriver(): DbDriver {
         "production needs real Postgres (see .env.example).",
     );
   }
-  let client = globalForDb.__lumenPglite;
+  let client = globalForDb.__rtsPglite;
   if (!client) {
     acquirePgliteLock(PGLITE_DIR); // throws before anything is cached → next use retries
     client = new PGlite(PGLITE_DIR);
-    globalForDb.__lumenPglite = client;
+    globalForDb.__rtsPglite = client;
   }
   return { kind: "pglite", db: drizzlePglite(client, { schema }), client };
 }

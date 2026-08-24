@@ -4,6 +4,7 @@ import path from "node:path";
 import fontkit from "@pdf-lib/fontkit";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import type { User } from "@/db/schema";
+import { BRAND_NAME } from "@/lib/brand";
 
 // Bundled OFL font with Greek + Latin coverage (assets/fonts). The
 // standard-14 fonts are WinAnsi-only — they cannot encode "Δημήτρης", and
@@ -22,8 +23,9 @@ function fontBytes(): Buffer | null {
 }
 
 /**
- * PDF name-stamping (SPEC §9): every downloaded PDF carries
- * "Prepared for {student name} · {email}" in the footer of each page.
+ * PDF name-stamping (SPEC §9; §15.7 #20): every downloaded PDF carries
+ * "Road to Success · Prepared for {student name} · {email}" in the footer
+ * of each page.
  */
 export async function stampPdf(data: Buffer, user: User): Promise<Buffer> {
   try {
@@ -39,7 +41,7 @@ export async function stampPdf(data: Buffer, user: User): Promise<Buffer> {
     } else {
       font = await doc.embedFont(StandardFonts.Helvetica); // WinAnsi-only fallback
     }
-    const text = `Prepared for ${user.name} · ${user.email}`;
+    const text = `${BRAND_NAME} · Prepared for ${user.name} · ${user.email}`;
     const size = 8;
     for (const page of doc.getPages()) {
       const { width } = page.getSize();

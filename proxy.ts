@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // /app and /admin layouts. SPEC §7: students can never reach /admin — the
 // layout redirects them; logged-out users land on /login.
 export function proxy(request: NextRequest) {
-  const hasSession = request.cookies.has("lumen_session");
+  const hasSession = request.cookies.has("rts_session");
   const { pathname } = request.nextUrl;
 
   if (!hasSession && (pathname.startsWith("/app") || pathname.startsWith("/admin"))) {

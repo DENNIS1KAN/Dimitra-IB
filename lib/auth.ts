@@ -5,7 +5,7 @@ import { and, eq, gt, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { sessions, users, type User } from "@/db/schema";
 
-const SESSION_COOKIE = "lumen_session";
+const SESSION_COOKIE = "rts_session";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
 
 const hash = (raw: string) => createHash("sha256").update(raw).digest("hex");

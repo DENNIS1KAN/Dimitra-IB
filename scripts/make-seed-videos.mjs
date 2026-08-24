@@ -54,7 +54,7 @@ const record = async (page, label) =>
           ctx.fillStyle = "#2d2c2b";
           ctx.font = "bold 42px sans-serif";
           ctx.textAlign = "center";
-          ctx.fillText("lumen.", 320, 100);
+          ctx.fillText("Road to Success", 320, 100);
           ctx.font = "500 24px sans-serif";
           ctx.fillText(text, 320, 320);
           t++;

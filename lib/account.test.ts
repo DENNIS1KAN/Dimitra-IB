@@ -26,8 +26,8 @@ beforeAll(async () => {
   [nikos, eleni] = await db
     .insert(schema.users)
     .values([
-      { role: "student", name: "Nikos", username: "nikos", passwordHash: hashPassword("lumen123"), email: "n@x" },
-      { role: "student", name: "Eleni", username: "eleni", passwordHash: hashPassword("lumen123"), email: "e@x" },
+      { role: "student", name: "Nikos", username: "nikos", passwordHash: hashPassword("success123"), email: "n@x" },
+      { role: "student", name: "Eleni", username: "eleni", passwordHash: hashPassword("success123"), email: "e@x" },
     ])
     .returning();
 }, 30_000); // migrates a fresh in-memory PGlite — slow on a loaded machine
@@ -43,20 +43,20 @@ describe("change own password (SPEC §15.4: current + new, min 8, same scrypt pa
   });
 
   it("rejects a new password under 8 characters", async () => {
-    expect(await a.changeOwnPassword(nikos, form({ current: "lumen123", next: "short" }))).toEqual({
+    expect(await a.changeOwnPassword(nikos, form({ current: "success123", next: "short" }))).toEqual({
       ok: false,
       reason: "too-short",
     });
-    expect(verifyPassword("lumen123", await hashOf(nikos.id))).toBe(true);
+    expect(verifyPassword("success123", await hashOf(nikos.id))).toBe(true);
   });
 
   it("changes only the actor's password: old stops working, new works, others untouched", async () => {
-    expect(await a.changeOwnPassword(nikos, form({ current: "lumen123", next: "brandnew1" }))).toEqual({ ok: true });
+    expect(await a.changeOwnPassword(nikos, form({ current: "success123", next: "brandnew1" }))).toEqual({ ok: true });
     const h = await hashOf(nikos.id);
     expect(h.startsWith("scrypt:")).toBe(true);
-    expect(verifyPassword("lumen123", h)).toBe(false);
+    expect(verifyPassword("success123", h)).toBe(false);
     expect(verifyPassword("brandnew1", h)).toBe(true);
-    expect(verifyPassword("lumen123", await hashOf(eleni.id))).toBe(true);
+    expect(verifyPassword("success123", await hashOf(eleni.id))).toBe(true);
   });
 });
 

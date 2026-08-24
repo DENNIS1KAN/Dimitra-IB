@@ -9,9 +9,9 @@ import {
 
 describe("password hashing", () => {
   it("round-trips the right password and rejects the wrong one", () => {
-    const stored = hashPassword("lumen123");
-    expect(verifyPassword("lumen123", stored)).toBe(true);
-    expect(verifyPassword("lumen124", stored)).toBe(false);
+    const stored = hashPassword("success123");
+    expect(verifyPassword("success123", stored)).toBe(true);
+    expect(verifyPassword("success124", stored)).toBe(false);
     expect(verifyPassword("", stored)).toBe(false);
   });
 
@@ -29,7 +29,7 @@ describe("password hashing", () => {
     // A well-formed scrypt value means the login action's compare for an
     // unknown username runs the full scrypt derivation, not a short-circuit.
     expect(DUMMY_HASH).toMatch(/^scrypt:[0-9a-f]{32}:[0-9a-f]{128}$/);
-    expect(verifyPassword("lumen123", DUMMY_HASH)).toBe(false);
+    expect(verifyPassword("success123", DUMMY_HASH)).toBe(false);
     expect(verifyPassword("dummy-timing-equalizer-not-a-real-account", DUMMY_HASH)).toBe(true);
   });
 
@@ -37,6 +37,6 @@ describe("password hashing", () => {
     expect(MIN_PASSWORD_LENGTH).toBe(8);
     expect(isAcceptablePassword("short7!")).toBe(false);
     expect(isAcceptablePassword("")).toBe(false);
-    expect(isAcceptablePassword("lumen123")).toBe(true);
+    expect(isAcceptablePassword("success123")).toBe(true);
   });
 });
