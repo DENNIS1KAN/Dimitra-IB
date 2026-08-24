@@ -1,11 +1,14 @@
 // NOTE: no "server-only" here — the seed script imports this from plain Node.
 import { createHash } from "node:crypto";
-import { mkdir, open, readFile, stat, unlink, writeFile } from "node:fs/promises";
+import { createReadStream } from "node:fs";
+import { mkdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { Readable } from "node:stream";
 
-// File storage behind one interface (SPEC §9): dev writes to ./storage,
-// prod uses Bunny Storage via presigned-style URLs. The switch is purely
-// env-driven (BUNNY_STORAGE_ZONE + BUNNY_STORAGE_API_KEY).
+// File storage behind one interface (SPEC §9). Since SPEC §15.7 #25 there is
+// one implementation: the server's own disk under ./storage, served to
+// signed-in students through /api/materials. The interface stays because it is
+// the seam a future object store would slot into without touching callers.
 
 export interface FileStorage {
   /** Persist bytes under a key. */
@@ -14,8 +17,12 @@ export interface FileStorage {
   get(key: string): Promise<Buffer>;
   /** Object size in bytes (video range requests need it without a full read). */
   size(key: string): Promise<number>;
-  /** Read just [start, end] (inclusive) — a video seek must not buffer the whole file. */
-  getRange(key: string, start: number, end: number): Promise<Buffer>;
+  /**
+   * Stream just [start, end] (inclusive). A seek reads its slice at a file
+   * offset and streams it out, so serving a 2 GB video costs one small buffer
+   * per request instead of 2 GB of RSS — the whole file is never read.
+   */
+  getRange(key: string, start: number, end: number): Promise<ReadableStream<Uint8Array>>;
   /** Remove a stored object (account deletion = user row + their files). */
   delete(key: string): Promise<void>;
 }
@@ -41,70 +48,19 @@ class LocalStorage implements FileStorage {
     return (await stat(safe(key))).size;
   }
   async getRange(key: string, start: number, end: number) {
-    const fd = await open(safe(key), "r");
-    try {
-      const length = end - start + 1;
-      const { buffer, bytesRead } = await fd.read(Buffer.alloc(length), 0, length, start);
-      return bytesRead === length ? buffer : buffer.subarray(0, bytesRead);
-    } finally {
-      await fd.close();
-    }
+    const file = safe(key);
+    // stat first: createReadStream reports a missing file asynchronously, and
+    // the route needs to answer 404 before it has started a 206.
+    await stat(file);
+    const node = createReadStream(file, { start, end });
+    return Readable.toWeb(node) as ReadableStream<Uint8Array>;
   }
   async delete(key: string) {
     await unlink(safe(key)).catch(() => {});
   }
 }
 
-class BunnyStorage implements FileStorage {
-  private base: string;
-  constructor(
-    private zone: string,
-    private apiKey: string,
-    region = process.env.BUNNY_STORAGE_REGION ?? "",
-  ) {
-    const host = region ? `${region}.storage.bunnycdn.com` : "storage.bunnycdn.com";
-    this.base = `https://${host}/${zone}`;
-  }
-  private headers() {
-    return { AccessKey: this.apiKey };
-  }
-  async put(key: string, data: Buffer, contentType = "application/octet-stream") {
-    const res = await fetch(`${this.base}/${key}`, {
-      method: "PUT",
-      headers: { ...this.headers(), "Content-Type": contentType },
-      body: new Uint8Array(data),
-    });
-    if (!res.ok) throw new Error(`bunny put failed: ${res.status}`);
-  }
-  async get(key: string) {
-    const res = await fetch(`${this.base}/${key}`, { headers: this.headers() });
-    if (!res.ok) throw new Error(`bunny get failed: ${res.status}`);
-    return Buffer.from(await res.arrayBuffer());
-  }
-  async size(key: string) {
-    const res = await fetch(`${this.base}/${key}`, { method: "HEAD", headers: this.headers() });
-    const length = Number(res.headers.get("content-length"));
-    if (!res.ok || !Number.isFinite(length)) throw new Error(`bunny head failed: ${res.status}`);
-    return length;
-  }
-  async getRange(key: string, start: number, end: number) {
-    const res = await fetch(`${this.base}/${key}`, {
-      headers: { ...this.headers(), Range: `bytes=${start}-${end}` },
-    });
-    if (!res.ok) throw new Error(`bunny range get failed: ${res.status}`);
-    const body = Buffer.from(await res.arrayBuffer());
-    // 206 = the requested slice; 200 = Range ignored, slice it ourselves.
-    return res.status === 206 ? body : body.subarray(start, end + 1);
-  }
-  async delete(key: string) {
-    await fetch(`${this.base}/${key}`, { method: "DELETE", headers: this.headers() });
-  }
-}
-
-export const storage: FileStorage =
-  process.env.BUNNY_STORAGE_ZONE && process.env.BUNNY_STORAGE_API_KEY
-    ? new BunnyStorage(process.env.BUNNY_STORAGE_ZONE, process.env.BUNNY_STORAGE_API_KEY)
-    : new LocalStorage();
+export const storage: FileStorage = new LocalStorage();
 
 export const storageKeyFor = (moduleId: string, filename: string) => {
   const stem = createHash("sha1").update(`${moduleId}:${filename}:${Date.now()}`).digest("hex").slice(0, 12);

@@ -6,6 +6,7 @@ import { loadStudentAccess } from "@/lib/access";
 import { contentTypeFor, extensionOf } from "@/lib/content-type";
 import { getSessionUser } from "@/lib/auth";
 import { moduleState, solutionsVisible } from "@/lib/gating";
+import { parseRangeHeader, unsatisfiableContentRange } from "@/lib/range";
 import { hasSubmissionFor, logMaterialEvent } from "@/lib/material-access";
 import { storage } from "@/lib/storage";
 import { isUuid } from "@/lib/validate";
@@ -44,13 +45,22 @@ export async function GET(
     }
   }
 
-  const ext = extensionOf(material.storageKey);
-  const contentType = contentTypeFor(material.storageKey);
+  // A link video (SPEC §15.7 #25) has no bytes here: it plays on its own
+  // service, and the student page links straight to it.
+  const storageKey = material.storageKey;
+  if (!storageKey) return NextResponse.json({ error: "not found" }, { status: 404 });
+
+  const ext = extensionOf(storageKey);
+  const contentType = contentTypeFor(storageKey);
   const wantsDownload = request.nextUrl.searchParams.get("download") === "1";
+  // Only video is served in slices. PDFs go out whole (and a stamped download
+  // is generated per request, so its bytes are not the stored bytes at all),
+  // so claiming range support for them would be a lie a PDF viewer acts on.
+  const rangeable = contentType.startsWith("video/") && !wantsDownload;
 
   const headers = new Headers({
     "Content-Type": contentType,
-    "Accept-Ranges": "bytes",
+    "Accept-Ranges": rangeable ? "bytes" : "none",
     "Cache-Control": "private, no-store",
   });
   if (wantsDownload) {
@@ -58,37 +68,39 @@ export async function GET(
     headers.set("Content-Disposition", `attachment; filename="${filename}"`);
   }
 
-  // Range support so <video> can seek, served via storage.getRange, so a
-  // seek reads only its slice instead of buffering the whole file per
-  // request. (Videos log a single 'view' from the watch page instead of
-  // here, otherwise every byte-range/preload request would count.)
-  const range = request.headers.get("range");
-  const m = range?.match(/bytes=(\d+)-(\d*)/);
-  if (m && contentType.startsWith("video/")) {
+  // Range support so <video> can seek. storage.getRange streams the slice from
+  // a file offset, so a seek into a 2 GB recording costs one small buffer
+  // rather than the whole file. Malformed and unsatisfiable ranges both get
+  // 416 with the real size, so the player's next attempt can be correct.
+  // (Videos log a single 'view' from the watch page instead of here,
+  // otherwise every byte-range/preload request would count.)
+  const rangeHeader = request.headers.get("range");
+  if (rangeable && rangeHeader !== null) {
     let size: number;
     try {
-      size = await storage.size(material.storageKey);
+      size = await storage.size(storageKey);
     } catch {
       return NextResponse.json(
         { error: "This file is still processing. Try again shortly." },
         { status: 404 },
       );
     }
-    const start = Number(m[1]);
-    const end = m[2] ? Math.min(Number(m[2]), size - 1) : size - 1;
-    if (start > end || start >= size) {
-      headers.set("Content-Range", `bytes */${size}`);
+    const range = parseRangeHeader(rangeHeader, size);
+    if (range.kind === "unsatisfiable") {
+      headers.set("Content-Range", unsatisfiableContentRange(size));
       return new NextResponse(null, { status: 416, headers });
     }
-    const chunk = await storage.getRange(material.storageKey, start, end);
-    headers.set("Content-Range", `bytes ${start}-${end}/${size}`);
-    headers.set("Content-Length", String(chunk.length));
-    return new NextResponse(new Uint8Array(chunk), { status: 206, headers });
+    if (range.kind === "slice") {
+      const body = await storage.getRange(storageKey, range.start, range.end);
+      headers.set("Content-Range", `bytes ${range.start}-${range.end}/${size}`);
+      headers.set("Content-Length", String(range.end - range.start + 1));
+      return new NextResponse(body, { status: 206, headers });
+    }
   }
 
   let data: Buffer;
   try {
-    data = await storage.get(material.storageKey);
+    data = await storage.get(storageKey);
   } catch {
     return NextResponse.json(
       { error: "This file is still processing. Try again shortly." },
